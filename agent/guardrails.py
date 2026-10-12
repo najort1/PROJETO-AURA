@@ -92,7 +92,7 @@ SENSITIVE_PATTERNS = [
     # Idade / faixas etárias numéricas e textuais
     r"\b(faixa\s+et[áa]ria|idade\s+avan[çc]ada|idos[oa]s?|jovens?|menor\s+de\s+idade|terceira\s+idade)\b",
     r"\b\d{1,2}\s+anos(\s+de\s+idade)?\b",
-    r"\b(data\s+de\s+nascimento|nascid[oa]s?\s+em\s+['´\"“]?\d{2,4}|nasceu\s+em\s+['´\"“]?\d{2,4}|ano\s+de\s+nascimento\s+['´\"“]?\d{2,4})\b",
+    r"\b(data\s+de\s+nascimento|nascid[oa]s?\s+em\s+['´\"“]?\d{2,4}|nasceu\s+(em|no\s+ano)\s+['´\"“]?\d{2,4}|ano\s+de\s+nascimento\s+['´\"“]?\d{2,4})\b",
     # Gênero / sexo direto e indireto (inclui "maior de idade")
     r"\b(g[êe]nero|sexo\s+(masculino|feminino|bio|m|f)|homem|homens|mulher|mulheres|menino|menina|do\s+sexo|maior\s+de\s+idade)\b",
     # Regiões geográficas com e sem a palavra 'região' + "natural de"
@@ -129,6 +129,8 @@ URGENCY_PATTERNS = [
     r"\b(v[áa]lid[ao]\s+s[óo]\s+at[ée]\s+amanh[ãa])\b",
     r"\b(contagem\s+regressiva)\b",
     r"\b(\d+\s+minutos?\s+restantes?)\b",
+    # R4 (revisita 3, V4-04): "acaba imediatamente"
+    r"\b(expira|termina|acaba)\s+imediatamente\b",
 ]
 
 # Promessas abusivas ou benefícios inexistentes generalizados (ACH-02 + NEW-03 + R3)
@@ -143,7 +145,7 @@ URGENCY_PATTERNS = [
 #     de retenção — pareia com TODOS os benefícios.
 _GRATUIDADE_FREE = r"gratu[íi]t[oa]s?|gr[áa]tis|de\s+gra[çc]a|de\s+cortesia|sem\s+custo"
 _DURABILIDADE_STRONG = (
-    r"vital[íi]ci[oa]s?|ilimitad[oa]s?|sem\s+limite|infinit[oa]s?|inesgot[áa]veis?|"
+    r"vital[íi]ci[oa]s?|perp[ée]tu[oa]s?|perpetu[oa]s?|ilimitad[oa]s?|sem\s+limite|infinit[oa]s?|inesgot[áa]veis?|"
     r"etern[oa]s?|nunca\s+expira|expira[m]?\s+nunca|para\s+sempre|m[áa]xima|todas?\s+filas?|por\s+vida"
 )
 # Benefícios JAMAIS gratuitos: gratuidade próxima (free OU strong) = fabricação.
@@ -183,7 +185,7 @@ PROMPT_INJECTION_VARIANTS = [
     # PT: ignore/ignorar/desconsidere/esqueca + regras/instruções/diretrizes/etc.
     r"\b(ignore|ignorar|desconsidere|desconsiderar|esqueca|esquecer)\s+(todas?\s+as?\s+|os?\s+|as?\s+)?(regras?|instrucoes|diretrizes|politicas?|prompts?|mensagens?)\s*(anteriores|acima|precedentes|do\s+sistema)?\b",
     r"\b(ignore|ignorar|desconsidere|desconsiderar)\s+(o\s+)?prompt(\s+acima|\s+anterior)?\b",
-    r"\b(nao\s+siga|nao\s+considere)\s+(as?\s+)?(regras?|instrucoes|diretrizes)\b",
+    r"\b(nao\s+siga|nao\s+considere|deixe\s+de\s+seguir)\s+(as?\s+)?(regras?|instrucoes|diretrizes)\b",
     # PT: "esqueça tudo antes/acima" variants (NEW-01)
     r"\b(esqueca|efqueca)\s+tudo\s+(antes|acima)\b",
     # PT: "não siga as diretrizes" / "desconsidere as diretrizes" variants (NEW-01)
@@ -196,6 +198,9 @@ PROMPT_INJECTION_VARIANTS = [
     r"\b(nao\s+)?obedec[ae]s?\s+(a|as|aos?)\s+(regras?|diretrizes|instrucoes|politicas?)\b",
     r"\bdesrespeit[ae]s?\s+(as?\s+)?(regras?|diretrizes|instrucoes|politicas?)\b",
     r"\b(atue|aja|comporte-?se)\s+como\s+(um[oa]?\s+)?(outro|diferente)\s+(assistente|agente|modelo|sistema)\b",
+    # R4 (revisita 3, V4-01/02): locuções perifrásticas de desobediência e troca de persona
+    r"\b(deixe|deixar)\s+de\s+seguir\s+(as?\s+)?(regras?|diretrizes|instrucoes)\b",
+    r"\b(seja|torn[e]-se)\s+(um[oa]?\s+)?(assistente|agente|modelo|sistema)\s+sem\s+(filtros?|limites?|restricoes)\b",
     # EN: ignore / disregard / forget / override
     r"\b(ignore|disregard|forget|override)\s+(all\s+)?(previous|prior|system|above)?\s*(instructions|rules|guidelines|policies|prompts?)\b",
     # Role prefixes: system:/assistant:/human:/user: (NEW-02) - sem \b final para permitir :
