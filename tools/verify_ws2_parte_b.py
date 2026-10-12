@@ -59,7 +59,8 @@ print(f"  %azul: {tiers.get('azul', 0):.4f} (rel. 95.61%) | %diamante+unique: "
 nps_missing = inter["nps_rating"].isna().mean()
 print(f"  NPS missingness: {nps_missing:.4f} (rel. ~49.2%)")
 
-calib = json.load(open("data/curated/calibration_values.json", encoding="utf-8"))
+with open("data/curated/calibration_values.json", encoding="utf-8") as f:
+    calib = json.load(f)
 anac = calib["market.seasonality_by_route"]["market_monthly_index"]
 flights["m"] = flights["departure_date"].dt.month
 synth_counts = flights.groupby("m").size()
@@ -78,7 +79,8 @@ for f in sorted(glob.glob("data/analytics/*.parquet")):
     cols = [c.lower() for c in con.execute(f"SELECT * FROM read_parquet('{f}') LIMIT 0").df().columns]
     leaks = sorted(set(cols) & banned)
     print(f"  {f.split(chr(92))[-1]}: {'VAZOU ' + str(leaks) if leaks else 'ok'}")
-gt = open("schemas/ground_truth.yaml", encoding="utf-8").read()
+with open("schemas/ground_truth.yaml", encoding="utf-8") as f:
+    gt = f.read()
 print(f"  ground_truth consumers evaluation_only: {'evaluation_only' in gt}")
 
 con.close()
