@@ -1,0 +1,107 @@
+table: agent_recommendations
+description: "Recomendações, mensagens e justificativas do agente de retenção e explicabilidade (WS7)"
+granularity: "uma recomendação por cliente por campanha de retenção"
+produced_by: "agent.pipeline"
+consumers: [app, ml.impact]
+columns:
+  - name: customer_id
+    dtype: string
+    nullable: false
+    description: "Identificador único do cliente"
+    unit: null
+    source: "data/analytics/agent_input.parquet"
+    sensitive: false
+    example: "C000001"
+  - name: action_id
+    dtype: string
+    nullable: false
+    description: "Identificador da ação recomendada no playbook (ex.: ACT-BONUS-PONTOS)"
+    unit: null
+    source: "config/actions.yaml"
+    sensitive: false
+    example: "ACT-RESGATE-ESPECIAL"
+  - name: action_name
+    dtype: string
+    nullable: false
+    description: "Chave canônica da ação (ex.: oferta_resgate_especial)"
+    unit: null
+    source: "config/actions.yaml"
+    sensitive: false
+    example: "oferta_resgate_especial"
+  - name: channel
+    dtype: string
+    nullable: false
+    description: "Canal selecionado para a comunicação (app, email, whatsapp, telefone)"
+    unit: null
+    source: "agent.pipeline"
+    sensitive: false
+    example: "app"
+  - name: message
+    dtype: string
+    nullable: false
+    description: "Mensagem redigida em PT-BR para o cliente com suporte do regulamento e sem dados sensíveis"
+    unit: null
+    source: "agent.composer | agent.llm"
+    sensitive: false
+    example: "Olá! Identificamos que você é cliente Safira..."
+  - name: justification_json
+    dtype: string
+    nullable: false
+    description: "Estrutura JSON com SHAP top-3, atritos dominantes e regras determinísticas acionadas"
+    unit: null
+    source: "agent.pipeline"
+    sensitive: false
+    example: '{"shap_top3": ["queda_voos"], "atritos": ["resgate"], "regras": ["saldo_suficiente_para_cota"]}'
+  - name: citations_json
+    dtype: string
+    nullable: false
+    description: "Estrutura JSON com lista de citações formais do regulamento (fact_id, status, vigência, fonte)"
+    unit: null
+    source: "agent.rag.retriever"
+    sensitive: false
+    example: '[{"fact_id": "AF-RESGATE-ESPECIAL-2025", "verification_status": "official_current_partial"}]'
+  - name: confidence
+    dtype: float
+    nullable: false
+    description: "Nível de confiança da recomendação (0.0 a 1.0)"
+    unit: "score"
+    source: "agent.pipeline"
+    sensitive: false
+    example: 0.95
+  - name: human_review
+    dtype: bool
+    nullable: false
+    description: "Flag que sinaliza necessidade de revisão humana (ex.: regras nulas no tier, caso sensível)"
+    unit: null
+    source: "agent.guardrails"
+    sensitive: false
+    example: false
+  - name: mode
+    dtype: string
+    nullable: false
+    description: "Modo de execução que gerou a recomendação (offline ou llm)"
+    unit: null
+    source: "agent.pipeline"
+    sensitive: false
+    example: "offline"
+  - name: snapshot_version
+    dtype: string
+    nullable: false
+    description: "Versão do snapshot do regulamento utilizada como base de conhecimento"
+    unit: null
+    source: "config/program_rules.yaml"
+    sensitive: false
+    example: "research-2026-10-12"
+  - name: recommended_at
+    dtype: string
+    nullable: false
+    description: "Timestamp ISO-8601 da recomendação gerada"
+    unit: null
+    source: "agent.pipeline"
+    sensitive: false
+    example: "2026-10-12T12:00:00Z"
+checks:
+  unique: [customer_id]
+  non_null: [customer_id, action_id, action_name, channel, message, justification_json, citations_json, confidence, human_review, mode, snapshot_version, recommended_at]
+  allowed_values:
+    mode: [offline, llm]

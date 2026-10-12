@@ -1,0 +1,149 @@
+table: agent_input
+description: "Contrato de entrada para o motor de recomendação e redação do agente (WS7)"
+granularity: "um registro por cliente na coorte de retenção"
+produced_by: "ml (features, clv, churn, segmentation/personas, sentiment)"
+consumers: [agent.pipeline, agent.eligibility, agent.composer, app]
+columns:
+  - name: customer_id
+    dtype: string
+    nullable: false
+    description: "Identificador único do cliente"
+    unit: null
+    source: "data/curated/synthetic/customers.parquet"
+    sensitive: false
+    example: "C000001"
+  - name: tier
+    dtype: string
+    nullable: false
+    description: "Nível atual no Azul Fidelidade (azul, topazio, safira, diamante, diamante_unique)"
+    unit: null
+    source: "data/analytics/features_customer.parquet"
+    sensitive: false
+    example: "safira"
+  - name: persona
+    dtype: string
+    nullable: false
+    description: "Persona atribuída pelo modelo de segmentação"
+    unit: null
+    source: "data/analytics/customer_personas.parquet"
+    sensitive: false
+    example: "maximizador_milhas"
+  - name: risk_state
+    dtype: string
+    nullable: false
+    description: "Estado de risco e valor (risco_alto_valor_alto, risco_medio_valor_alto, risco_baixo_potencial_alto, risco_baixo_estavel)"
+    unit: null
+    source: "data/analytics/customer_scores.parquet"
+    sensitive: false
+    example: "risco_alto_valor_alto"
+  - name: pontos_qualificaveis_12m
+    dtype: int
+    nullable: false
+    description: "Pontos qualificáveis acumulados nos últimos 12 meses"
+    unit: "pontos"
+    source: "data/analytics/features_customer.parquet"
+    sensitive: false
+    example: 9500
+  - name: trechos_12m
+    dtype: int
+    nullable: false
+    description: "Trechos voados nos últimos 12 meses"
+    unit: "trechos"
+    source: "data/analytics/features_customer.parquet"
+    sensitive: false
+    example: 9
+  - name: gastos_12m_brl
+    dtype: float
+    nullable: false
+    description: "Gastos aéreos em passagens e serviços elegíveis nos últimos 12 meses (BRL)"
+    unit: "BRL"
+    source: "data/analytics/features_customer.parquet"
+    sensitive: false
+    example: 4500.0
+  - name: saldo_pontos
+    dtype: int
+    nullable: false
+    description: "Saldo atual de Pontos Azul disponíveis para resgate"
+    unit: "pontos"
+    source: "data/analytics/features_customer.parquet"
+    sensitive: false
+    example: 75000
+  - name: pontos_expirando_30d
+    dtype: int
+    nullable: false
+    description: "Pontos a expirar nos próximos 30 dias"
+    unit: "pontos"
+    source: "data/analytics/features_customer.parquet"
+    sensitive: false
+    example: 12000
+  - name: meta_proximo_nivel_pct
+    dtype: float
+    nullable: false
+    description: "Percentual atingido da meta de qualificação para o próximo nível (0.0 a 1.0+)"
+    unit: "ratio"
+    source: "data/analytics/features_customer.parquet"
+    sensitive: false
+    example: 0.85
+  - name: churn_prob
+    dtype: float
+    nullable: false
+    description: "Probabilidade prevista de evasão (churn) no horizonte de 12 meses"
+    unit: "probabilidade"
+    source: "data/analytics/customer_scores.parquet"
+    sensitive: false
+    example: 0.72
+  - name: clv_12m_previsto
+    dtype: float
+    nullable: false
+    description: "Customer Lifetime Value previsto para os próximos 12 meses (BRL)"
+    unit: "BRL"
+    source: "data/analytics/customer_scores.parquet"
+    sensitive: false
+    example: 5400.0
+  - name: alto_valor
+    dtype: bool
+    nullable: false
+    description: "Indicador binário de cliente de alto valor (definido pelo limiar de Pareto/ScoreAV)"
+    unit: null
+    source: "data/analytics/customer_scores.parquet"
+    sensitive: false
+    example: true
+  - name: atritos_dominantes
+    dtype: string
+    nullable: true
+    description: "Atritos dominantes detectados (ex.: 'resgate', 'atraso', 'bagagem', 'atendimento')"
+    unit: null
+    source: "data/analytics/sentiment_aspects.parquet"
+    sensitive: false
+    example: "resgate"
+  - name: rota_favorita
+    dtype: string
+    nullable: true
+    description: "Trecho mais frequente voado pelo cliente (ex.: 'VCP-SDU')"
+    unit: null
+    source: "data/analytics/features_customer.parquet"
+    sensitive: false
+    example: "VCP-SDU"
+  - name: beneficio_nao_utilizado
+    dtype: string
+    nullable: true
+    description: "Benefício contratual do nível vigente não utilizado pelo cliente"
+    unit: null
+    source: "data/analytics/features_customer.parquet"
+    sensitive: false
+    example: "espaco_azul"
+  - name: shap_top3
+    dtype: string
+    nullable: true
+    description: "JSON array com os 3 principais fatores de risco/CLV explicados por SHAP"
+    unit: null
+    source: "data/analytics/customer_scores.parquet"
+    sensitive: false
+    example: '["queda_frequencia_voos", "atrito_resgate", "inatividade_recente"]'
+checks:
+  unique: [customer_id]
+  non_null: [customer_id, tier, persona, risk_state, saldo_pontos, churn_prob, clv_12m_previsto, alto_valor]
+  allowed_values:
+    tier: [azul, topazio, safira, diamante, diamante_unique]
+    persona: [executivo_recorrente, lazer_premium, maximizador_milhas, regional_dependente, eventual_ascendente, eventual_promocional]
+    risk_state: [risco_alto_valor_alto, risco_medio_valor_alto, risco_baixo_potencial_alto, risco_baixo_estavel]
