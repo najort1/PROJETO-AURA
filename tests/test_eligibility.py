@@ -24,6 +24,35 @@ def engine() -> EligibilityEngine:
 # =============================================================================
 
 
+def test_regressao_atrito_resgate_milhas_taxonomia_real(engine: EligibilityEngine):
+    """Bugfix WS7b (achado #4): a taxonomia de aspectos da WS6 rotula o atrito de
+    resgate como 'resgate_milhas'. O teste de membership exato em 'resgate' nunca
+    disparava na base real — a semântica correta é substring. Guards contra
+    regressão usando o valor REAL produzido pelo pipeline."""
+    client = ClientState(
+        tier="safira",
+        persona="maximizador_milhas",
+        risk_state="risco_alto_valor_alto",
+        saldo_pontos=70000,
+        atritos_dominantes="resgate_milhas",  # valor real da taxonomia
+    )
+    res = engine.evaluate_action("oferta_resgate_especial", client)
+    assert res.is_eligible is True
+    assert "atrito_resgate_observado" in res.rules_triggered
+
+    # Atrito sem relação a resgate não pode acionar a regra
+    client_outro = ClientState(
+        tier="safira",
+        persona="maximizador_milhas",
+        risk_state="risco_alto_valor_alto",
+        saldo_pontos=70000,
+        atritos_dominantes="preco",
+    )
+    res_outro = engine.evaluate_action("oferta_resgate_especial", client_outro)
+    assert res_outro.is_eligible is False
+    assert "atrito_resgate_observado" not in res_outro.rules_triggered
+
+
 def test_borda_saldo_exatamente_no_minimo_safira(engine: EligibilityEngine):
     """Safira exige 70.000 pontos para cota de Resgate Especial."""
     # Exatamente no mínimo: elegível

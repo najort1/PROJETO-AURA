@@ -9,6 +9,7 @@ Uso:
 O Makefile na raiz apenas repassa os mesmos alvos para este script, permitindo
 `make <alvo>` em ambientes com GNU Make (Linux, macOS, CI).
 """
+
 from __future__ import annotations
 
 import os
@@ -58,6 +59,9 @@ TARGETS: dict[str, list[list[str]]] = {
     "agent-eval": [
         ["{py}", "-m", "agent.eval.harness"],
     ],
+    "agent-eval-real": [
+        ["{py}", "-m", "ml.eval.real_input_eval"],
+    ],
     "agent-precompute": [
         ["{py}", "-m", "agent.pipeline", "--precompute-demo"],
     ],
@@ -93,6 +97,7 @@ DESCRIPTIONS = {
     "sentiment": "Corpus PT-BR rotulado por aspecto + 2 abordagens + mapa de atritos",
     "rag": "Indexa a base de conhecimento versionada (regulamento Azul Fidelidade)",
     "agent-eval": "Harness de avaliacao do agente (groundedness, guardrails, adversarial)",
+    "agent-eval-real": "Avaliacao do agente sobre clientes reais da base (agent_input.parquet)",
     "agent-precompute": "Precomputa recomendacoes offline para o modo demonstracao do app",
     "fairness": "Auditoria de vies por faixa etaria, genero e regiao",
     "impact": "Simulacao de impacto (cenarios conservador/base/otimista + sensibilidade)",

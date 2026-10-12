@@ -284,7 +284,10 @@ class EligibilityEngine:
 
         # Requisito: atrito_resgate_observado
         if "atrito_resgate_observado" in requires:
-            if "resgate" in atritos:
+            # Bugfix WS7b (achado #4 do eval real): a taxonomia de aspectos da WS6
+            # rotula o atrito como "resgate_milhas" — membership exato de "resgate"
+            # nunca disparava. Semântica de subtring, robusta a variantes.
+            if any("resgate" in a for a in atritos):
                 rules_triggered.append("atrito_resgate_observado")
             else:
                 is_eligible = False
