@@ -9,6 +9,8 @@ Design e Navegação:
 """
 from __future__ import annotations
 
+from pathlib import Path
+
 import streamlit as st
 
 from app.theme import (
@@ -30,15 +32,22 @@ st.set_page_config(
 # Injeta tokens CSS globais
 st.markdown(get_global_css(), unsafe_allow_html=True)
 
-# Definição das 7 páginas via caminhos de arquivo (padrão nativo do st.Page)
+# Definição das 7 páginas via caminhos de arquivo (padrão nativo do st.Page).
+# Nota de robustez: o st.Page do Streamlit (>=1.30) resolve caminhos relativos
+# contra o DIRETÓRIO DO SCRIPT DE ENTRADA (main_script_parent), não contra o
+# CWD — logo "app/views/..." dobraria para "app/app/views/..." e levantaria
+# StreamlitPageNotFoundError. Caminhos absolutos são parte do contrato público
+# do st.Page e funcionam de qualquer diretório de lançamento.
+_VIEWS = Path(__file__).resolve().parent / "views"
+
 pages = [
-    st.Page("app/views/01_carteira.py", title="01 · Visão da Carteira", icon="📊", url_path="carteira", default=True),
-    st.Page("app/views/02_personas.py", title="02 · Personas", icon="👥", url_path="personas"),
-    st.Page("app/views/03_cliente_360.py", title="03 · Cliente 360", icon="🔍", url_path="cliente-360"),
-    st.Page("app/views/04_agente.py", title="04 · Agente de Retenção", icon="🤖", url_path="agente"),
-    st.Page("app/views/05_atritos.py", title="05 · Mapa de Atritos", icon="⚠️", url_path="atritos"),
-    st.Page("app/views/06_simulador.py", title="06 · Simulador de Impacto", icon="📈", url_path="simulador"),
-    st.Page("app/views/07_ia_responsavel.py", title="07 · IA Responsável", icon="🛡️", url_path="ia-responsavel"),
+    st.Page(str(_VIEWS / "01_carteira.py"), title="01 · Visão da Carteira", icon="📊", url_path="carteira", default=True),
+    st.Page(str(_VIEWS / "02_personas.py"), title="02 · Personas", icon="👥", url_path="personas"),
+    st.Page(str(_VIEWS / "03_cliente_360.py"), title="03 · Cliente 360", icon="🔍", url_path="cliente-360"),
+    st.Page(str(_VIEWS / "04_agente.py"), title="04 · Agente de Retenção", icon="🤖", url_path="agente"),
+    st.Page(str(_VIEWS / "05_atritos.py"), title="05 · Mapa de Atritos", icon="⚠️", url_path="atritos"),
+    st.Page(str(_VIEWS / "06_simulador.py"), title="06 · Simulador de Impacto", icon="📈", url_path="simulador"),
+    st.Page(str(_VIEWS / "07_ia_responsavel.py"), title="07 · IA Responsável", icon="🛡️", url_path="ia-responsavel"),
 ]
 
 # Sidebar Institucional

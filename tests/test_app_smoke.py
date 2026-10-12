@@ -306,3 +306,27 @@ def test_real_analytics_dataset_metrics() -> None:
     assert len(df_inf) == 14
     assert df_inf["four_fifths_compliant"].sum() == 9
     assert (~df_inf["four_fifths_compliant"]).sum() == 5
+
+
+def test_main_py_builds_all_pages_without_error() -> None:
+    """Regrecao do bug StreamlitPageNotFoundError (Streamlit >= 1.30).
+
+    O st.Page resolve caminhos relativos contra o DIRETORIO DO SCRIPT DE
+    ENTRADA (main_script_parent), nao contra o CWD: caminhos como
+    "app/views/..." lancam StreamlitPageNotFoundError ao dobrar para
+    "app/app/views/...". O main.py corrige isso com caminhos absolutos
+    ancorados em __file__; este teste executa o main.py num runtime real
+    (AppTest) e garante que nenhuma excecao ocorra na construcao das paginas.
+    """
+    from streamlit.testing.v1 import AppTest
+
+    # Caminho absoluto: AppTest.from_file resolve caminhos relativos contra o
+    # ARQUIVO CHAMADOR (tests/), nao contra o CWD — mesma armadilha do st.Page.
+    main_py = Path(__file__).resolve().parents[1] / "app" / "main.py"
+    at = AppTest.from_file(str(main_py), default_timeout=300)
+    at.run()
+
+    exceptions = list(at.exception)
+    assert exceptions == [], f"main.py levantou excecoes: {[str(e.message)[:200] for e in exceptions]}"
+    # A tela default (01 - Carteira) renderizou conteudo (CSS global e o primeiro markdown injetado)
+    assert len(at.markdown) > 0
