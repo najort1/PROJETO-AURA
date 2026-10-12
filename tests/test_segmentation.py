@@ -162,3 +162,46 @@ def test_ari_vs_ground_truth_metric_computed() -> None:
     # Valor real documentado em torno de 0.16 (honesto e não maquiado)
     assert -0.10 <= ari_gt <= 1.0
     assert metrics["ari_kmeans_vs_gmm"] >= 0.70
+
+
+def test_timeline_exclui_voos_com_partida_pos_cutoff() -> None:
+    """Revisor WS5-B, achado B4-01: voos pré-comprados com PARTIDA após o cutoff
+    não podem entrar na timeline (vazariam resultado operacional futuro, ex. atraso).
+    Voo comprado ANTES do cutoff e partindo DEPOIS → excluído; partida no próprio
+    cutoff → incluído; a guarda fail-loud nega qualquer evento pós-cutoff."""
+    from ml.segmentation.timeline import build_customer_timeline
+
+    cutoff = "2025-08-31 23:59:59"
+    tx = pd.DataFrame(
+        {
+            "customer_id": ["C1", "C1", "C2"],
+            "transaction_date": ["2025-06-01", "2025-06-01", "2025-08-01"],
+            "flight_id": ["F1", "F2", "F3"],
+            "pontos_azul_resgatados": [0, 0, 0],
+        }
+    )
+    fl = pd.DataFrame(
+        {
+            "flight_id": ["F1", "F2", "F3"],
+            "origin_airport": ["VCP", "VCP", "CGH"],
+            "destination_airport": ["REC", "SDU", "GYN"],
+            "departure_date": ["2025-08-31", "2025-09-15", "2025-08-20"],
+            "delay_minutes": [30, 90, 0],
+            "has_delay": [1, 1, 0],
+        }
+    )
+    inter = pd.DataFrame(
+        {"customer_id": [], "interaction_date": [], "has_friction": [], "aspect": [], "channel": []}
+    ).astype(object)
+    lo = pd.DataFrame(
+        {"customer_id": [], "event_date": [], "new_tier": [], "previous_tier": [], "trigger_reason": []}
+    ).astype(object)
+
+    tl = build_customer_timeline(tx, fl, inter, lo, cutoff_date=cutoff)
+
+    voos = tl[tl["tipo"] == "voo"]
+    # F1 (partida no cutoff) e F3 (partida antes) permanecem; F2 (partida 15/09) sai.
+    assert sorted(voos["titulo"].tolist()) == ["Voo CGH-GYN", "Voo VCP-REC"]
+    assert (pd.to_datetime(tl["data"]) <= pd.Timestamp("2025-08-31")).all()
+    # O atraso do voo futuro (F2) não pode vazar como evento:
+    assert not tl["detalhe"].str.contains("SDU").any()
