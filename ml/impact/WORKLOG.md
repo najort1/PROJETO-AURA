@@ -25,3 +25,9 @@ Registro de execução contínua da frente WS9 (task-10, última frente de imple
 - Executado `python tasks.py impact` ponta a ponta com sucesso.
 - Suíte completa de testes executada com 189/189 testes verdes (`tests/test_impact.py` 9/9).
 - Linter `ruff check ml/impact tests/test_impact.py` 100% limpo, sem advertências ou erros. Todos os escopos respeitados.
+
+## 2026-10-12 — Correção de Não-Determinismos (Lead, pós-gate)
+- O gate de reprodução `tasks.py all` do zero expôs não-determinismos de features (ordem de linhas do DuckDB, empates de rota em `ROW_NUMBER`, soma float de `amount_brl`) — corrigidos na raiz em `dbt/` (ver `docs/limitations.md §7b`).
+- `tests/test_impact.py` refactorado: expectativas passaram a ser DERIVADAS dos artefatos (invariantes + faixas + cross-checks), sem contagens hard-coded, imune a deslocamentos de clientes de fronteira.
+- Cadeia canônica regenerada do zero (features → train → score → precompute → fairness → impact); treino e score verificados BITWISE estáveis entre execuções consecutivas.
+- `docs/impact_simulation.md` atualizado com os números finais canônicos; contagens de alvo/cobertura citadas nos registros históricos acima (14.638/6.170) referem-se aos artefatos pré-regeneração.

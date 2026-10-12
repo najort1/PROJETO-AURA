@@ -220,3 +220,20 @@ def test_recomendacoes_fail_safe_no_action_exige_revisao_humana(recommendations:
     for row in com_cit.head(200).itertuples():
         cit = json.loads(row.citations_json)
         assert isinstance(cit, list) and cit, "citations_json deve ser lista não vazia quando presente"
+
+
+def test_scores_consomem_exatamente_as_predicoes_publicadas(customers_scores: pd.DataFrame) -> None:
+    """Guarda de corrida de processos: customers_scores deve refletir EXATAMENTE
+    as predições publicadas em clv_predictions/churn_predictions.
+
+    Detectou (e agora previne) a mistura de saídas de dois treinos concorrentes
+    — ver docs/limitations.md §7b, Achado 3.
+    """
+    clv = _read("clv_predictions")[["customer_id", "clv_predicted_12m"]]
+    churn = _read("churn_predictions")[["customer_id", "churn_prob_model"]]
+    m = customers_scores[["customer_id", "clv_12m_previsto", "churn_prob"]].merge(clv, on="customer_id").merge(churn, on="customer_id")
+    assert len(m) == 50_000, "joins 1:1 quebrados — bases divergem em cardinalidade"
+    diff_clv = (m["clv_12m_previsto"] - m["clv_predicted_12m"]).abs()
+    diff_churn = (m["churn_prob"] - m["churn_prob_model"].round(4)).abs()
+    assert float(diff_clv.max()) <= 0.005, f"CLV publicado difere do previsto em {diff_clv.max()}"
+    assert float(diff_churn.max()) <= 0.00005, f"churn publicado difere do modelo em {diff_churn.max()} (treino concorrente/estagnado?)"

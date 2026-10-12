@@ -11,10 +11,10 @@ A avaliação compara o modelo probabilístico não-contratual clássico (**BG/N
 
 | Métrica | Baseline (BG/NBD + GG) | Modelo Final (LightGBM) | Ganho / Diferença | IC 95% Bootstrap | Significativo? |
 |---|---|---|---|---|---|
-| **WAPE** | 0.7974 | 0.6550 | -0.1424 | [-0.1495, -0.1354] | Sim |
-| **MAE (BRL)** | R$ 606.12 | R$ 497.85 | R$ -108.27 | [-114.80, -101.77] | Sim |
-| **Spearman** | 0.6106 | 0.7346 | +0.1240 | [0.1198, 0.1284] | Sim |
-| **Gini de Captura** | 0.5935 | 0.6604 | +0.0669 | — | — |
+| **WAPE** | 0.7972 | 0.6550 | -0.1422 | [-0.1486, -0.1359] | Sim |
+| **MAE (BRL)** | R$ 605.97 | R$ 497.85 | R$ -108.12 | [-113.78, -102.24] | Sim |
+| **Spearman** | 0.6109 | 0.7346 | +0.1237 | [0.1191, 0.1281] | Sim |
+| **Gini de Captura** | 0.5566 | 0.6598 | +0.1032 | — | — |
 | **Lift Decil 1** | 4.35x | 5.23x | +0.88x | — | — |
 
 ## 3. Explicabilidade (TreeSHAP)

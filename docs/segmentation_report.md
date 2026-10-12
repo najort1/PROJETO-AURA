@@ -11,7 +11,7 @@
 
 A frente WS5 consolida o núcleo de inteligência de decisão do Projeto Aura 2.0. Integrando predições supervisionadas de CLV 12m e risco de evasão (churn) com histórico transacional e interacional do Azul Fidelidade, esta frente produz:
 1. **Score de Alto Valor (ScoreAV):** ranking percentilar balanceado (60% CLV, 20% RFM composto, 20% Potencial) com estrita garantia anti-vazamento temporal e proibição de atributos sensíveis.
-2. **Justificativa Empírica do Corte:** análise de Pareto demonstrando que o corte superior de **10%** captura **46,97%** da receita futura prevista de toda a carteira de 50.000 clientes.
+2. **Justificativa Empírica do Corte:** análise de Pareto demonstrando que o corte superior de **10%** captura **46,96%** da receita futura prevista de toda a carteira de 50.000 clientes.
 3. **Análise de Sensibilidade:** prova mecânica de estabilidade do ranking sob variações de pesos ($\pm 0,10$, mantendo soma 1,0) com correlações de Spearman superiores a **0,998** e Jaccard no corte de 10% entre **87,1% e 92,7%**.
 4. **Segmentação Não-Supervisionada:** modelo híbrido KMeans e Gaussian Mixture Models (GMM) com alinhamento ARI de **0,8109** e estabilidade bootstrap de **0,9123**.
 5. **Recuperação de Arquétipos (ARI vs Ground Truth):** mensuração honesta de **$\text{ARI} = 0,1642$**, acompanhada de fundamentação técnica sobre a cisão entre arquétipos estocásticos latentes e clusters observáveis comportamentais.
@@ -48,9 +48,9 @@ A seleção dos clientes prioritários baseia-se na concentração da receita pr
 | Corte Superior | Clientes ($N$) | Receita Capturada (R$) | % da Receita Total | ScoreAV Mínimo | Comentário Operacional |
 |:---|:---:|:---:|:---:|:---:|:---|
 | **Top 5%** | 2.500 | R$ 12.061.692,86 | 30,49% | 0,9336 | Hiper-foco em super-executivos e alta renda; deixa de fora parcela relevante em progressão |
-| **Top 10% (Eleito)** | **5.000** | **R$ 18.577.090,30** | **46,97%** | **0,8840** | **Ponto ótimo de equilíbrio: captura quase metade da receita com cobertura operacional viável** |
+| **Top 10% (Eleito)** | **5.000** | **R$ 18.576.716,18** | **46,96%** | **0,8840** | **Ponto ótimo de equilíbrio: captura quase metade da receita com cobertura operacional viável** |
 | **Top 15%** | 7.500 | R$ 22.701.826,22 | 57,39% | 0,8369 | Ganho marginal decrescente; eleva custo total das campanhas proativas |
-| **Top 20%** | 10.000 | R$ 25.663.633,91 | 64,88% | 0,7924 | Diluição do foco do time de relacionamento; abrange clientes de média frequência |
+| **Top 20%** | 10.000 | R$ 25.664.268,39 | 64,88% | 0,7924 | Diluição do foco do time de relacionamento; abrange clientes de média frequência |
 
 > **Correção (Lead, 12/10/2026):** a versão inicial citava valores nominais incorretos
 > (R$ 11.936.438,70 / R$ 25.412.398,82). As frações percentuais estavam corretas;
@@ -114,13 +114,15 @@ A tabela abaixo resume a carteira oficial gerada pelo pipeline (`data/analytics/
 
 | Persona | Membros ($N$) | Share (%) | CLV 12M Médio | Churn Médio | Valor em Risco Total | Ticket Médio | Atritos Dominantes | Ação Recomendada do Playbook |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---|:---|
-| **Executivo Recorrente** | 1.312 | 2,62% | R$ 6.522,80 | 2,61% | R$ 205.091,40 | R$ 469,20 | atraso, atendimento | Contato Proativo (ACT-CONTATO) |
-| **Eventual Ascendente** | 5.121 | 10,24% | R$ 2.155,50 | 18,22% | R$ 1.526.866,10 | R$ 419,90 | app_checkin, preco | Antecipação de Nível (ACT-ANTECIPACAO-NIVEL) |
-| **Regional Dependente** | 9.763 | 19,53% | R$ 888,20 | 33,01% | R$ 2.315.986,10 | R$ 430,50 | conforto, cancelamento | Garantia Conectividade (ACT-CONTATO) |
-| **Lazer Premium** | 4.645 | 9,29% | R$ 831,50 | 29,84% | R$ 887.678,60 | R$ 259,40 | preco, bagagem | Oferta Rota Favorita (ACT-OFERTA-ROTA) |
-| **Maximizador de Milhas** | 4.949 | 9,90% | R$ 477,30 | 22,01% | R$ 454.687,00 | R$ 1.144,70 | resgate_milhas, app_checkin | Oferta Resgate Especial (ACT-RESGATE-ESPECIAL) |
-| **Eventual Promocional** | 24.210 | 48,42% | R$ 209,10 | 73,60% | R$ 2.915.187,20 | R$ 185,30 | preco | Campanha Promocional (ACT-BONUS-PONTOS) |
-| **Total / Média** | **50.000** | **100%** | **R$ 508,25** | **48,93%** | **R$ 8.305.496,40** | **R$ 404,18** | — | — |
+| **Executivo Recorrente** | 1.310 | 2,62% | R$ 6.527,77 | 2,63% | R$ 204.611,20 | R$ 469,80 | atraso, atendimento | Contato Proativo (ACT-CONTATO) |
+| **Eventual Ascendente** | 5.122 | 10,24% | R$ 2.155,49 | 18,15% | R$ 1.529.250,25 | R$ 419,60 | app_checkin, preco | Antecipação de Nível (ACT-ANTECIPACAO-NIVEL) |
+| **Regional Dependente** | 9.766 | 19,53% | R$ 888,16 | 32,99% | R$ 2.318.190,59 | R$ 430,64 | conforto, cancelamento | Garantia Conectividade (ACT-CONTATO) |
+| **Lazer Premium** | 4.647 | 9,29% | R$ 832,42 | 29,84% | R$ 889.535,40 | R$ 259,34 | preco, bagagem | Oferta Rota Favorita (ACT-OFERTA-ROTA) |
+| **Maximizador de Milhas** | 4.948 | 9,90% | R$ 476,91 | 21,97% | R$ 454.139,19 | R$ 1.144,25 | resgate_milhas, app_checkin | Oferta Resgate Especial (ACT-RESGATE-ESPECIAL) |
+| **Eventual Promocional** | 24.207 | 48,41% | R$ 209,07 | 73,63% | R$ 2.917.152,41 | R$ 184,75 | preco | Campanha Promocional (ACT-BONUS-PONTOS) |
+| **Total / Média** | **50.000** | **100%** | **R$ 791,09** | **48,97%** | **R$ 8.312.879,04** | **R$ 415,29** | — | — |
+
+*Nota de fonte (honestidade): as colunas por persona vêm de `personas_summary.parquet` (média por grupo); a linha Total usa as médias globais de `customers_scores.parquet` (CLV médio R$ 791,09; churn médio 48,97%; VaR pela fórmula $\sum \text{CLV} \times \text{churn}$ = R$ 8.312.879,04; ticket médio = gastos totais ÷ trechos totais). Soma da coluna `valor_em_risco` (com arredondamento por linha a 2 decimais): R$ 8.312.953,18.*
 
 ---
 

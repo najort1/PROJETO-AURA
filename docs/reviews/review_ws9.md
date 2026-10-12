@@ -1,5 +1,15 @@
 # Relatório de Revisão Independente — WS9 (Simulação de Impacto + Piloto A/B)
 
+> **ADENDO DO ORQUESTRADOR (12/10/2026, pós-gate final):** este veredito histórico
+> permanece íntegro e IMUTÁVEL — o revisor verificou os artefatos então vigentes
+> (14.638 alvos; custo R$ 166.437,00; Δ base −R$ 153.515,79; cobertura 6.170).
+> No gate de reprodução do zero, o Lead detectou e corrigiu não-determinismos
+> raiz (ordem de linhas DuckDB; empates de rota; soma float em `ticket_medio`;
+> ver `docs/limitations.md §7b`) e regenerou a cadeia canônica. Os números
+> FINAIS publicados em `docs/impact_simulation.md` podem diferir dos citados
+> aqui em ±4 clientes de fronteira (contagens) e 4ª casa decimal (pontos/ICs).
+> A metodologia auditada e aprovada não mudou.
+
 > **Projeto Aura 2.0** — Pipeline de Inteligência e Retenção do Azul Fidelidade  
 > **Frente Auditada:** Workstream 9 (WS9 · Simulação de Impacto Financeiro, Análise de Sensibilidade e Dimensionamento de Piloto A/B)  
 > **Revisor:** Revisor Independente Adversarial (`mega-brain`)  

@@ -5,6 +5,13 @@
 **Revisor:** Revisor Independente (Subagente Especialista)  
 **Status:** CONCLUÍDO  
 
+> **ADENDO DO ORQUESTRADOR (12/10/2026, pós-gate final):** veredito histórico
+> íntegro e imutável (ACH-WS5A-01 sobre os nominais da tabela §3 foi incorporado
+> na época). Após a correção dos não-determinismos de features
+> (`docs/limitations.md §7b`), os nominais de Pareto foram recalculados mais uma
+> vez no retreino canônico; `docs/segmentation_report.md` reflete o estado
+> final. Percentuais, limiares e N=5.000/5.005 seguem estáveis.
+
 ---
 
 ## 1. Sumário Executivo e Veredito Parcial

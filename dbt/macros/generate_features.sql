@@ -56,7 +56,7 @@ agg_tx AS (
                    THEN 1 END) AS frequency_3m,
 
         COALESCE(SUM(CASE WHEN transaction_date >= (DATE '{{ cutoff_date }}' - INTERVAL '365' DAY)
-                          THEN amount_brl ELSE 0 END), 0.0) AS monetary_12m,
+                          THEN amount_brl::DECIMAL(18,2) ELSE 0 END), 0.0) AS monetary_12m,
 
         COALESCE(SUM(CASE WHEN transaction_date >= (DATE '{{ cutoff_date }}' - INTERVAL '365' DAY)
                           THEN pontos_qualificaveis_acumulados ELSE 0 END), 0) AS pontos_qualificaveis_12m,
@@ -90,7 +90,7 @@ route_ranking AS (
         customer_id,
         origin_airport || '-' || destination_airport AS rota,
         COUNT(*) AS rota_count,
-        ROW_NUMBER() OVER(PARTITION BY customer_id ORDER BY COUNT(*) DESC) AS rn
+        ROW_NUMBER() OVER(PARTITION BY customer_id ORDER BY COUNT(*) DESC, rota ASC) AS rn
     FROM historical_transactions
     WHERE origin_airport IS NOT NULL AND destination_airport IS NOT NULL
       AND transaction_date >= (DATE '{{ cutoff_date }}' - INTERVAL '365' DAY)
@@ -138,7 +138,7 @@ historical_interactions AS (
 future_performance AS (
     SELECT
         customer_id,
-        COALESCE(SUM(amount_brl), 0.0) AS target_clv_12m,
+        COALESCE(SUM(amount_brl::DECIMAL(18,2)), 0.0)::DOUBLE AS target_clv_12m,
         COUNT(*) AS future_tx_count,
         MIN(transaction_date) AS first_future_tx_date
     FROM {{ ref('stg_transactions') }}
@@ -156,12 +156,14 @@ SELECT
     COALESCE(tx.frequency_6m, 0) AS frequency_6m,
     COALESCE(tx.frequency_12m, 0) AS frequency_12m,
     COALESCE(tx.frequency_12m, 0) AS trechos_12m,
-    ROUND(COALESCE(tx.monetary_12m, 0.0), 2) AS monetary_12m,
-    ROUND(COALESCE(tx.monetary_12m, 0.0), 2) AS gastos_12m_brl,
+    -- ::DOUBLE na publicação: a SOMA é feita em DECIMAL (exata, determinística),
+    -- mas a coluna sai como float64 para compatibilidade com o ecossistema pandas/sklearn.
+    ROUND(COALESCE(tx.monetary_12m, 0.0), 2)::DOUBLE AS monetary_12m,
+    ROUND(COALESCE(tx.monetary_12m, 0.0), 2)::DOUBLE AS gastos_12m_brl,
 
     CASE
         WHEN COALESCE(tx.frequency_12m, 0) > 0
-        THEN ROUND(tx.monetary_12m / tx.frequency_12m, 2)
+        THEN ROUND(tx.monetary_12m / tx.frequency_12m, 2)::DOUBLE
         ELSE 0.0
     END AS ticket_medio_12m,
 

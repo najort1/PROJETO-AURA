@@ -29,7 +29,7 @@
   2. Destacar os KPI Cards da base real:
      - **Tamanho da Carteira:** 50.000 clientes
      - **CLV 12M Total Previsto:** R$ 39.554.463,12 (média: R$ 791,09/cliente)
-     - **Valor em Risco Total:** R$ 8.305.496,50 (21,0% do CLV total da carteira)
+     - **Valor em Risco Total:** R$ 8.312.879,04 (21,0% do CLV total da carteira)
      - **Segmento Alto Valor:** 10,01% (5.005 clientes prioritários)
   3. Rolar suavemente para a Curva de Lorenz/Pareto mostrando a concentração da receita (Gini = 0,55, com top 20% concentrando ~64,2% do CLV).
 * **Fala do Apresentador:**
@@ -46,17 +46,17 @@
 * **Ação visual:**
   1. Clicar no menu lateral em `02 · Personas`.
   2. Mostrar os cartões das 6 personas reais com suas respectivas participações de mercado:
-     - *Eventual Promocional* (48,42% · 24.210 membros · CLV médio R$ 209,11 · Churn 73,6%)
-     - *Regional Dependente* (19,53% · 9.763 membros · CLV médio R$ 888,16 · Churn 33,0%)
-     - *Eventual Ascendente* (10,24% · 5.121 membros · CLV médio R$ 2.155,46 · Churn 18,2%)
-     - *Maximizador de Milhas* (9,90% · 4.949 membros · CLV médio R$ 477,32 · Churn 22,0%)
-     - *Lazer Premium* (9,29% · 4.645 membros · CLV médio R$ 831,52 · Churn 29,8%)
-     - *Executivo Recorrente* (2,62% · 1.312 membros · CLV médio R$ 6.522,82 · Churn 2,6%)
+     - *Eventual Promocional* (48,41% · 24.207 membros · CLV médio R$ 209,07 · Churn 73,6%)
+     - *Regional Dependente* (19,53% · 9.766 membros · CLV médio R$ 888,16 · Churn 33,0%)
+     - *Eventual Ascendente* (10,24% · 5.122 membros · CLV médio R$ 2.155,49 · Churn 18,2%)
+     - *Maximizador de Milhas* (9,90% · 4.948 membros · CLV médio R$ 476,91 · Churn 22,0%)
+     - *Lazer Premium* (9,29% · 4.647 membros · CLV médio R$ 832,42 · Churn 29,8%)
+     - *Executivo Recorrente* (2,62% · 1.310 membros · CLV médio R$ 6.527,77 · Churn 2,6%)
   3. Apontar a linha de ação recomendada e atritos dominantes em cada card.
 * **Fala do Apresentador:**
   > *"Em vez de clusters genéricos, o Aura classifica a carteira em 6 personas comportamentais reais.
   > A base volumosa concentra-se no Eventual Promocional, com 48,4% dos clientes e churn elevado de 73,6%.
-  > No outro extremo, o Executivo Recorrente representa apenas 2,62% da base, mas ostenta o maior CLV médio (R$ 6.522) e voa com frequência em rotas troncais.
+  > No outro extremo, o Executivo Recorrente representa apenas 2,62% da base, mas ostenta o maior CLV médio (R$ 6.528) e voa com frequência em rotas troncais.
   > Para o Regional Dependente (19,53%), a dependência de conexões regionais torna o atrito de pontualidade crítico.
   > Cada persona possui playbooks específicos de retenção e regras determinísticas de elegibilidade."*
 
@@ -68,10 +68,10 @@
   1. Abrir o seletor de clientes ordenado por *Maior Valor em Risco*.
   2. Selecionar o cliente número 1 em risco da carteira real: **C038454** (Topázio · Eventual Ascendente).
   3. Apontar o badge de categoria Topázio e a tag ★ ALTO VALOR.
-  4. Mostrar as métricas individuais: CLV 12M de R$ 3.868,54, P(Churn) de 76,4% e Valor em Risco de R$ 2.955,56.
+  4. Mostrar as métricas individuais: CLV 12M de R$ 4.974,86, P(Churn) de 62,5% e Valor em Risco de R$ 3.109,29.
   5. Rolar para o gráfico de barras horizontais de **Explicabilidade SHAP do CLV** e a **Linha do Tempo de Relacionamento**.
 * **Fala do Apresentador:**
-  > *"Ao descermos para o nível individual no Cliente 360, inspecionamos o cliente C038454, o maior Valor em Risco da carteira real: R$ 2.955,56 em risco com CLV de R$ 3.868,54 e probabilidade de churn de 76,4%.
+  > *"Ao descermos para o nível individual no Cliente 360, inspecionamos o cliente C038454, o maior Valor em Risco da carteira real: R$ 3.109,29 em risco com CLV de R$ 4.974,86 e probabilidade de churn de 62,5%.
   > Mas nós não operamos como uma caixa-preta.
   > O gráfico SHAP à esquerda decompõe exatamente o que levou o modelo a prever esse valor de vida: o nível Topázio agrega +R$ 3.333, o ticket médio elevado por voo agrega +R$ 512 e os pontos qualificáveis agregam +R$ 346.
   > Na linha do tempo à direita, vemos o histórico real sem qualquer vazamento pós-cutoff: 4 eventos registrados até maio de 2025, incluindo um voo com atraso operacional de 23 minutos em 07/04/2025 que gerou atrito registrado no app com NPS baixo."*

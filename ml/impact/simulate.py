@@ -58,7 +58,8 @@ def load_simulation_data(
     """Carrega recomendações, scores de clientes e custos de ações do playbook.
 
     Retorna:
-        target_df: DataFrame dos clientes com ação proativa elegível (14.638).
+        target_df: DataFrame dos clientes com ação proativa elegível (público alvo
+            completo; contagem varia com clientes de fronteira entre regenerações).
         scores_df: DataFrame completo de scores dos clientes (50.000).
         action_costs: Mapeamento de nome de ação -> custo operacional em BRL.
     """

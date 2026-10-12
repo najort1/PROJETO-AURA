@@ -3,7 +3,7 @@
 > **Frente de Implementação WS9 (task-10, encerramento do pipeline analítico).**  
 > **Artefato computacional gerado:** `data/analytics/impact_scenarios.json`  
 > **Módulo executável:** `python -m ml.impact.simulate` (ou via runner: `python tasks.py impact`)  
-> **Testes automatizados:** `tests/test_impact.py` (9 testes verdes, 189 testes em toda a suíte)
+> **Testes automatizados:** `tests/test_impact.py` (9 testes verdes; invariantes e cross-checks derivados dos artefatos)
 
 ---
 
@@ -13,11 +13,11 @@ A simulação de impacto financeiro do Projeto Aura 2.0 quantifica o retorno eco
 
 ### 1.1 Definição do Alvo da Simulação
 
-A base analítica total compreende **50.000 clientes** (`data/analytics/customers_scores.parquet`), com Valor em Risco consolidado de **R$ 8.307.728,94** e CLV 12m projetado de **R$ 39.554.463,12**.
+A base analítica total compreende **50.000 clientes** (`data/analytics/customers_scores.parquet`), com Valor em Risco consolidado de **R$ 8.312.953,18** (soma da coluna `valor_em_risco`) e CLV 12m projetado de **R$ 39.554.463,12**.
 
 O motor determinístico de elegibilidade e guardrails do agente (`data/analytics/agent_recommendations.parquet`) classificou os clientes em:
-1. **Silêncio Responsável (`nenhuma_acao_elegivel`):** 35.362 clientes (70,72%). Clientes sem atrito comprovado, com risco irrelevante ou sem ação com ROI justificado. Possuem **custo zero** e **estão excluídos do alvo da simulação**.
-2. **Ações Proativas Elegíveis (Alvo da Simulação):** **14.638 clientes** (29,28%). Clientes que preencheram todos os critérios contratuais do programa e receberam uma intervenção personalizada do playbook de retenção.
+1. **Silêncio Responsável (`nenhuma_acao_elegivel`):** 35.355 clientes (70,71%). Clientes sem atrito comprovado, com risco irrelevante ou sem ação com ROI justificado. Possuem **custo zero** e **estão excluídos do alvo da simulação**.
+2. **Ações Proativas Elegíveis (Alvo da Simulação):** **14.645 clientes** (29,29%). Clientes que preencheram todos os critérios contratuais do programa e receberam uma intervenção personalizada do playbook de retenção.
 
 ### 1.2 Distribuição e Custo do Playbook por Ação
 
@@ -25,12 +25,13 @@ Os custos unitários foram extraídos de `config/actions.yaml`. Para ações cuj
 
 | Ação do Playbook | ID da Ação | Clientes Elegíveis | Custo Unitário (BRL) | Custo Total (BRL) | Status da Premissa |
 |---|---|:---:|:---:|:---:|---|
-| `aviso_antecipado_prioridade` | `ACT-AVISO-ANTENCIPADO` | 9.758 | R$ 5,00 | R$ 48.790,00 | Custo de comunicação multicanal |
-| `antecipacao_de_nivel` | `ACT-ANTECIPACAO-NIVEL` | 4.610 | R$ 25,00 | R$ 115.250,00 | Custo operacional de upgrade assistido |
-| `educacao_beneficio_existente` | `ACT-EDUCA-BENEFICIO` | 139 | R$ 3,00 | R$ 417,00 | Custo digital via push/email |
+| `aviso_antecipado_prioridade` | `ACT-AVISO-ANTENCIPADO` | 9.763 | R$ 5,00 | R$ 48.815,00 | Custo de comunicação multicanal |
+| `antecipacao_de_nivel` | `ACT-ANTECIPACAO-NIVEL` | 4.611 | R$ 25,00 | R$ 115.275,00 | Custo operacional de upgrade assistido |
+| `educacao_beneficio_existente` | `ACT-EDUCA-BENEFICIO` | 137 | R$ 3,00 | R$ 411,00 | Custo digital via push/email |
 | `pacote_experiencia_destino` | `ACT-PACOTE-EXPERIENCIA` | 130 | R$ 15,00 | R$ 1.950,00 | Parceria Azul Viagens |
-| `reencaminhamento_atraso` | `ACT-ATRATRIBUI-ATRASO` | 1 | R$ 30,00 | R$ 30,00 | Intervenção operacional de malha |
-| **Total do Playbook** | — | **14.638** | **R$ 11,37 (médio)** | **R$ 166.437,00** | **Investimento total irrestrito** |
+| `reencaminhamento_atraso` | `ACT-ATRATRIBUI-ATRASO` | 2 | R$ 30,00 | R$ 60,00 | Intervenção operacional de malha |
+| `gesto_reconhecimento_bonus_pontos` | `ACT-BONUS-PONTOS` | 2 | R$ 60,00 | R$ 120,00 | Bônus de pontos como gesto de reconhecimento |
+| **Total do Playbook** | — | **14.645** | **R$ 11,38 (médio)** | **R$ 166.631,00** | **Investimento total irrestrito** |
 
 ---
 
@@ -70,14 +71,14 @@ Para cada cenário, foram computados os valores pontuais e intervalos de confian
 
 | Métrica | Conservador | Base | Otimista |
 |---|:---:|:---:|:---:|
-| **Clientes Alvo Elegíveis** | 14.638 | 14.638 | 14.638 |
-| **Evasões Evitadas Estimadas** | 23,78 clientes | 71,33 clientes | 148,61 clientes |
-| **Receita Bruta Preservada** | R$ 3.230,30 | R$ 12.921,21 | R$ 33.648,99 |
-| *IC95% Receita Bruta [Bootstrap]* | *[R$ 3.121,20 ; R$ 3.342,15]* | *[R$ 12.484,79 ; R$ 13.368,61]* | *[R$ 32.512,48 ; R$ 34.814,10]* |
-| **Custo Total das Ações** | R$ 166.437,00 | R$ 166.437,00 | R$ 166.437,00 |
-| **$\Delta\text{Receita Líquida}$** | **R$ -163.206,70** | **R$ -153.515,79** | **R$ -132.788,01** |
-| *IC95% $\Delta\text{Receita}$ [Bootstrap]* | *[R$ -165.348,13 ; R$ -160.890,50]* | *[R$ -155.674,98 ; R$ -151.200,89]* | *[R$ -134.935,50 ; R$ -130.513,91]* |
-| **ROI Líquido sobre Custo** | -98,06% | -92,24% | -79,78% |
+| **Clientes Alvo Elegíveis** | 14.645 | 14.645 | 14.645 |
+| **Evasões Evitadas Estimadas** | 23,80 clientes | 71,39 clientes | 148,74 clientes |
+| **Receita Bruta Preservada** | R$ 3.239,59 | R$ 12.958,35 | R$ 33.745,71 |
+| *IC95% Receita Bruta [Bootstrap]* | *[R$ 3.215,99 ; R$ 3.263,60]* | *[R$ 12.863,95 ; R$ 13.054,39]* | *[R$ 33.499,86 ; R$ 33.995,80]* |
+| **Custo Total das Ações** | R$ 166.631,00 | R$ 166.631,00 | R$ 166.631,00 |
+| **$\Delta\text{Receita Líquida}$** | **R$ -163.391,41** | **R$ -153.672,65** | **R$ -132.885,29** |
+| *IC95% $\Delta\text{Receita}$ [Bootstrap]* | *[R$ -165.569,92 ; R$ -161.156,56]* | *[R$ -155.840,07 ; R$ -151.455,90]* | *[R$ -135.056,39 ; R$ -130.662,31]* |
+| **ROI Líquido sobre Custo** | -98,06% | -92,22% | -79,75% |
 
 ---
 
@@ -85,16 +86,16 @@ Para cada cenário, foram computados os valores pontuais e intervalos de confian
 
 ### 4.1 Por que o $\Delta\text{Receita}$ irrestrito é negativo?
 
-O resultado negativo na abordagem irrestrita (contatar todos os 14.638 clientes elegíveis) não é um defeito de modelo, mas uma **verdade analítica incontornável da gestão de CRM**:
-1. O custo acumulado de ações do playbook varia entre R$ 5,00 e R$ 25,00 por cliente (média de R$ 11,37).
-2. Uma parcela expressiva do público elegível é formada pela persona `regional_dependente` recebendo `aviso_antecipado_prioridade` (9.758 clientes) ou `antecipacao_de_nivel` (4.610 clientes).
+O resultado negativo na abordagem irrestrita (contatar todos os 14.645 clientes elegíveis) não é um defeito de modelo, mas uma **verdade analítica incontornável da gestão de CRM**:
+1. O custo acumulado de ações do playbook varia entre R$ 5,00 e R$ 60,00 por cliente (média de R$ 11,38).
+2. Uma parcela expressiva do público elegível é formada pela persona `regional_dependente` recebendo `aviso_antecipado_prioridade` (9.763 clientes) ou `antecipacao_de_nivel` (4.611 clientes).
 3. Nesses segmentos, o valor monetário anual ponderado pelo risco ($\text{churn\_prob} \times \text{CLV\_12m}$) é modesto em comparação aos custos fixos de contato.
 4. Quando se multiplica uma taxa de resposta realista (12% a 25%) por um lift de retenção conservador (5% a 15%) e pela margem (20%), o retorno financeiro esperado por cliente gira em torno de **R$ 0,22 a R$ 2,30**.
 5. Disparar ações pagas para toda a base elegível de forma indiferenciada ("blanket campaign") inevitavelmente destrói valor econômico.
 
 ### 4.2 Custo Máximo Unitário para Ponto de Equilíbrio (Break-Even)
 
-Para que a execução sobre os 14.638 clientes atingisse ponto de equilíbrio ($\Delta\text{Receita} = 0$), o custo unitário máximo admissível por ação seria:
+Para que a execução sobre os 14.645 clientes atingisse ponto de equilíbrio ($\Delta\text{Receita} = 0$), o custo unitário máximo admissível por ação seria:
 - **Cenário Conservador:** Máximo de **R$ 0,22** por ação.
 - **Cenário Base:** Máximo de **R$ 0,88** por ação.
 - **Cenário Otimista:** Máximo de **R$ 2,30** por ação.
@@ -103,8 +104,8 @@ Para que a execução sobre os 14.638 clientes atingisse ponto de equilíbrio ($
 
 ### 4.3 Eficácia Conjunta Necessária no Cenário Atual
 
-Mantendo-se o custo atual de R$ 166.437,00 e a margem base de 20%, o produto multiplicativo necessário $(\text{efeito\_retenção} \times \text{resposta\_do\_canal})$ para break-even na carteira total seria de **23,19%**.  
-Isso exigiria, por exemplo, uma taxa de resposta de 50% combinada a uma eficácia de retenção de 46,38% — patamares irrealistas para o setor aéreo sem subsídio promocional massivo.
+Mantendo-se o custo atual de R$ 166.631,00 e a margem base de 20%, o produto multiplicativo necessário $(\text{efeito\_retenção} \times \text{resposta\_do\_canal})$ para break-even na carteira total seria de **23,15%**.  
+Isso exigiria, por exemplo, uma taxa de resposta de 50% combinada a uma eficácia de retenção de 46,29% — patamares irrealistas para o setor aéreo sem subsídio promocional massivo.
 
 ---
 
@@ -114,39 +115,39 @@ Em ambientes corporativos reais, campanhas operam sob teto orçamentário. O Pro
 
 ### 5.1 Estratégia de Priorização por Valor em Risco (Recomendada)
 
-Ordenando os 14.638 clientes elegíveis por `valor_em_risco` decrescente até esgotar os R$ 80.000,00:
+Ordenando os 14.645 clientes elegíveis por `valor_em_risco` decrescente até esgotar os R$ 80.000,00:
 
 | Métrica da Campanha | Valor Real Calculado | Impacto Estratégico |
 |---|:---:|---|
-| **Clientes Cobertos** | **6.170 clientes** | 42,15% da base elegível de 14.638 clientes |
-| **Investimento Efetivo** | **R$ 79.995,00** | 99,99% de utilização do orçamento |
-| **Valor em Risco Capturado** | **R$ 2.117.680,43** | **59,00% de todo o VaR do público elegível** |
-| $\Delta\text{Receita}$ Cenário Base | R$ -72.371,35 | Receita Bruta salva: R$ 7.623,65 |
-| $\Delta\text{Receita}$ Cenário Otimista | R$ -60.141,75 | Receita Bruta salva: R$ 19.853,25 |
+| **Clientes Cobertos** | **6.140 clientes** | 41,93% da base elegível de 14.645 clientes |
+| **Investimento Efetivo** | **R$ 79.988,00** | 99,99% de utilização do orçamento |
+| **Valor em Risco Capturado** | **R$ 2.119.404,58** | **58,88% de todo o VaR do público elegível** |
+| $\Delta\text{Receita}$ Cenário Base | R$ -72.358,14 | Receita Bruta salva: R$ 7.629,86 |
+| $\Delta\text{Receita}$ Cenário Otimista | R$ -60.118,58 | Receita Bruta salva: R$ 19.869,42 |
 
-*Insight de Concentração:* Com apenas 42,15% dos clientes, o algoritmo captura **59,00% do risco financeiro total**, comprovando a eficácia da priorização orientada a dados sobre seleções aleatórias.
+*Insight de Concentração:* Com apenas 41,93% dos clientes, o algoritmo captura **58,88% do risco financeiro total**, comprovando a eficácia da priorização orientada a dados sobre seleções aleatórias.
 
 ### 5.2 Comparativo com a Heurística da Tela 06 (Custo Médio R$ 45)
 
 A Tela 06 do aplicativo Streamlit disponibiliza um simulador dinâmico parametrizável cujo valor padrão adota custo médio de R$ 45,00/ação:
-- Sob R$ 80.000 e R$ 45,00/ação: **1.777 clientes alcançados** (12,14% do alvo).
+- Sob R$ 80.000 e R$ 45,00/ação: **1.777 clientes alcançados** (12,13% do alvo).
 - Investimento: R$ 79.965,00.
-- A granularidade do inventário real (`actions.yaml`), com ações de R$ 5 e R$ 25, permite atender **3,47 vezes mais clientes** (6.170 vs 1.777) sob o mesmo teto financeiro.
+- A granularidade do inventário real (`actions.yaml`), com ações de R$ 5 e R$ 25, permite atender **3,46 vezes mais clientes** (6.140 vs 1.777) sob o mesmo teto financeiro.
 
 ---
 
 ## 6. Análise de Sensibilidade Unidimensional (Tornado)
 
-Para mensurar o impacto relativo de incertezas nas premissas sobre o $\Delta\text{Receita}$ líquido, realizou-se uma variação isolada (*one-at-a-time*) de $\pm 20\%$ ao redor do ponto de calibração Base ($\Delta\text{Receita} = \text{R\$} -153.515,79$).
+Para mensurar o impacto relativo de incertezas nas premissas sobre o $\Delta\text{Receita}$ líquido, realizou-se uma variação isolada (*one-at-a-time*) de $\pm 20\%$ ao redor do ponto de calibração Base ($\Delta\text{Receita} = \text{R\$} -153.672,65$).
 
 ### 6.1 Ranking Tornado Padronizado ($\pm 20\%$)
 
 | Posição | Parâmetro Analisado | Faixa Avaliada [-20% ; +20%] | $\Delta\text{Receita}$ Mínimo | $\Delta\text{Receita}$ Máximo | Amplitude (Swing BRL) | Elasticidade ($E$) |
 |:---:|---|:---:|:---:|:---:|:---:|:---:|
-| **1º** | **`custo_acao`** | [0,80x ; 1,20x] | R$ -186.803,19 | R$ -120.228,39 | **R$ 66.574,80** | **-1,0842** |
-| **2º** | **`efeito_retencao`** | [8,0% ; 12,0%] | R$ -156.100,03 | R$ -150.931,54 | **R$ 5.168,49** | **+0,0842** |
-| **3º** | **`resposta_canal`** | [14,4% ; 21,6%] | R$ -156.100,03 | R$ -150.931,54 | **R$ 5.168,49** | **+0,0842** |
-| **4º** | **`margem`** | [16,0% ; 24,0%] | R$ -156.100,03 | R$ -150.931,54 | **R$ 5.168,49** | **+0,0842** |
+| **1º** | **`custo_acao`** | [0,80x ; 1,20x] | R$ -186.998,85 | R$ -120.346,45 | **R$ 66.652,40** | **-1,0844** |
+| **2º** | **`efeito_retencao`** | [8,0% ; 12,0%] | R$ -156.264,32 | R$ -151.081,28 | **R$ 5.183,04** | **+0,0843** |
+| **3º** | **`resposta_canal`** | [14,4% ; 21,6%] | R$ -156.264,32 | R$ -151.081,28 | **R$ 5.183,04** | **+0,0843** |
+| **4º** | **`margem`** | [16,0% ; 24,0%] | R$ -156.264,32 | R$ -151.081,28 | **R$ 5.183,04** | **+0,0843** |
 
 ### 6.2 Tornado nas Faixas Globais dos Cenários
 
@@ -155,15 +156,15 @@ Avaliando a oscilação entre os limites do cenário Conservador e Otimista:
 ```
 PARÂMETRO               FAIXA             AMPLITUDE DO IMPACTO FINANCEIRO (SWING BRL)
 --------------------------------------------------------------------------------------
-custo_acao              [0.80x - 1.20x]   ████████████████████████████████  R$ 66.574,80
-efeito_retencao         [5.0% - 15.0%]    ██████                            R$ 12.921,21
-resposta_canal          [12.0% - 25.0%]   ████                              R$  9.331,98
-margem                  [15.0% - 25.0%]   ███                               R$  6.460,60
+custo_acao              [0.80x - 1.20x]   ████████████████████████████████  R$ 66.652,40
+efeito_retencao         [5.0% - 15.0%]    ██████                            R$ 12.958,35
+resposta_canal          [12.0% - 25.0%]   ████                              R$  9.358,81
+margem                  [15.0% - 25.0%]   ███                               R$  6.479,18
 ```
 
 ### 6.3 Diagnóstico dos Fatores Críticos
 
-1. **O custo operacional da ação é a variável hegemônica:** Uma redução de 20% nos custos das ações gera uma economia líquida de R$ 33.287,40 — valor mais de 6 vezes superior a qualquer melhoria equivalente na taxa de resposta ou no lift de retenção.
+1. **O custo operacional da ação é a variável hegemônica:** Uma redução de 20% nos custos das ações gera uma economia líquida de R$ 33.326,20 — valor mais de 12 vezes superior a qualquer melhoria equivalente na taxa de resposta ou no lift de retenção.
 2. **Simetria nos fatores de receita:** Devido à estrutura multiplicativa linear da receita ($\text{Efeito} \times \text{Resposta} \times \text{Margem} \times \text{VaR}$), a elasticidade percentual pontual dos três direcionadores de receita é rigorosamente idêntica (+0,0842).
 
 ---
@@ -178,10 +179,10 @@ Para transformar as premissas em evidências causais calibradas, é indispensáv
 - **Público Elegível:** Clientes classificados como **Alto Valor em Risco** (`alto_valor == True` E `churn_prob` acima da mediana).
 - **Métricas Reais da Base Carregada:**
   - Total de clientes de Alto Valor: **5.005 clientes** (10,01% da base total).
-  - Mediana de `churn_prob` entre Alto Valor: **0,0941** (9,41%).
-  - Total de Alto Valor em Risco na amostra sintética: **2.500 clientes**.
-  - **Baseline Real de Evasão ($p_1$):** **14,62%** (`churn_prob` médio de 0,146245).
-  - **Baseline Real de Retenção ($1 - p_1$):** **85,38%** (0,853755).
+  - Mediana de `churn_prob` entre Alto Valor: **0,0948** (9,48%).
+  - Total de Alto Valor em Risco na amostra sintética: **2.499 clientes**.
+  - **Baseline Real de Evasão ($p_1$):** **14,65%** (`churn_prob` médio de 0,146478).
+  - **Baseline Real de Retenção ($1 - p_1$):** **85,35%** (0,853522).
 
 ### 7.2 Dimensionamento Amostral (Fórmula de Fleiss Two-Sample)
 
@@ -196,22 +197,22 @@ Para um caso de calibração clássico com baseline $p_1 = 50\%$ e $\text{MDE} =
 $$n = \frac{\left( 1,95996 \sqrt{2 \times 0,525 \times 0,475} + 0,84162 \sqrt{0,25 + 0,2475} \right)^2}{0,05^2} = 1.564,67 \approx 1.565 \text{ clientes/braço}$$
 O módulo computacional reproduz exatamente esse valor (`tests/test_impact.py`), validando a precisão da fórmula.
 
-### 7.3 Tabela de Dimensionamento por MDE no Baseline Real (85,38%)
+### 7.3 Tabela de Dimensionamento por MDE no Baseline Real (85,35%)
 
-| MDE Testado | Taxa Alvo ($p_2$) | $n$ por Braço | Tamanho Total ($2n$) | Cabe no Risco Local (2.500)? | Cabe no Alto Valor Local (5.005)? |
+| MDE Testado | Taxa Alvo ($p_2$) | $n$ por Braço | Tamanho Total ($2n$) | Cabe no Risco Local (2.499)? | Cabe no Alto Valor Local (5.005)? |
 |:---:|:---:|:---:|:---:|:---:|:---:|
-| **+1,0 pp** | 86,38% | 19.040 | 38.080 | Não | Não |
-| **+2,0 pp (Primário)** | **87,38%** | **4.618** | **9.236** | **Não** | **Não** |
-| **+3,0 pp** | 88,38% | 1.988 | 3.976 | Não | **Sim (1 piloto)** |
-| **+4,0 pp** | 89,38% | 1.082 | 2.164 | **Sim (1 piloto)** | **Sim (2 pilotos)** |
-| **+5,0 pp** | 90,38% | 668 | 1.336 | **Sim (1 piloto)** | **Sim (3 pilotos)** |
+| **+1,0 pp** | 86,35% | 19.066 | 38.131 | Não | Não |
+| **+2,0 pp (Primário)** | **87,35%** | **4.624** | **9.248** | **Não** | **Não** |
+| **+3,0 pp** | 88,35% | 1.991 | 3.982 | Não | **Sim (1 piloto)** |
+| **+4,0 pp** | 89,35% | 1.083 | 2.166 | **Sim (1 piloto)** | **Sim (2 pilotos)** |
+| **+5,0 pp** | 90,35% | 669 | 1.338 | **Sim (1 piloto)** | **Sim (3 pilotos)** |
 
 ### 7.4 Análise Honesta de Capacidade e Escala
 
 1. **Amostra Sintética Local (50.000 clientes):**
-   - O contingente local de Alto Valor em Risco é de apenas **2.500 clientes**.
-   - Para um MDE realista de **+2pp**, seriam necessários **9.236 clientes**, inviabilizando o teste nessa amostra local sem extrapolar para outros níveis de risco.
-   - Na amostra local, o efeito mínimo detectável com 80% de poder é de **+4pp** ($n=1.082$/braço, total 2.164).
+   - O contingente local de Alto Valor em Risco é de apenas **2.499 clientes**.
+   - Para um MDE realista de **+2pp**, seriam necessários **9.248 clientes**, inviabilizando o teste nessa amostra local sem extrapolar para outros níveis de risco.
+   - Na amostra local, o efeito mínimo detectável com 80% de poder é de **+4pp** ($n=1.083$/braço, total 2.166).
 2. **Escala Corporativa Real (Azul Fidelidade — 20,1M de membros):**
    - Conforme dados oficiais de RI (dez/2025), o programa conta com 20,1M de membros cadastrados e cerca de 1,4M de usuários ativos mensais (MAU).
    - O estrato de Alto Valor projetado em escala real ultrapassa **140.000 clientes**, dos quais mais de **70.000** encontram-se em situação de risco de evasão.

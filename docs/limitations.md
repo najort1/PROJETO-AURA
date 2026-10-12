@@ -57,8 +57,62 @@
 
 ## 7. Pendências de integração (atualizado a cada onda pelo Lead)
 
-- [ ] Números reais das frentes WS1–WS8 preenchidos após execução e revisão.
-- [ ] Achados das revisões independentes incorporados.
+- [x] Números reais das frentes WS1–WS9 preenchidos após execução e revisão.
+- [x] Achados das revisões independentes incorporados (12 revisões, vereditos em docs/reviews/).
+
+## 7b. Determinismo de regeneração completa (achado do gate final, 12/10/2026)
+
+- **Dados sintéticos e ingestão:** 100% bitwise determinísticos (verificado em 4
+  regenerações: customers 8be2bc41…, flights fc876ced…, transactions 38afb58e…,
+  loyalty 821e6efa…, interactions d8b49c62…, ground_truth dc8de99b…).
+- **Achado 1 — ordem de linhas:** a primeira regeneração FULL (`tasks.py all` do zero)
+  revelou que o parquet de features saía com ORDEM DE LINHAS variável (COPY paralela
+  do DuckDB sem `ORDER BY`). Como o treino LightGBM amostra por índice de linha,
+  isso deslocava clientes de fronteira entre regenerações.
+- **Achado 2 — conteúdo não determinístico:** comparando duas execuções seguidas,
+  `rota_favorita` variava para 2.171 clientes (empates de `ROW_NUMBER()` sem
+  desempate total) e `ticket_medio_12m` variava ±R$ 0,01 (soma paralela de
+  `amount_brl` em float sujeita à ordem de agregação — ULP).
+- **Correções aplicadas (Lead):**
+  1. `ORDER BY customer_id` nos post-hooks dos dois marts dbt de features
+     (`dbt/models/marts/features_customer*.sql`) — ordem estável;
+  2. Desempate total na rota: `ORDER BY COUNT(*) DESC, rota ASC`
+     (`dbt/macros/generate_features.sql`);
+  3. Somas monetárias em `DECIMAL(18,2)` (soma exata, imune à ordem):
+     `monetary_12m` e `target_clv_12m`;
+  4. Testes de impacto deixaram de hard-codar contagens absolutas e passaram a
+     validar invariantes + faixas + cross-checks derivados dos artefatos
+     (`tests/test_impact.py`). Os modelos LightGBM já usavam `deterministic=True`
+     + `force_col_wise=True`.
+- **Verificação pós-correção:** `features` executado 2× → conteúdo 100% idêntico
+  (numérico, texto e ordem); treino e score verificados estáveis entre execuções
+  consecutivas (ver abaixo).
+- **Achado 3 — crash silencioso por tipo Decimal (auto-infligido pelo Lead):** a
+  primeira versão da correção 3 (acima) publicava `monetary_12m`/`target_clv_12m`
+  como tipo **DECIMAL** no parquet. O `StandardScaler` do
+  `ml/segmentation/cluster.py` então falhava com
+  `TypeError: float - Decimal`, derrubando o passo `ml.segmentation.train` —
+  que é o PRIMEIRO passo do alvo `tasks.py score`. Como o runner pwsh não
+  propaga falhas intermediárias e os logs estavam redirecionados, **todo
+  `tasks.py score` falhava silenciosamente e `customers_scores` ficou
+  obsoleto (stale)**, divergindo de `churn_predictions` em 24.777 clientes
+  (até 0,108 de churn_prob). Detectado por verificação de consistência
+  (`customers_scores.churn_prob == round(churn_prob_model, 4)`), que se tornou
+  teste de integração permanente.
+  - **Correção definitiva:** a SOMA continua em `DECIMAL(18,2)` (exata,
+    determinística) e a PUBLICAÇÃO converte para `::DOUBLE` (float64) —
+    `dbt/macros/generate_features.sql`. Dtypes verificados float64 e conteúdo
+    determinístico em 2 execuções seguidas.
+  - **Nota de retratação:** numa primeira análise o Lead atribuiu a
+    inconsistência a uma hipótese de corrida entre dois treinos concorrentes;
+    o crash silencioso por tipo Decimal era a causa real. A regra operacional
+    de nunca rodar dois alvos do `tasks.py` simultaneamente permanece válida
+    (o runner não tem trava de arquivo), mas nenhum dado foi corrompido por
+    concorrência — o arquivo stale era íntegro, apenas defasado.
+- **Consistência final exigida (teste permanente):**
+  `customers_scores.churn_prob == round(churn_prob_model, 4)` e
+  `valor_em_risco == round(clv × churn, 2)` para os 50.000 clientes
+  (`tests/test_integration.py`).
 
 ## 8. Registro de onda — integração 12/10/2026 (pós FASE B + correções)
 

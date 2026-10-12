@@ -1,5 +1,14 @@
 # Re-Visão Independente WS5 · Verificação das Correções Lead Pós-Revisão A/B
 
+> **ADENDO DO ORQUESTRADOR (12/10/2026, pós-gate final):** veredito histórico
+> íntegro e imutável — Pareto e limiares bateram exatamente com os artefatos
+> então vigentes (Top 10%: R$ 18.577.090,30 · 46,97% · limiar 0,8840). Após a
+> correção dos não-determinismos de features (`docs/limitations.md §7b`) e o
+> retreino canônico, os nominais de Pareto em `docs/segmentation_report.md`
+> foram recalculados (4ª casa decimal / centavos). **Os limiares de score
+> (0,9336/0,8840/0,8369/0,7924) e o conjunto alto-valor (5.005 clientes)
+> permaneceram estáveis** — a estrutura do corte é invariante.
+
 **Data:** 2025-02-18  
 **Avaliador:** Re-Visor Independente (Mega-Brain)  
 **Status:** Concluído — APROVADO  

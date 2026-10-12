@@ -2,7 +2,7 @@
 
 > **Projeto Aura 2.0** — Validação empírica da base sintética calibrada contra fontes públicas brasileiras (ANAC e Azul RI).
 > **Status:** ✅ APROVADO EM TODAS AS DIMENSÕES
-> **Data de Geração:** 2026-10-12 06:08:09
+> **Data de Geração:** 2026-10-12 09:49:23
 > **Escala da Base Sintética:** 50,000 clientes | 217,698 voos | 320,127 transações | R$ 104,342,906.51 faturamento total.
 
 ---

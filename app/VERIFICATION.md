@@ -44,8 +44,8 @@ cache-control: no-cache
   |---|---|---|---|
   | Tamanho da Carteira | 50.000 clientes | 50.000 | **OK** |
   | CLV 12M Total Previsto | R$ 39.554.463,12 | R$ 39.554.463,12 | **OK** |
-  | Valor em Risco Total (Σ clv × churn_prob) | R$ 8.305.496,50 | R$ 8.305.496,50 | **OK** |
-  | Valor em Risco Coluna Pré-computada (Σ valor_em_risco) | R$ 8.305.453,33 | R$ 8.305.496,50 (fórmula direta) | **OK** |
+  | Valor em Risco Total (Σ clv × churn_prob) | R$ 8.312.879,04 | R$ 8.312.879,04 | **OK** |
+  | Valor em Risco Coluna Pré-computada (Σ valor_em_risco) | R$ 8.312.953,18 | R$ 8.312.879,04 (fórmula direta) | **OK** |
   | % Clientes Alto Valor | 10,01% (5.005 clientes) | 10,0% (5.005 prioritários) | **OK** |
   | Custo Médio da Ação | R$ 45,00 | R$ 45,00 (premissa rotulada) | **OK** |
   | Concentração Top 20% (Lorenz/Gini) | 64,2% do CLV / Gini 0,55 | 64,2% / Gini 0,55 | **OK** |
@@ -57,12 +57,12 @@ cache-control: no-cache
 * **Métricas checadas:** 6 personas comportamentais com distribuição quantitativa:
   | Persona | Clientes (Count) | Share Real Esperado | Share Renderizado | CLV Médio | Churn Médio | Status |
   |---|---|---|---|---|---|---|
-  | Eventual Promocional | 24.210 | 48,42% | 48,4% | R$ 209,11 | 73,6% | **OK** |
-  | Regional Dependente | 9.763 | 19,53% | 19,5% | R$ 888,16 | 33,0% | **OK** |
-  | Eventual Ascendente | 5.121 | 10,24% | 10,2% | R$ 2.155,46 | 18,2% | **OK** |
-  | Maximizador de Milhas | 4.949 | 9,90% | 9,9% | R$ 477,32 | 22,0% | **OK** |
-  | Lazer Premium | 4.645 | 9,29% | 9,3% | R$ 831,52 | 29,8% | **OK** |
-  | Executivo Recorrente | 1.312 | 2,62% | 2,6% | R$ 6.522,82 | 2,6% | **OK** |
+  | Eventual Promocional | 24.207 | 48,41% | 48,4% | R$ 209,07 | 73,6% | **OK** |
+  | Regional Dependente | 9.766 | 19,53% | 19,5% | R$ 888,16 | 33,0% | **OK** |
+  | Eventual Ascendente | 5.122 | 10,24% | 10,2% | R$ 2.155,49 | 18,2% | **OK** |
+  | Maximizador de Milhas | 4.948 | 9,90% | 9,9% | R$ 476,91 | 22,0% | **OK** |
+  | Lazer Premium | 4.647 | 9,29% | 9,3% | R$ 832,42 | 29,8% | **OK** |
+  | Executivo Recorrente | 1.310 | 2,62% | 2,6% | R$ 6.527,77 | 2,6% | **OK** |
 
 ---
 
@@ -74,7 +74,7 @@ cache-control: no-cache
   | Cobertura do Seletor | 50.000 clientes disponíveis | 50.000 clientes (busca/filtro instantâneo) | **OK** |
   | Top 1 Valor em Risco | Cliente `C038454` | Cliente `C038454` | **OK** |
   | Categoria e Persona de C038454 | Topázio · Eventual Ascendente | Topázio · Eventual Ascendente | **OK** |
-  | VaR e Risco de C038454 | VaR R$ 2.955,56 / Churn 76,4% / CLV R$ 3.868,54 | VaR R$ 2.955,56 / Churn 76,4% / CLV R$ 3.868,54 | **OK** |
+  | VaR e Risco de C038454 | VaR R$ 3.109,29 / Churn 62,5% / CLV R$ 4.974,86 | VaR R$ 3.109,29 / Churn 62,5% / CLV R$ 4.974,86 | **OK** |
   | SHAP Top 1 (CLV) | `tier_encoded`: +R$ 3.333,26 | Nível / Categoria (Tier): +R$ 3.333,26 | **OK** |
   | SHAP Top 2 (CLV) | `ticket_medio_12m`: +R$ 512,22 | Ticket Médio por Voo: +R$ 512,22 | **OK** |
   | SHAP Top 3 (CLV) | `pontos_qualificaveis_12m`: +R$ 346,35 | Pontos Qualificáveis 12M: +R$ 346,35 | **OK** |

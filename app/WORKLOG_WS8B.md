@@ -26,4 +26,9 @@
 - Testes automatizados: `pytest tests/test_app_smoke.py` (16/16 verde), suíte completa `pytest` (177/177 verde) e `ruff check app tests` 100% limpo.
 - `app/VERIFICATION.md`: documentação completa de verificação cruzada das 7 telas com os números reais recalculados.
 
+## [2026-10-12 / Adendo do Orquestrador — pós-gate final]
+- As contagens acima (14.638 alvos; 35.362 silêncio; 9.758/4.610) referem-se aos artefatos pré-regeneração canônica.
+- O gate de reprodução do zero detectou não-determinismos de features (ordem de linhas, empates de rota, soma float — corrigidos na raiz em `dbt/`; ver `docs/limitations.md §7b`) e, na sequência, um crash silencioso por tipo DECIMAL no parquet de features que deixava `customers_scores` obsoleto — corrigido com publicação `::DOUBLE` e guarda de consistência permanente em `tests/test_integration.py`.
+- A cadeia foi regenerada LIMPAMENTE a partir das predições canônicas (bitwise estáveis); as contagens finais constam em `docs/impact_simulation.md` e em `app/VERIFICATION.md`. O snapshot `research-2026-10-12` e todos os contratos permanecem válidos.
+
 

@@ -1,7 +1,7 @@
 # Projeto Aura 2.0 — Relatório Oficial de Calibração com Fontes Públicas
 
 > ⚠️ **ARTEFATO GERADO AUTOMATICAMENTE POR `ingestion/render_calibration.py`**
-> **Data de geração:** 2026-10-12 09:58:43 UTC  
+> **Data de geração:** 2026-10-12 12:48:51 UTC  
 > **Contrato de origem:** `config/calibration_map.yaml`  
 > **Valores medidos:** `data/curated/calibration_values.json`  
 > **Regra de ouro:** nenhum número inventado; limitações de granularidade e cobertura declaradas abertamente.

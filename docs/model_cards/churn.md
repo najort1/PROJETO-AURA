@@ -11,36 +11,36 @@ Comparação entre o modelo linear baseline (**Regressão Logística**) e o esti
 
 | Métrica | Baseline (Regressão Logística) | Modelo Final (LightGBM) | Ganho / Diferença | IC 95% Bootstrap | Significativo? |
 |---|---|---|---|---|---|
-| **ROC-AUC** | 0.8440 | 0.8566 | +0.0126 | [0.0107, 0.0143] | Sim |
-| **PR-AUC** | 0.8307 | 0.8373 | +0.0066 | [0.0057, 0.0080] | Sim |
-| **Brier Score** | 0.1516 | 0.1453 | -0.0063 | [-0.0070, -0.0055] | Sim |
-| **Lift Top 10%** | 1.73x | 1.73x | +0.00x | — | — |
+| **ROC-AUC** | 0.8440 | 0.8566 | +0.0126 | [0.0108, 0.0145] | Sim |
+| **PR-AUC** | 0.8451 | 0.8522 | +0.0071 | [0.0061, 0.0083] | Sim |
+| **Brier Score** | 0.1516 | 0.1453 | -0.0063 | [-0.0070, -0.0056] | Sim |
+| **Lift Top 10%** | 1.74x | 1.74x | +0.00x | — | — |
 
 ### Tabela de Calibração por Faixas (LightGBM)
 | Bin | Clientes | Probabilidade Média Prevista | Fração Real de Evasão |
 |---|---|---|---|
-| 0 | 3682 | 0.0490 | 0.0421 |
-| 1 | 5782 | 0.1448 | 0.1610 |
-| 2 | 8361 | 0.2509 | 0.2727 |
-| 3 | 7859 | 0.3482 | 0.3535 |
-| 4 | 4309 | 0.4376 | 0.4393 |
-| 5 | 529 | 0.5284 | 0.4953 |
-| 6 | 13 | 0.6219 | 0.3077 |
-| 8 | 19465 | 0.8451 | 0.9082 |
+| 0 | 3660 | 0.0491 | 0.0413 |
+| 1 | 5848 | 0.1447 | 0.1609 |
+| 2 | 8324 | 0.2515 | 0.2727 |
+| 3 | 7834 | 0.3480 | 0.3542 |
+| 4 | 4310 | 0.4382 | 0.4397 |
+| 5 | 542 | 0.5286 | 0.4871 |
+| 6 | 17 | 0.6224 | 0.4118 |
+| 8 | 19465 | 0.8452 | 0.9082 |
 
 ## 3. Explicabilidade (TreeSHAP)
 Atributos de maior impacto sobre a probabilidade de evasão:
 
 | Posto | Atributo | Média |SHAP| |
 |---|---|---|
-| 1 | `recency_days` | 1.1073 |
-| 2 | `avg_advance_booking_days` | 0.2643 |
-| 3 | `tier_encoded` | 0.1483 |
-| 4 | `monetary_12m` | 0.1210 |
-| 5 | `frequency_12m` | 0.0692 |
-| 6 | `share_resgate` | 0.0565 |
-| 7 | `pontos_qualificaveis_12m` | 0.0443 |
-| 8 | `days_since_last_interaction` | 0.0429 |
+| 1 | `recency_days` | 1.1071 |
+| 2 | `avg_advance_booking_days` | 0.2599 |
+| 3 | `tier_encoded` | 0.1501 |
+| 4 | `monetary_12m` | 0.1223 |
+| 5 | `frequency_12m` | 0.0681 |
+| 6 | `share_resgate` | 0.0552 |
+| 7 | `pontos_qualificaveis_12m` | 0.0436 |
+| 8 | `days_since_last_interaction` | 0.0417 |
 
 ### Figuras Auditáveis
 - Importância Global: ![SHAP Global](figuras/churn_shap_global.png)

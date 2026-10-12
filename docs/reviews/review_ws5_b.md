@@ -4,6 +4,14 @@
 **Data:** 2025-05-18  
 **Status da Revisão:** Concluído (Auditado)
 
+> **ADENDO DO ORQUESTRADOR (12/10/2026, pós-gate final):** veredito histórico
+> íntegro e imutável — B3 reconciliou as personas então vigentes
+> (48,42% eventual_promocional; executivo CLV R$ 6.522,82). No retreino
+> canônico pós-correção de não-determinismos (`docs/limitations.md §7b`),
+> essas estatísticas moveram na 2ª casa decimal
+> (48,41%; R$ 6.527,77). As 6 personas, seus nomes e a reconciliação
+> biunívoca com `actions.yaml` permanecem idênticos.
+
 ---
 
 ## 1. Sumário Executivo e Veredito Parcial

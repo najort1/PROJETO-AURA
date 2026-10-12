@@ -1,5 +1,14 @@
 # Revisão Adversarial Independente — WS3+WS4 (Features dbt + Modelos CLV/Churn + SHAP + Model Cards)
 
+> **ADENDO DO ORQUESTRADOR (12/10/2026, pós-gate final):** veredito histórico
+> íntegro e imutável — as métricas batiam com os artefatos então vigentes
+> (Gini 0,6604; PR-AUC 0,8373). Após a correção dos não-determinismos de
+> features (ordem de linhas, empates de rota, soma float — `docs/limitations.md
+> §7b`) e o retreino canônico, as métricas publicadas em
+> `data/analytics/metrics/*.json` e nos model cards mudaram na 4ª casa decimal
+> (ex.: Gini 0,6598; PR-AUC 0,8522). Os model cards são regenerados
+> automaticamente pela task `train` e refletem sempre o estado atual.
+
 **Projeto:** AURA 2.0  
 **Data:** 2025-01-15 (auditoria)  
 **Auditor:** Revisor Independente  
