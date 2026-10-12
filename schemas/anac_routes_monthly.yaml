@@ -1,0 +1,160 @@
+table: anac_routes_monthly
+description: "Agregado mensal de rotas do mercado doméstico regular brasileiro (ANAC voos_basica) com métricas de mercado e Azul"
+granularity: "uma rota (origem-destino OACI) por mês"
+produced_by: "ingestion.curate"
+consumers: ["synthetic.generate", "snowflake", "ml.impact", "app"]
+columns:
+  - name: id_rota_mes
+    dtype: string
+    nullable: false
+    description: "Identificador único da rota e mês (origem-destino:AAAA-MM)"
+    unit: null
+    source: "data/raw/anac/voos_basica/*.parquet"
+    sensitive: false
+    example: "SBKP-SBRJ:2024-01"
+  - name: rota
+    dtype: string
+    nullable: false
+    description: "Par de códigos OACI origem e destino (ex: SBKP-SBRJ)"
+    unit: null
+    source: "data/raw/anac/voos_basica/*.parquet"
+    sensitive: false
+    example: "SBKP-SBRJ"
+  - name: origem_oaci
+    dtype: string
+    nullable: false
+    description: "Código OACI do aeródromo de origem"
+    unit: null
+    source: "data/raw/anac/voos_basica/*.parquet"
+    sensitive: false
+    example: "SBKP"
+  - name: destino_oaci
+    dtype: string
+    nullable: false
+    description: "Código OACI do aeródromo de destino"
+    unit: null
+    source: "data/raw/anac/voos_basica/*.parquet"
+    sensitive: false
+    example: "SBRJ"
+  - name: ano
+    dtype: int
+    nullable: false
+    description: "Ano de referência do voo"
+    unit: ano
+    source: "data/raw/anac/voos_basica/*.parquet"
+    sensitive: false
+    example: 2024
+  - name: mes
+    dtype: int
+    nullable: false
+    description: "Mês de referência do voo (1 a 12)"
+    unit: mes
+    source: "data/raw/anac/voos_basica/*.parquet"
+    sensitive: false
+    example: 1
+  - name: ano_mes
+    dtype: string
+    nullable: false
+    description: "Ano e mês no formato AAAA-MM"
+    unit: null
+    source: "data/raw/anac/voos_basica/*.parquet"
+    sensitive: false
+    example: "2024-01"
+  - name: total_pax_pagos
+    dtype: float
+    nullable: false
+    description: "Total de passageiros pagos transportados na rota no mês por todas as empresas aéreas"
+    unit: passageiros
+    source: "data/raw/anac/voos_basica/*.parquet"
+    sensitive: false
+    example: 15420.0
+  - name: total_assentos_ofertados
+    dtype: float
+    nullable: false
+    description: "Total de assentos ofertados na rota no mês pelo mercado"
+    unit: assentos
+    source: "data/raw/anac/voos_basica/*.parquet"
+    sensitive: false
+    example: 18500.0
+  - name: total_decolagens
+    dtype: float
+    nullable: false
+    description: "Total de decolagens realizadas na rota no mês"
+    unit: voos
+    source: "data/raw/anac/voos_basica/*.parquet"
+    sensitive: false
+    example: 112.0
+  - name: azul_pax_pagos
+    dtype: float
+    nullable: false
+    description: "Passageiros pagos transportados pela Azul Linhas Aéreas (sg_empresa_icao='AZU') na rota no mês"
+    unit: passageiros
+    source: "data/raw/anac/voos_basica/*.parquet"
+    sensitive: false
+    example: 6200.0
+  - name: azul_assentos_ofertados
+    dtype: float
+    nullable: false
+    description: "Assentos ofertados pela Azul na rota no mês"
+    unit: assentos
+    source: "data/raw/anac/voos_basica/*.parquet"
+    sensitive: false
+    example: 7400.0
+  - name: azul_decolagens
+    dtype: float
+    nullable: false
+    description: "Decolagens realizadas pela Azul na rota no mês"
+    unit: voos
+    source: "data/raw/anac/voos_basica/*.parquet"
+    sensitive: false
+    example: 44.0
+  - name: azul_share_pax
+    dtype: float
+    nullable: false
+    description: "Participação de mercado da Azul em passageiros pagos na rota no mês (0 a 1)"
+    unit: ratio
+    source: "data/raw/anac/voos_basica/*.parquet"
+    sensitive: false
+    example: 0.402
+  - name: azul_share_decolagens
+    dtype: float
+    nullable: false
+    description: "Participação de mercado da Azul em decolagens na rota no mês (0 a 1)"
+    unit: ratio
+    source: "data/raw/anac/voos_basica/*.parquet"
+    sensitive: false
+    example: 0.393
+  - name: azul_load_factor
+    dtype: float
+    nullable: false
+    description: "Taxa de ocupação da Azul na rota (pax / assentos) ou 0 se sem voos"
+    unit: ratio
+    source: "data/raw/anac/voos_basica/*.parquet"
+    sensitive: false
+    example: 0.838
+  - name: total_load_factor
+    dtype: float
+    nullable: false
+    description: "Taxa de ocupação geral do mercado na rota (total pax / total assentos)"
+    unit: ratio
+    source: "data/raw/anac/voos_basica/*.parquet"
+    sensitive: false
+    example: 0.833
+  - name: has_azul
+    dtype: bool
+    nullable: false
+    description: "Indica se a Azul operou na rota durante o mês"
+    unit: null
+    source: "data/raw/anac/voos_basica/*.parquet"
+    sensitive: false
+    example: true
+checks:
+  unique: [id_rota_mes]
+  non_null: [id_rota_mes, rota, origem_oaci, destino_oaci, ano, mes, ano_mes, total_pax_pagos, total_decolagens, has_azul]
+  custom:
+    - name: no_negative_pax
+      expr: "MIN(total_pax_pagos) >= 0"
+      message: "Total de passageiros não pode ser negativo"
+    - name: timeline_bounds
+      expr: "MIN(ano_mes) >= '2023-09' AND MAX(ano_mes) <= '2026-08'"
+      message: "Dados fora da janela temporal do projeto (2023-09 a 2026-08)"

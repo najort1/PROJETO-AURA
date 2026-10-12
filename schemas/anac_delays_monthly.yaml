@@ -1,0 +1,77 @@
+table: anac_delays_monthly
+description: "Série histórica mensal da taxa de atraso (>15 minutos) do sistema aeroportuário nacional (ANAC movimentação)"
+granularity: "um mês"
+produced_by: "ingestion.curate"
+consumers: ["synthetic.generate", "snowflake", "ml.sentiment", "app"]
+columns:
+  - name: id_ano_mes
+    dtype: string
+    nullable: false
+    description: "Identificador único do mês (AAAA-MM)"
+    unit: null
+    source: "data/raw/anac/movimentacao/*.parquet"
+    sensitive: false
+    example: "2024-01"
+  - name: ano
+    dtype: int
+    nullable: false
+    description: "Ano do movimento operacional"
+    unit: ano
+    source: "data/raw/anac/movimentacao/*.parquet"
+    sensitive: false
+    example: 2024
+  - name: mes
+    dtype: int
+    nullable: false
+    description: "Mês do movimento operacional (1 a 12)"
+    unit: mes
+    source: "data/raw/anac/movimentacao/*.parquet"
+    sensitive: false
+    example: 1
+  - name: ano_mes
+    dtype: string
+    nullable: false
+    description: "Ano e mês no formato AAAA-MM"
+    unit: null
+    source: "data/raw/anac/movimentacao/*.parquet"
+    sensitive: false
+    example: "2024-01"
+  - name: total_movimentos
+    dtype: int
+    nullable: false
+    description: "Total de movimentos de aeronaves registrados com horário previsto e calço/toque"
+    unit: movimentos
+    source: "data/raw/anac/movimentacao/*.parquet"
+    sensitive: false
+    example: 187310
+  - name: movimentos_atrasados
+    dtype: int
+    nullable: false
+    description: "Quantidade de movimentos com atraso superior a 15 minutos (dt/hh_calco vs dt/hh_previsto > 900s)"
+    unit: movimentos
+    source: "data/raw/anac/movimentacao/*.parquet"
+    sensitive: false
+    example: 42825
+  - name: taxa_atraso
+    dtype: float
+    nullable: false
+    description: "Taxa mensal de atraso superior a 15 min (movimentos atrasados / total movimentos)"
+    unit: taxa
+    source: "data/raw/anac/movimentacao/*.parquet"
+    sensitive: false
+    example: 0.2286
+  - name: cobertura
+    dtype: string
+    nullable: false
+    description: "Declaração de abrangência temporal e limitação da fonte (2019-03 a 2025-12; 2026 indisponível)"
+    unit: null
+    source: "ingestion/curate.py"
+    sensitive: false
+    example: "2019-03_a_2025-12"
+checks:
+  unique: [id_ano_mes]
+  non_null: [id_ano_mes, ano, mes, ano_mes, total_movimentos, movimentos_atrasados, taxa_atraso, cobertura]
+  custom:
+    - name: taxa_bounds
+      expr: "MIN(taxa_atraso) >= 0.0 AND MAX(taxa_atraso) <= 1.0"
+      message: "Taxa de atraso fora dos limites [0, 1]"

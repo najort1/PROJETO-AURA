@@ -1,0 +1,83 @@
+table: anac_airports
+description: "Cadastro de aeródromos brasileiros com coordenadas geográficas e macrorregião derivada da UF"
+granularity: "um aeródromo (código OACI)"
+produced_by: "ingestion.curate"
+consumers: ["synthetic.generate", "snowflake", "ml.fairness", "app"]
+columns:
+  - name: codigo_oaci
+    dtype: string
+    nullable: false
+    description: "Código ICAO/OACI de 4 letras do aeródromo"
+    unit: null
+    source: "data/raw/anac/aeroportos/aerodromos.parquet"
+    sensitive: false
+    example: "SBKP"
+  - name: nome
+    dtype: string
+    nullable: false
+    description: "Nome oficial do aeródromo"
+    unit: null
+    source: "data/raw/anac/aeroportos/aerodromos.parquet"
+    sensitive: false
+    example: "Viracopos"
+  - name: municipio
+    dtype: string
+    nullable: false
+    description: "Município de localização do aeródromo"
+    unit: null
+    source: "data/raw/anac/aeroportos/aerodromos.parquet"
+    sensitive: false
+    example: "Campinas"
+  - name: uf
+    dtype: string
+    nullable: false
+    description: "Unidade Federativa (sigla de 2 letras)"
+    unit: null
+    source: "data/raw/anac/aeroportos/aerodromos.parquet"
+    sensitive: false
+    example: "SP"
+  - name: regiao
+    dtype: string
+    nullable: false
+    description: "Macrorregião geográfica brasileira derivada da UF (Norte, Nordeste, Centro-Oeste, Sudeste, Sul)"
+    unit: null
+    source: "derivação geográfica explícita em ingestion/curate.py"
+    sensitive: false
+    example: "Sudeste"
+  - name: latitude
+    dtype: float
+    nullable: true
+    description: "Latitude geográfica em graus decimais"
+    unit: graus
+    source: "data/raw/anac/aeroportos/aerodromos.parquet"
+    sensitive: false
+    example: -23.0074
+  - name: longitude
+    dtype: float
+    nullable: true
+    description: "Longitude geográfica em graus decimais"
+    unit: graus
+    source: "data/raw/anac/aeroportos/aerodromos.parquet"
+    sensitive: false
+    example: -47.1345
+  - name: altitude
+    dtype: float
+    nullable: true
+    description: "Altitude do aeródromo em metros"
+    unit: metros
+    source: "data/raw/anac/aeroportos/aerodromos.parquet"
+    sensitive: false
+    example: 661.0
+  - name: is_active_commercial
+    dtype: bool
+    nullable: false
+    description: "Indica se o aeródromo registrou voos comerciais regulares no período do projeto"
+    unit: null
+    source: "cruzamento com voos_basica em ingestion/curate.py"
+    sensitive: false
+    example: true
+checks:
+  unique: [codigo_oaci]
+  non_null: [codigo_oaci, regiao]
+  allowed_values:
+    regiao: ["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul", "Desconhecida"]
