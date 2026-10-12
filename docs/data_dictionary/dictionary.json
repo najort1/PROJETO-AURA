@@ -1,0 +1,2848 @@
+{
+  "agent_input": {
+    "table": "agent_input",
+    "description": "Contrato de entrada para o motor de recomendação e redação do agente (WS7)",
+    "granularity": "um registro por cliente na coorte de retenção",
+    "produced_by": "ml (features, clv, churn, segmentation/personas, sentiment)",
+    "consumers": [
+      "agent.pipeline",
+      "agent.eligibility",
+      "agent.composer",
+      "app"
+    ],
+    "columns": [
+      {
+        "name": "customer_id",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Identificador único do cliente",
+        "unit": null,
+        "source": "data/curated/synthetic/customers.parquet",
+        "sensitive": false,
+        "example": "C000001"
+      },
+      {
+        "name": "tier",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Nível atual no Azul Fidelidade (azul, topazio, safira, diamante, diamante_unique)",
+        "unit": null,
+        "source": "data/analytics/features_customer.parquet",
+        "sensitive": false,
+        "example": "safira"
+      },
+      {
+        "name": "persona",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Persona atribuída pelo modelo de segmentação",
+        "unit": null,
+        "source": "data/analytics/customer_personas.parquet",
+        "sensitive": false,
+        "example": "maximizador_milhas"
+      },
+      {
+        "name": "risk_state",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Estado de risco e valor (risco_alto_valor_alto, risco_medio_valor_alto, risco_baixo_potencial_alto, risco_baixo_estavel)",
+        "unit": null,
+        "source": "data/analytics/customer_scores.parquet",
+        "sensitive": false,
+        "example": "risco_alto_valor_alto"
+      },
+      {
+        "name": "pontos_qualificaveis_12m",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Pontos qualificáveis acumulados nos últimos 12 meses",
+        "unit": "pontos",
+        "source": "data/analytics/features_customer.parquet",
+        "sensitive": false,
+        "example": 9500
+      },
+      {
+        "name": "trechos_12m",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Trechos voados nos últimos 12 meses",
+        "unit": "trechos",
+        "source": "data/analytics/features_customer.parquet",
+        "sensitive": false,
+        "example": 9
+      },
+      {
+        "name": "gastos_12m_brl",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Gastos aéreos em passagens e serviços elegíveis nos últimos 12 meses (BRL)",
+        "unit": "BRL",
+        "source": "data/analytics/features_customer.parquet",
+        "sensitive": false,
+        "example": 4500.0
+      },
+      {
+        "name": "saldo_pontos",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Saldo atual de Pontos Azul disponíveis para resgate",
+        "unit": "pontos",
+        "source": "data/analytics/features_customer.parquet",
+        "sensitive": false,
+        "example": 75000
+      },
+      {
+        "name": "pontos_expirando_30d",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Pontos a expirar nos próximos 30 dias",
+        "unit": "pontos",
+        "source": "data/analytics/features_customer.parquet",
+        "sensitive": false,
+        "example": 12000
+      },
+      {
+        "name": "meta_proximo_nivel_pct",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Percentual atingido da meta de qualificação para o próximo nível (0.0 a 1.0+)",
+        "unit": "ratio",
+        "source": "data/analytics/features_customer.parquet",
+        "sensitive": false,
+        "example": 0.85
+      },
+      {
+        "name": "churn_prob",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Probabilidade prevista de evasão (churn) no horizonte de 12 meses",
+        "unit": "probabilidade",
+        "source": "data/analytics/customer_scores.parquet",
+        "sensitive": false,
+        "example": 0.72
+      },
+      {
+        "name": "clv_12m_previsto",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Customer Lifetime Value previsto para os próximos 12 meses (BRL)",
+        "unit": "BRL",
+        "source": "data/analytics/customer_scores.parquet",
+        "sensitive": false,
+        "example": 5400.0
+      },
+      {
+        "name": "alto_valor",
+        "dtype": "bool",
+        "nullable": false,
+        "description": "Indicador binário de cliente de alto valor (definido pelo limiar de Pareto/ScoreAV)",
+        "unit": null,
+        "source": "data/analytics/customer_scores.parquet",
+        "sensitive": false,
+        "example": true
+      },
+      {
+        "name": "atritos_dominantes",
+        "dtype": "string",
+        "nullable": true,
+        "description": "Atritos dominantes detectados (ex.: 'resgate', 'atraso', 'bagagem', 'atendimento')",
+        "unit": null,
+        "source": "data/analytics/sentiment_aspects.parquet",
+        "sensitive": false,
+        "example": "resgate"
+      },
+      {
+        "name": "rota_favorita",
+        "dtype": "string",
+        "nullable": true,
+        "description": "Trecho mais frequente voado pelo cliente (ex.: 'VCP-SDU')",
+        "unit": null,
+        "source": "data/analytics/features_customer.parquet",
+        "sensitive": false,
+        "example": "VCP-SDU"
+      },
+      {
+        "name": "beneficio_nao_utilizado",
+        "dtype": "string",
+        "nullable": true,
+        "description": "Benefício contratual do nível vigente não utilizado pelo cliente",
+        "unit": null,
+        "source": "data/analytics/features_customer.parquet",
+        "sensitive": false,
+        "example": "espaco_azul"
+      },
+      {
+        "name": "shap_top3",
+        "dtype": "string",
+        "nullable": true,
+        "description": "JSON array com os 3 principais fatores de risco/CLV explicados por SHAP",
+        "unit": null,
+        "source": "data/analytics/customer_scores.parquet",
+        "sensitive": false,
+        "example": "[\"queda_frequencia_voos\", \"atrito_resgate\", \"inatividade_recente\"]"
+      }
+    ],
+    "checks": {
+      "unique": [
+        "customer_id"
+      ],
+      "non_null": [
+        "customer_id",
+        "tier",
+        "persona",
+        "risk_state",
+        "saldo_pontos",
+        "churn_prob",
+        "clv_12m_previsto",
+        "alto_valor"
+      ],
+      "allowed_values": {
+        "tier": [
+          "azul",
+          "topazio",
+          "safira",
+          "diamante",
+          "diamante_unique"
+        ],
+        "persona": [
+          "executivo_recorrente",
+          "lazer_premium",
+          "maximizador_milhas",
+          "regional_dependente",
+          "eventual_ascendente",
+          "eventual_promocional"
+        ],
+        "risk_state": [
+          "risco_alto_valor_alto",
+          "risco_medio_valor_alto",
+          "risco_baixo_potencial_alto",
+          "risco_baixo_estavel"
+        ]
+      }
+    }
+  },
+  "anac_airports": {
+    "table": "anac_airports",
+    "description": "Cadastro de aeródromos brasileiros com coordenadas geográficas e macrorregião derivada da UF",
+    "granularity": "um aeródromo (código OACI)",
+    "produced_by": "ingestion.curate",
+    "consumers": [
+      "synthetic.generate",
+      "snowflake",
+      "ml.fairness",
+      "app"
+    ],
+    "columns": [
+      {
+        "name": "codigo_oaci",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Código ICAO/OACI de 4 letras do aeródromo",
+        "unit": null,
+        "source": "data/raw/anac/aeroportos/aerodromos.parquet",
+        "sensitive": false,
+        "example": "SBKP"
+      },
+      {
+        "name": "nome",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Nome oficial do aeródromo",
+        "unit": null,
+        "source": "data/raw/anac/aeroportos/aerodromos.parquet",
+        "sensitive": false,
+        "example": "Viracopos"
+      },
+      {
+        "name": "municipio",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Município de localização do aeródromo",
+        "unit": null,
+        "source": "data/raw/anac/aeroportos/aerodromos.parquet",
+        "sensitive": false,
+        "example": "Campinas"
+      },
+      {
+        "name": "uf",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Unidade Federativa (sigla de 2 letras)",
+        "unit": null,
+        "source": "data/raw/anac/aeroportos/aerodromos.parquet",
+        "sensitive": false,
+        "example": "SP"
+      },
+      {
+        "name": "regiao",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Macrorregião geográfica brasileira derivada da UF (Norte, Nordeste, Centro-Oeste, Sudeste, Sul)",
+        "unit": null,
+        "source": "derivação geográfica explícita em ingestion/curate.py",
+        "sensitive": false,
+        "example": "Sudeste"
+      },
+      {
+        "name": "latitude",
+        "dtype": "float",
+        "nullable": true,
+        "description": "Latitude geográfica em graus decimais",
+        "unit": "graus",
+        "source": "data/raw/anac/aeroportos/aerodromos.parquet",
+        "sensitive": false,
+        "example": -23.0074
+      },
+      {
+        "name": "longitude",
+        "dtype": "float",
+        "nullable": true,
+        "description": "Longitude geográfica em graus decimais",
+        "unit": "graus",
+        "source": "data/raw/anac/aeroportos/aerodromos.parquet",
+        "sensitive": false,
+        "example": -47.1345
+      },
+      {
+        "name": "altitude",
+        "dtype": "float",
+        "nullable": true,
+        "description": "Altitude do aeródromo em metros",
+        "unit": "metros",
+        "source": "data/raw/anac/aeroportos/aerodromos.parquet",
+        "sensitive": false,
+        "example": 661.0
+      },
+      {
+        "name": "is_active_commercial",
+        "dtype": "bool",
+        "nullable": false,
+        "description": "Indica se o aeródromo registrou voos comerciais regulares no período do projeto",
+        "unit": null,
+        "source": "cruzamento com voos_basica em ingestion/curate.py",
+        "sensitive": false,
+        "example": true
+      }
+    ],
+    "checks": {
+      "unique": [
+        "codigo_oaci"
+      ],
+      "non_null": [
+        "codigo_oaci",
+        "regiao"
+      ],
+      "allowed_values": {
+        "regiao": [
+          "Norte",
+          "Nordeste",
+          "Centro-Oeste",
+          "Sudeste",
+          "Sul",
+          "Desconhecida"
+        ]
+      }
+    }
+  },
+  "anac_delays_monthly": {
+    "table": "anac_delays_monthly",
+    "description": "Série histórica mensal da taxa de atraso (>15 minutos) do sistema aeroportuário nacional (ANAC movimentação)",
+    "granularity": "um mês",
+    "produced_by": "ingestion.curate",
+    "consumers": [
+      "synthetic.generate",
+      "snowflake",
+      "ml.sentiment",
+      "app"
+    ],
+    "columns": [
+      {
+        "name": "id_ano_mes",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Identificador único do mês (AAAA-MM)",
+        "unit": null,
+        "source": "data/raw/anac/movimentacao/*.parquet",
+        "sensitive": false,
+        "example": "2024-01"
+      },
+      {
+        "name": "ano",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Ano do movimento operacional",
+        "unit": "ano",
+        "source": "data/raw/anac/movimentacao/*.parquet",
+        "sensitive": false,
+        "example": 2024
+      },
+      {
+        "name": "mes",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Mês do movimento operacional (1 a 12)",
+        "unit": "mes",
+        "source": "data/raw/anac/movimentacao/*.parquet",
+        "sensitive": false,
+        "example": 1
+      },
+      {
+        "name": "ano_mes",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Ano e mês no formato AAAA-MM",
+        "unit": null,
+        "source": "data/raw/anac/movimentacao/*.parquet",
+        "sensitive": false,
+        "example": "2024-01"
+      },
+      {
+        "name": "total_movimentos",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Total de movimentos de aeronaves registrados com horário previsto e calço/toque",
+        "unit": "movimentos",
+        "source": "data/raw/anac/movimentacao/*.parquet",
+        "sensitive": false,
+        "example": 187310
+      },
+      {
+        "name": "movimentos_atrasados",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Quantidade de movimentos com atraso superior a 15 minutos (dt/hh_calco vs dt/hh_previsto > 900s)",
+        "unit": "movimentos",
+        "source": "data/raw/anac/movimentacao/*.parquet",
+        "sensitive": false,
+        "example": 42825
+      },
+      {
+        "name": "taxa_atraso",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Taxa mensal de atraso superior a 15 min (movimentos atrasados / total movimentos)",
+        "unit": "taxa",
+        "source": "data/raw/anac/movimentacao/*.parquet",
+        "sensitive": false,
+        "example": 0.2286
+      },
+      {
+        "name": "cobertura",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Declaração de abrangência temporal e limitação da fonte (2019-03 a 2025-12; 2026 indisponível)",
+        "unit": null,
+        "source": "ingestion/curate.py",
+        "sensitive": false,
+        "example": "2019-03_a_2025-12"
+      }
+    ],
+    "checks": {
+      "unique": [
+        "id_ano_mes"
+      ],
+      "non_null": [
+        "id_ano_mes",
+        "ano",
+        "mes",
+        "ano_mes",
+        "total_movimentos",
+        "movimentos_atrasados",
+        "taxa_atraso",
+        "cobertura"
+      ],
+      "custom": [
+        {
+          "name": "taxa_bounds",
+          "expr": "MIN(taxa_atraso) >= 0.0 AND MAX(taxa_atraso) <= 1.0",
+          "message": "Taxa de atraso fora dos limites [0, 1]"
+        }
+      ]
+    }
+  },
+  "anac_routes_monthly": {
+    "table": "anac_routes_monthly",
+    "description": "Agregado mensal de rotas do mercado doméstico regular brasileiro (ANAC voos_basica) com métricas de mercado e Azul",
+    "granularity": "uma rota (origem-destino OACI) por mês",
+    "produced_by": "ingestion.curate",
+    "consumers": [
+      "synthetic.generate",
+      "snowflake",
+      "ml.impact",
+      "app"
+    ],
+    "columns": [
+      {
+        "name": "id_rota_mes",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Identificador único da rota e mês (origem-destino:AAAA-MM)",
+        "unit": null,
+        "source": "data/raw/anac/voos_basica/*.parquet",
+        "sensitive": false,
+        "example": "SBKP-SBRJ:2024-01"
+      },
+      {
+        "name": "rota",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Par de códigos OACI origem e destino (ex: SBKP-SBRJ)",
+        "unit": null,
+        "source": "data/raw/anac/voos_basica/*.parquet",
+        "sensitive": false,
+        "example": "SBKP-SBRJ"
+      },
+      {
+        "name": "origem_oaci",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Código OACI do aeródromo de origem",
+        "unit": null,
+        "source": "data/raw/anac/voos_basica/*.parquet",
+        "sensitive": false,
+        "example": "SBKP"
+      },
+      {
+        "name": "destino_oaci",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Código OACI do aeródromo de destino",
+        "unit": null,
+        "source": "data/raw/anac/voos_basica/*.parquet",
+        "sensitive": false,
+        "example": "SBRJ"
+      },
+      {
+        "name": "ano",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Ano de referência do voo",
+        "unit": "ano",
+        "source": "data/raw/anac/voos_basica/*.parquet",
+        "sensitive": false,
+        "example": 2024
+      },
+      {
+        "name": "mes",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Mês de referência do voo (1 a 12)",
+        "unit": "mes",
+        "source": "data/raw/anac/voos_basica/*.parquet",
+        "sensitive": false,
+        "example": 1
+      },
+      {
+        "name": "ano_mes",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Ano e mês no formato AAAA-MM",
+        "unit": null,
+        "source": "data/raw/anac/voos_basica/*.parquet",
+        "sensitive": false,
+        "example": "2024-01"
+      },
+      {
+        "name": "total_pax_pagos",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Total de passageiros pagos transportados na rota no mês por todas as empresas aéreas",
+        "unit": "passageiros",
+        "source": "data/raw/anac/voos_basica/*.parquet",
+        "sensitive": false,
+        "example": 15420.0
+      },
+      {
+        "name": "total_assentos_ofertados",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Total de assentos ofertados na rota no mês pelo mercado",
+        "unit": "assentos",
+        "source": "data/raw/anac/voos_basica/*.parquet",
+        "sensitive": false,
+        "example": 18500.0
+      },
+      {
+        "name": "total_decolagens",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Total de decolagens realizadas na rota no mês",
+        "unit": "voos",
+        "source": "data/raw/anac/voos_basica/*.parquet",
+        "sensitive": false,
+        "example": 112.0
+      },
+      {
+        "name": "azul_pax_pagos",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Passageiros pagos transportados pela Azul Linhas Aéreas (sg_empresa_icao='AZU') na rota no mês",
+        "unit": "passageiros",
+        "source": "data/raw/anac/voos_basica/*.parquet",
+        "sensitive": false,
+        "example": 6200.0
+      },
+      {
+        "name": "azul_assentos_ofertados",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Assentos ofertados pela Azul na rota no mês",
+        "unit": "assentos",
+        "source": "data/raw/anac/voos_basica/*.parquet",
+        "sensitive": false,
+        "example": 7400.0
+      },
+      {
+        "name": "azul_decolagens",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Decolagens realizadas pela Azul na rota no mês",
+        "unit": "voos",
+        "source": "data/raw/anac/voos_basica/*.parquet",
+        "sensitive": false,
+        "example": 44.0
+      },
+      {
+        "name": "azul_share_pax",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Participação de mercado da Azul em passageiros pagos na rota no mês (0 a 1)",
+        "unit": "ratio",
+        "source": "data/raw/anac/voos_basica/*.parquet",
+        "sensitive": false,
+        "example": 0.402
+      },
+      {
+        "name": "azul_share_decolagens",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Participação de mercado da Azul em decolagens na rota no mês (0 a 1)",
+        "unit": "ratio",
+        "source": "data/raw/anac/voos_basica/*.parquet",
+        "sensitive": false,
+        "example": 0.393
+      },
+      {
+        "name": "azul_load_factor",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Taxa de ocupação da Azul na rota (pax / assentos) ou 0 se sem voos",
+        "unit": "ratio",
+        "source": "data/raw/anac/voos_basica/*.parquet",
+        "sensitive": false,
+        "example": 0.838
+      },
+      {
+        "name": "total_load_factor",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Taxa de ocupação geral do mercado na rota (total pax / total assentos)",
+        "unit": "ratio",
+        "source": "data/raw/anac/voos_basica/*.parquet",
+        "sensitive": false,
+        "example": 0.833
+      },
+      {
+        "name": "has_azul",
+        "dtype": "bool",
+        "nullable": false,
+        "description": "Indica se a Azul operou na rota durante o mês",
+        "unit": null,
+        "source": "data/raw/anac/voos_basica/*.parquet",
+        "sensitive": false,
+        "example": true
+      }
+    ],
+    "checks": {
+      "unique": [
+        "id_rota_mes"
+      ],
+      "non_null": [
+        "id_rota_mes",
+        "rota",
+        "origem_oaci",
+        "destino_oaci",
+        "ano",
+        "mes",
+        "ano_mes",
+        "total_pax_pagos",
+        "total_decolagens",
+        "has_azul"
+      ],
+      "custom": [
+        {
+          "name": "no_negative_pax",
+          "expr": "MIN(total_pax_pagos) >= 0",
+          "message": "Total de passageiros não pode ser negativo"
+        },
+        {
+          "name": "timeline_bounds",
+          "expr": "MIN(ano_mes) >= '2023-09' AND MAX(ano_mes) <= '2026-08'",
+          "message": "Dados fora da janela temporal do projeto (2023-09 a 2026-08)"
+        }
+      ]
+    }
+  },
+  "churn_predictions": {
+    "table": "churn_predictions",
+    "description": "Predições individuais de probabilidade de evasão (Churn 12m) comparando Baseline Regressão Logística vs LightGBM",
+    "granularity": "um cliente na coorte de teste/avaliação",
+    "produced_by": "ml.churn.train",
+    "consumers": [
+      "ml.segmentation",
+      "agent.pipeline",
+      "app",
+      "docs.model_cards"
+    ],
+    "columns": [
+      {
+        "name": "customer_id",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Identificador único do cliente",
+        "unit": null,
+        "source": "data/analytics/features_customer.parquet",
+        "sensitive": false,
+        "example": "C000001"
+      },
+      {
+        "name": "churn_prob_baseline",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Probabilidade prevista de evasão em 12 meses pelo modelo baseline de Regressão Logística (0.0 a 1.0)",
+        "unit": "probabilidade",
+        "source": "ml/churn/train.py",
+        "sensitive": false,
+        "example": 0.42
+      },
+      {
+        "name": "churn_prob_model",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Probabilidade prevista de evasão em 12 meses pelo modelo final LightGBM (0.0 a 1.0)",
+        "unit": "probabilidade",
+        "source": "ml/churn/train.py",
+        "sensitive": false,
+        "example": 0.68
+      },
+      {
+        "name": "target_churn_12m",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Rótulo real observado de evasão (inatividade > 2x intervalo individual e >= 180 dias)",
+        "unit": "binario",
+        "source": "data/analytics/features_customer.parquet",
+        "sensitive": false,
+        "example": 1
+      },
+      {
+        "name": "decile_model",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Decil de classificação de risco do modelo final (1 = top 10% maior probabilidade de churn)",
+        "unit": "decil",
+        "source": "ml/churn/train.py",
+        "sensitive": false,
+        "example": 1
+      }
+    ],
+    "checks": {
+      "unique": [
+        "customer_id"
+      ],
+      "non_null": [
+        "customer_id",
+        "churn_prob_baseline",
+        "churn_prob_model",
+        "target_churn_12m",
+        "decile_model"
+      ],
+      "allowed_values": {
+        "target_churn_12m": [
+          0,
+          1
+        ],
+        "decile_model": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ]
+      },
+      "custom": [
+        {
+          "name": "valid_probabilities",
+          "expr": "MIN(churn_prob_model) >= 0.0 AND MAX(churn_prob_model) <= 1.0",
+          "message": "Probabilidade de evasão fora do intervalo válido [0, 1]"
+        }
+      ]
+    }
+  },
+  "clv_predictions": {
+    "table": "clv_predictions",
+    "description": "Predições individuais de Customer Lifetime Value (CLV 12m) comparando Baseline BG/NBD+GG vs LightGBM",
+    "granularity": "um cliente na coorte de teste/avaliação",
+    "produced_by": "ml.clv.train",
+    "consumers": [
+      "ml.segmentation",
+      "agent.pipeline",
+      "app",
+      "docs.model_cards"
+    ],
+    "columns": [
+      {
+        "name": "customer_id",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Identificador único do cliente",
+        "unit": null,
+        "source": "data/analytics/features_customer.parquet",
+        "sensitive": false,
+        "example": "C000001"
+      },
+      {
+        "name": "clv_baseline_12m",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Valor monetário previsto em 12 meses pelo modelo probabilístico Baseline BG/NBD + Gamma-Gamma (BRL)",
+        "unit": "BRL",
+        "source": "ml/clv/train.py",
+        "sensitive": false,
+        "example": 4120.5
+      },
+      {
+        "name": "clv_predicted_12m",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Valor monetário previsto em 12 meses pelo modelo Gradient Boosting LightGBM (BRL)",
+        "unit": "BRL",
+        "source": "ml/clv/train.py",
+        "sensitive": false,
+        "example": 4680.0
+      },
+      {
+        "name": "target_clv_12m",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Valor realizado de receita no horizonte futuro de 12 meses (target legítimo da coorte)",
+        "unit": "BRL",
+        "source": "data/analytics/features_customer.parquet",
+        "sensitive": false,
+        "example": 4950.0
+      },
+      {
+        "name": "error_baseline",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Erro absoluto do baseline (|target - baseline|)",
+        "unit": "BRL",
+        "source": "ml/clv/train.py",
+        "sensitive": false,
+        "example": 829.5
+      },
+      {
+        "name": "error_model",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Erro absoluto do modelo final LightGBM (|target - model|)",
+        "unit": "BRL",
+        "source": "ml/clv/train.py",
+        "sensitive": false,
+        "example": 270.0
+      },
+      {
+        "name": "decile_model",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Decil de classificação preditiva do modelo final (1 = top 10% maior valor previsto)",
+        "unit": "decil",
+        "source": "ml/clv/train.py",
+        "sensitive": false,
+        "example": 1
+      }
+    ],
+    "checks": {
+      "unique": [
+        "customer_id"
+      ],
+      "non_null": [
+        "customer_id",
+        "clv_baseline_12m",
+        "clv_predicted_12m",
+        "target_clv_12m",
+        "decile_model"
+      ],
+      "allowed_values": {
+        "decile_model": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ]
+      },
+      "custom": [
+        {
+          "name": "non_negative_clv",
+          "expr": "MIN(clv_predicted_12m) >= 0.0",
+          "message": "Predição de CLV não pode conter valores negativos"
+        }
+      ]
+    }
+  },
+  "features_customer": {
+    "table": "features_customer",
+    "description": "Features agregadas por cliente na coorte de análise com corte estrito anti-vazamento",
+    "granularity": "um cliente",
+    "produced_by": "dbt: marts.features_customer",
+    "consumers": [
+      "ml.clv",
+      "ml.churn",
+      "ml.segmentation",
+      "agent.input",
+      "app"
+    ],
+    "columns": [
+      {
+        "name": "customer_id",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Identificador único do cliente",
+        "unit": null,
+        "source": "data/curated/synthetic/customers.parquet",
+        "sensitive": false,
+        "example": "C000001"
+      },
+      {
+        "name": "tier",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Nível atual no programa de fidelidade (azul, topazio, safira, diamante, diamante_unique)",
+        "unit": null,
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": "safira"
+      },
+      {
+        "name": "recency_days",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Dias decorridos entre a última transação/atividade e o corte temporal (2025-08-31)",
+        "unit": "dias",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 45
+      },
+      {
+        "name": "frequency_3m",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Número de transações aéreas nos últimos 3 meses antes do cutoff",
+        "unit": "transacoes",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 3
+      },
+      {
+        "name": "frequency_6m",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Número de transações aéreas nos últimos 6 meses antes do cutoff",
+        "unit": "transacoes",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 6
+      },
+      {
+        "name": "frequency_12m",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Número de transações aéreas nos últimos 12 meses antes do cutoff",
+        "unit": "transacoes",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 12
+      },
+      {
+        "name": "trechos_12m",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Trechos aéreos voados nos últimos 12 meses antes do cutoff",
+        "unit": "trechos",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 12
+      },
+      {
+        "name": "monetary_12m",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Receita total gerada nos últimos 12 meses anteriores ao cutoff (BRL)",
+        "unit": "BRL",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 4850.5
+      },
+      {
+        "name": "gastos_12m_brl",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Gastos aéreos elegíveis em passagens e adicionais nos últimos 12 meses (BRL)",
+        "unit": "BRL",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 4850.5
+      },
+      {
+        "name": "ticket_medio_12m",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Gasto médio por transação/trecho nos 12 meses anteriores ao cutoff (BRL)",
+        "unit": "BRL",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 404.21
+      },
+      {
+        "name": "frequency_trend",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Tendência de aceleração/desaceleração da frequência (recente vs histórico anual)",
+        "unit": "ratio",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 0.9231
+      },
+      {
+        "name": "frequency_volatility",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Volatilidade/irregularidade calculada da frequência de compras nos períodos",
+        "unit": "coeficiente",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 0.1428
+      },
+      {
+        "name": "share_rotas_troncais",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Proporção de voos realizados em rotas troncais de alta densidade",
+        "unit": "ratio",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 0.75
+      },
+      {
+        "name": "share_resgate",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Participação de resgates de passagens sobre o total de viagens realizadas",
+        "unit": "ratio",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 0.1428
+      },
+      {
+        "name": "avg_advance_booking_days",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Média de dias de antecedência entre compra da passagem e data de embarque",
+        "unit": "dias",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 18.5
+      },
+      {
+        "name": "rota_favorita",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Par de aeroportos de rota mais frequente no histórico de 12m",
+        "unit": null,
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": "VCP-SDU"
+      },
+      {
+        "name": "pontos_qualificaveis_12m",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Total de pontos qualificáveis creditados nos 12 meses anteriores ao corte",
+        "unit": "pontos",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 8500
+      },
+      {
+        "name": "saldo_pontos",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Saldo consolidado de pontos disponíveis para resgate até o cutoff",
+        "unit": "pontos",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 45000
+      },
+      {
+        "name": "pontos_expirando_30d",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Estimativa de pontos acumulados sujeitos a expiração nos próximos 30 dias",
+        "unit": "pontos",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 3600
+      },
+      {
+        "name": "meta_proximo_nivel_pct",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Percentual atingido da meta de qualificação para o próximo nível vigente",
+        "unit": "ratio",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 0.7083
+      },
+      {
+        "name": "beneficio_nao_utilizado",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Benefício contratual elegível não exercido pelo cliente no ano",
+        "unit": null,
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": "espaco_azul"
+      },
+      {
+        "name": "days_since_last_interaction",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Dias decorridos desde o último contato ou interação de atendimento",
+        "unit": "dias",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 21
+      },
+      {
+        "name": "atritos_atraso_12m",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Número de ocorrências de atrito por atraso de voo nos últimos 12m",
+        "unit": "ocorrencias",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 1
+      },
+      {
+        "name": "atritos_bagagem_12m",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Número de ocorrências de atrito por extravio ou dano de bagagem nos últimos 12m",
+        "unit": "ocorrencias",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 0
+      },
+      {
+        "name": "atritos_app_checkin_12m",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Número de ocorrências de atrito no canal app/check-in digital nos últimos 12m",
+        "unit": "ocorrencias",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 0
+      },
+      {
+        "name": "atritos_resgate_milhas_12m",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Número de ocorrências de atrito ao tentar resgatar milhas/passagens nos últimos 12m",
+        "unit": "ocorrencias",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 0
+      },
+      {
+        "name": "atritos_atendimento_12m",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Número de ocorrências de insatisfação com atendimento nos últimos 12m",
+        "unit": "ocorrencias",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 0
+      },
+      {
+        "name": "atritos_preco_12m",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Número de reclamações ou atritos relacionados a preço e tarifas nos últimos 12m",
+        "unit": "ocorrencias",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 0
+      },
+      {
+        "name": "total_atritos_12m",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Total acumulado de eventos de atrito vivenciados nos últimos 12 meses",
+        "unit": "ocorrencias",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 1
+      },
+      {
+        "name": "last_activity_date",
+        "dtype": "date",
+        "nullable": true,
+        "description": "Data da última transação ou voo anterior ao marco temporal",
+        "unit": null,
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": "2025-07-15"
+      },
+      {
+        "name": "target_clv_12m",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Alvo legítimo: receita realizada no horizonte futuro de 12 meses (2025-09-01 a 2026-08-31)",
+        "unit": "BRL",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 5200.0
+      },
+      {
+        "name": "target_churn_12m",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Alvo legítimo: inatividade superior a 2x o intervalo típico e >= 180 dias sem compras",
+        "unit": "binario",
+        "source": "dbt: features_customer",
+        "sensitive": false,
+        "example": 0
+      }
+    ],
+    "checks": {
+      "unique": [
+        "customer_id"
+      ],
+      "non_null": [
+        "customer_id",
+        "tier",
+        "recency_days",
+        "frequency_12m",
+        "monetary_12m",
+        "target_clv_12m",
+        "target_churn_12m"
+      ],
+      "allowed_values": {
+        "tier": [
+          "azul",
+          "topazio",
+          "safira",
+          "diamante",
+          "diamante_unique"
+        ],
+        "target_churn_12m": [
+          0,
+          1
+        ]
+      },
+      "custom": [
+        {
+          "name": "no_future_information",
+          "expr": "MAX(last_activity_date) <= DATE '2025-08-31'",
+          "message": "Feature contém informação posterior ao cutoff temporal (vazamento)"
+        }
+      ]
+    }
+  },
+  "friction_map": {
+    "table": "friction_map",
+    "description": "Mapa analítico consolidado de atritos por aspecto, intensidade média e tendência temporal por semestre",
+    "granularity": "um aspecto por semestre",
+    "produced_by": "ml.sentiment.friction_map",
+    "consumers": [
+      "synthetic.generate",
+      "agent.pipeline",
+      "app",
+      "ml.impact"
+    ],
+    "columns": [
+      {
+        "name": "friction_id",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Identificador único da linha (aspecto + semestre)",
+        "unit": null,
+        "source": "ml/sentiment/friction_map.py",
+        "sensitive": false,
+        "example": "atraso_2024S1"
+      },
+      {
+        "name": "aspect",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Aspecto do atrito analisado (atraso, bagagem, atendimento, app_checkin, resgate_milhas, preco, conforto)",
+        "unit": null,
+        "source": "ml/sentiment/friction_map.py",
+        "sensitive": false,
+        "example": "atraso"
+      },
+      {
+        "name": "semester",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Semestre do período de referência (ex: 2024-S1)",
+        "unit": null,
+        "source": "ml/sentiment/friction_map.py",
+        "sensitive": false,
+        "example": "2024-S1"
+      },
+      {
+        "name": "mention_count",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Total de avaliações que mencionaram este aspecto no semestre",
+        "unit": "contagem",
+        "source": "ml/sentiment/friction_map.py",
+        "sensitive": false,
+        "example": 85
+      },
+      {
+        "name": "negative_count",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Quantidade de avaliações com polaridade negativa neste aspecto no semestre",
+        "unit": "contagem",
+        "source": "ml/sentiment/friction_map.py",
+        "sensitive": false,
+        "example": 62
+      },
+      {
+        "name": "neutral_count",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Quantidade de avaliações com polaridade neutra neste aspecto no semestre",
+        "unit": "contagem",
+        "source": "ml/sentiment/friction_map.py",
+        "sensitive": false,
+        "example": 10
+      },
+      {
+        "name": "positive_count",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Quantidade de avaliações com polaridade positiva neste aspecto no semestre",
+        "unit": "contagem",
+        "source": "ml/sentiment/friction_map.py",
+        "sensitive": false,
+        "example": 13
+      },
+      {
+        "name": "negative_rate",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Taxa de menções negativas sobre o total de menções do aspecto no semestre",
+        "unit": "taxa",
+        "source": "ml/sentiment/friction_map.py",
+        "sensitive": false,
+        "example": 0.729
+      },
+      {
+        "name": "semester_intensity",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Intensidade calculada do atrito no semestre (combinação de prevalência e negatividade, 0 a 1)",
+        "unit": "indice_0_1",
+        "source": "ml/sentiment/friction_map.py",
+        "sensitive": false,
+        "example": 0.684
+      },
+      {
+        "name": "mean_intensity",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Intensidade média global deste aspecto ao longo de toda a janela histórica",
+        "unit": "indice_0_1",
+        "source": "ml/sentiment/friction_map.py",
+        "sensitive": false,
+        "example": 0.65
+      },
+      {
+        "name": "delta_previous",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Variação da intensidade em relação ao semestre imediatamente anterior",
+        "unit": "delta",
+        "source": "ml/sentiment/friction_map.py",
+        "sensitive": false,
+        "example": 0.042
+      },
+      {
+        "name": "trend_direction",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Direção da tendência temporal do atrito (crescente, decrescente, estavel)",
+        "unit": null,
+        "source": "ml/sentiment/friction_map.py",
+        "sensitive": false,
+        "example": "crescente"
+      },
+      {
+        "name": "aspect_weight",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Peso calibrado do aspecto exportado para friction_weights.json (soma dos pesos = 1.0)",
+        "unit": "peso_normalizado",
+        "source": "ml/sentiment/friction_map.py",
+        "sensitive": false,
+        "example": 0.22
+      }
+    ],
+    "checks": {
+      "unique": [
+        "friction_id"
+      ],
+      "non_null": [
+        "friction_id",
+        "aspect",
+        "semester",
+        "mention_count",
+        "negative_count",
+        "neutral_count",
+        "positive_count",
+        "negative_rate",
+        "semester_intensity",
+        "mean_intensity",
+        "delta_previous",
+        "trend_direction",
+        "aspect_weight"
+      ],
+      "allowed_values": {
+        "aspect": [
+          "atraso",
+          "bagagem",
+          "atendimento",
+          "app_checkin",
+          "resgate_milhas",
+          "preco",
+          "conforto"
+        ],
+        "trend_direction": [
+          "crescente",
+          "decrescente",
+          "estavel"
+        ]
+      },
+      "custom": [
+        {
+          "name": "valid_semester_intensity_range",
+          "expr": "MIN(semester_intensity) >= 0.0 AND MAX(semester_intensity) <= 1.0",
+          "message": "Intensidade semestral deve estar entre 0.0 e 1.0"
+        },
+        {
+          "name": "valid_aspect_weight_range",
+          "expr": "MIN(aspect_weight) >= 0.0 AND MAX(aspect_weight) <= 1.0",
+          "message": "Peso de atrito deve estar entre 0.0 e 1.0"
+        }
+      ]
+    }
+  },
+  "ground_truth": {
+    "table": "ground_truth",
+    "description": "Verdade latente individual e parâmetros geradores verdadeiros (estritamente segregada para avaliação e auditoria)",
+    "granularity": "um registro por cliente sintético",
+    "produced_by": "synthetic.generate",
+    "consumers": [
+      "evaluation_only"
+    ],
+    "columns": [
+      {
+        "name": "customer_id",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Identificador único do cliente",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "C000001"
+      },
+      {
+        "name": "latent_archetype",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Família latente real geradora do cliente (usada para cálculo de ARI de recuperação de personas)",
+        "unit": null,
+        "source": "synthetic.generate (config/generator.yaml)",
+        "sensitive": false,
+        "example": "executivo_recorrente"
+      },
+      {
+        "name": "clv_real_12m",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Receita líquida total efetivamente realizada pelo cliente na janela alvo de 12 meses (2025-09-01 a 2026-08-31)",
+        "unit": "BRL",
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": 4250.8
+      },
+      {
+        "name": "churn_observed_12m",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Indicador binário de inatividade observada (> 2x intervalo individual e >= 180 dias sem transação no período alvo)",
+        "unit": "binario",
+        "source": "synthetic.generate (config/settings.yaml: modeling)",
+        "sensitive": false,
+        "example": 0
+      },
+      {
+        "name": "latent_churn_event_12m",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Indicador estocástico latente de desistência do programa disparado pelo processo de hazard",
+        "unit": "binario",
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": 0
+      },
+      {
+        "name": "latent_base_hazard",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Taxa anual basal de hazard de churn atribuída ao arquétipo do cliente",
+        "unit": "taxa_anual",
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": 0.09
+      },
+      {
+        "name": "latent_annual_frequency",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Frequência esperada latente de voos por ano calibrada com efeito aleatório",
+        "unit": "voos_por_ano",
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": 22.5
+      },
+      {
+        "name": "latent_price_sensitivity",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Elasticidade-preço individual latente do cliente",
+        "unit": "elasticidade",
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": -0.35
+      },
+      {
+        "name": "latent_redemption_propensity",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Propensão individual de queima/resgate de pontos acumulados",
+        "unit": "propensao_0_a_1",
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": 0.22
+      },
+      {
+        "name": "latent_freq_effect",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Efeito aleatório individual de frequência epsilon_freq ~ N(0, sigma)",
+        "unit": "desvio_padrao",
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": 0.12
+      },
+      {
+        "name": "latent_spend_effect",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Efeito aleatório individual de gasto monetário epsilon_spend ~ N(0, sigma)",
+        "unit": "desvio_padrao",
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": 0.08
+      },
+      {
+        "name": "latent_churn_effect",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Efeito aleatório individual de hazard de churn epsilon_churn ~ N(0, sigma)",
+        "unit": "desvio_padrao",
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": -0.05
+      },
+      {
+        "name": "total_frictions_lifetime",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Contagem total de episódios de atrito vivenciados pelo cliente ao longo de toda a simulação",
+        "unit": "contagem",
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": 3
+      }
+    ],
+    "checks": {
+      "unique": [
+        "customer_id"
+      ],
+      "non_null": [
+        "customer_id",
+        "latent_archetype",
+        "clv_real_12m",
+        "churn_observed_12m",
+        "latent_churn_event_12m",
+        "latent_base_hazard",
+        "latent_annual_frequency",
+        "latent_price_sensitivity",
+        "latent_redemption_propensity",
+        "latent_freq_effect",
+        "latent_spend_effect",
+        "latent_churn_effect",
+        "total_frictions_lifetime"
+      ],
+      "allowed_values": {
+        "latent_archetype": [
+          "executivo_recorrente",
+          "lazer_premium",
+          "maximizador_milhas",
+          "regional_dependente",
+          "eventual_promocional"
+        ],
+        "churn_observed_12m": [
+          0,
+          1
+        ],
+        "latent_churn_event_12m": [
+          0,
+          1
+        ]
+      }
+    }
+  },
+  "agent_recommendations": {
+    "table": "agent_recommendations",
+    "description": "Recomendações, mensagens e justificativas do agente de retenção e explicabilidade (WS7)",
+    "granularity": "uma recomendação por cliente por campanha de retenção",
+    "produced_by": "agent.pipeline",
+    "consumers": [
+      "app",
+      "ml.impact"
+    ],
+    "columns": [
+      {
+        "name": "customer_id",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Identificador único do cliente",
+        "unit": null,
+        "source": "data/analytics/agent_input.parquet",
+        "sensitive": false,
+        "example": "C000001"
+      },
+      {
+        "name": "action_id",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Identificador da ação recomendada no playbook (ex.: ACT-BONUS-PONTOS)",
+        "unit": null,
+        "source": "config/actions.yaml",
+        "sensitive": false,
+        "example": "ACT-RESGATE-ESPECIAL"
+      },
+      {
+        "name": "action_name",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Chave canônica da ação (ex.: oferta_resgate_especial)",
+        "unit": null,
+        "source": "config/actions.yaml",
+        "sensitive": false,
+        "example": "oferta_resgate_especial"
+      },
+      {
+        "name": "channel",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Canal selecionado para a comunicação (app, email, whatsapp, telefone)",
+        "unit": null,
+        "source": "agent.pipeline",
+        "sensitive": false,
+        "example": "app"
+      },
+      {
+        "name": "message",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Mensagem redigida em PT-BR para o cliente com suporte do regulamento e sem dados sensíveis",
+        "unit": null,
+        "source": "agent.composer | agent.llm",
+        "sensitive": false,
+        "example": "Olá! Identificamos que você é cliente Safira..."
+      },
+      {
+        "name": "justification_json",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Estrutura JSON com SHAP top-3, atritos dominantes e regras determinísticas acionadas",
+        "unit": null,
+        "source": "agent.pipeline",
+        "sensitive": false,
+        "example": "{\"shap_top3\": [\"queda_voos\"], \"atritos\": [\"resgate\"], \"regras\": [\"saldo_suficiente_para_cota\"]}"
+      },
+      {
+        "name": "citations_json",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Estrutura JSON com lista de citações formais do regulamento (fact_id, status, vigência, fonte)",
+        "unit": null,
+        "source": "agent.rag.retriever",
+        "sensitive": false,
+        "example": "[{\"fact_id\": \"AF-RESGATE-ESPECIAL-2025\", \"verification_status\": \"official_current_partial\"}]"
+      },
+      {
+        "name": "confidence",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Nível de confiança da recomendação (0.0 a 1.0)",
+        "unit": "score",
+        "source": "agent.pipeline",
+        "sensitive": false,
+        "example": 0.95
+      },
+      {
+        "name": "human_review",
+        "dtype": "bool",
+        "nullable": false,
+        "description": "Flag que sinaliza necessidade de revisão humana (ex.: regras nulas no tier, caso sensível)",
+        "unit": null,
+        "source": "agent.guardrails",
+        "sensitive": false,
+        "example": false
+      },
+      {
+        "name": "mode",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Modo de execução que gerou a recomendação (offline ou llm)",
+        "unit": null,
+        "source": "agent.pipeline",
+        "sensitive": false,
+        "example": "offline"
+      },
+      {
+        "name": "snapshot_version",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Versão do snapshot do regulamento utilizada como base de conhecimento",
+        "unit": null,
+        "source": "config/program_rules.yaml",
+        "sensitive": false,
+        "example": "research-2026-10-12"
+      },
+      {
+        "name": "recommended_at",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Timestamp ISO-8601 da recomendação gerada",
+        "unit": null,
+        "source": "agent.pipeline",
+        "sensitive": false,
+        "example": "2026-10-12T12:00:00Z"
+      }
+    ],
+    "checks": {
+      "unique": [
+        "customer_id"
+      ],
+      "non_null": [
+        "customer_id",
+        "action_id",
+        "action_name",
+        "channel",
+        "message",
+        "justification_json",
+        "citations_json",
+        "confidence",
+        "human_review",
+        "mode",
+        "snapshot_version",
+        "recommended_at"
+      ],
+      "allowed_values": {
+        "mode": [
+          "offline",
+          "llm"
+        ]
+      }
+    }
+  },
+  "sentiment_reviews": {
+    "table": "sentiment_reviews",
+    "description": "Corpus sintético rotulado de avaliações em PT-BR por aspecto e polaridade (100% sintético para validação do pipeline de WS6 do Projeto Aura 2.0)",
+    "granularity": "uma avaliação",
+    "produced_by": "ml.sentiment.corpus",
+    "consumers": [
+      "ml.sentiment.approaches",
+      "ml.sentiment.friction_map",
+      "ml.sentiment.pipeline"
+    ],
+    "columns": [
+      {
+        "name": "review_id",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Identificador único da avaliação sintética",
+        "unit": null,
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": "REV-000001"
+      },
+      {
+        "name": "review_date",
+        "dtype": "datetime",
+        "nullable": false,
+        "description": "Data e hora simuladas da avaliação (janela 2023-09-01 a 2026-08-31)",
+        "unit": null,
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": "2024-05-10 14:30:00"
+      },
+      {
+        "name": "channel",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Canal genérico de origem da avaliação (sem uso de marcas reais)",
+        "unit": null,
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": "portal_reclamacoes"
+      },
+      {
+        "name": "text",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Texto em português brasileiro da avaliação, com ruído, gírias ou ironia",
+        "unit": null,
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": "Voo atrasou mais de 2 horas e o atendimento no balcão foi péssimo."
+      },
+      {
+        "name": "aspects_mentioned",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Lista de aspectos mencionados no texto, separados por vírgula",
+        "unit": null,
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": "atraso,atendimento"
+      },
+      {
+        "name": "overall_sentiment",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Sentimento geral consolidado da avaliação",
+        "unit": null,
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": "negativo"
+      },
+      {
+        "name": "has_atraso",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Indicador binário de menção ao aspecto atraso de voo",
+        "unit": "binario",
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": 1
+      },
+      {
+        "name": "has_bagagem",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Indicador binário de menção ao aspecto bagagem / extravio / danos",
+        "unit": "binario",
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": 0
+      },
+      {
+        "name": "has_atendimento",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Indicador binário de menção ao aspecto atendimento (bordo, solo, SAC)",
+        "unit": "binario",
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": 1
+      },
+      {
+        "name": "has_app_checkin",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Indicador binário de menção ao aspecto app móvel / check-in digital",
+        "unit": "binario",
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": 0
+      },
+      {
+        "name": "has_resgate_milhas",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Indicador binário de menção ao aspecto resgate de pontos e milhas",
+        "unit": "binario",
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": 0
+      },
+      {
+        "name": "has_preco",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Indicador binário de menção ao aspecto preço de passagens e taxas",
+        "unit": "binario",
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": 0
+      },
+      {
+        "name": "has_conforto",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Indicador binário de menção ao aspecto conforto a bordo e poltronas",
+        "unit": "binario",
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": 0
+      },
+      {
+        "name": "polarity_atraso",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Polaridade atribuída ao aspecto atraso",
+        "unit": null,
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": "negativo"
+      },
+      {
+        "name": "polarity_bagagem",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Polaridade atribuída ao aspecto bagagem",
+        "unit": null,
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": "ausente"
+      },
+      {
+        "name": "polarity_atendimento",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Polaridade atribuída ao aspecto atendimento",
+        "unit": null,
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": "negativo"
+      },
+      {
+        "name": "polarity_app_checkin",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Polaridade atribuída ao aspecto app / check-in",
+        "unit": null,
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": "ausente"
+      },
+      {
+        "name": "polarity_resgate_milhas",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Polaridade atribuída ao aspecto resgate de milhas",
+        "unit": null,
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": "ausente"
+      },
+      {
+        "name": "polarity_preco",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Polaridade atribuída ao aspecto preço",
+        "unit": null,
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": "ausente"
+      },
+      {
+        "name": "polarity_conforto",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Polaridade atribuída ao aspecto conforto",
+        "unit": null,
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": "ausente"
+      },
+      {
+        "name": "is_ironic",
+        "dtype": "bool",
+        "nullable": false,
+        "description": "Indica se o texto contém ironia ou sarcasmo deliberado",
+        "unit": "booleano",
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": false
+      },
+      {
+        "name": "noise_level",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Grau de ruído textual (baixo, medio, alto) decorrente de gírias e pontuação",
+        "unit": null,
+        "source": "ml/sentiment/corpus.py",
+        "sensitive": false,
+        "example": "baixo"
+      }
+    ],
+    "checks": {
+      "unique": [
+        "review_id"
+      ],
+      "non_null": [
+        "review_id",
+        "review_date",
+        "channel",
+        "text",
+        "aspects_mentioned",
+        "overall_sentiment",
+        "has_atraso",
+        "has_bagagem",
+        "has_atendimento",
+        "has_app_checkin",
+        "has_resgate_milhas",
+        "has_preco",
+        "has_conforto",
+        "polarity_atraso",
+        "polarity_bagagem",
+        "polarity_atendimento",
+        "polarity_app_checkin",
+        "polarity_resgate_milhas",
+        "polarity_preco",
+        "polarity_conforto",
+        "is_ironic",
+        "noise_level"
+      ],
+      "allowed_values": {
+        "channel": [
+          "app",
+          "portal_reclamacoes",
+          "redes_sociais",
+          "pesquisa_nps"
+        ],
+        "overall_sentiment": [
+          "positivo",
+          "neutro",
+          "negativo"
+        ],
+        "noise_level": [
+          "baixo",
+          "medio",
+          "alto"
+        ]
+      },
+      "custom": [
+        {
+          "name": "min_corpus_size",
+          "expr": "COUNT(*) >= 1000",
+          "message": "O corpus deve conter pelo menos 1.000 avaliações sintéticas rotuladas"
+        },
+        {
+          "name": "date_within_synthetic_window",
+          "expr": "MIN(review_date) >= TIMESTAMP '2023-09-01' AND MAX(review_date) <= TIMESTAMP '2026-08-31 23:59:59'",
+          "message": "Avaliações com datas fora da janela sintética de 36 meses (2023-09-01 a 2026-08-31)"
+        }
+      ]
+    }
+  },
+  "synthetic_customers": {
+    "table": "synthetic_customers",
+    "description": "Clientes sintéticos cadastrados no Azul Fidelidade (população da base sintética do Projeto Aura 2.0)",
+    "granularity": "um registro por cliente sintético",
+    "produced_by": "synthetic.generate",
+    "consumers": [
+      "dbt: curated -> analytics",
+      "ml.fairness",
+      "synthetic.fidelity_report"
+    ],
+    "columns": [
+      {
+        "name": "customer_id",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Identificador único do cliente sintético",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "C000001"
+      },
+      {
+        "name": "archetype",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Família latente de comportamento do cliente",
+        "unit": null,
+        "source": "synthetic.generate (config/generator.yaml: archetypes)",
+        "sensitive": false,
+        "example": "executivo_recorrente"
+      },
+      {
+        "name": "faixa_etaria",
+        "dtype": "string",
+        "nullable": true,
+        "description": "Faixa etária do cliente (apenas para auditoria de viés/LGPD - NUNCA usada como feature)",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": true,
+        "example": "35-44"
+      },
+      {
+        "name": "genero",
+        "dtype": "string",
+        "nullable": true,
+        "description": "Gênero declarado pelo cliente (apenas para auditoria de viés/LGPD - NUNCA usada como feature)",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": true,
+        "example": "M"
+      },
+      {
+        "name": "regiao",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Região geográfica brasileira de residência (apenas para auditoria de viés/LGPD)",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": true,
+        "example": "Sudeste"
+      },
+      {
+        "name": "home_airport",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Aeroporto base mais frequente (código IATA)",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "VCP"
+      },
+      {
+        "name": "join_date",
+        "dtype": "datetime",
+        "nullable": false,
+        "description": "Data de cadastro no programa Azul Fidelidade",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "2023-09-15 00:00:00"
+      },
+      {
+        "name": "current_tier",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Nível vigente no encerramento da janela (azul, topazio, safira, diamante, diamante_unique)",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "azul"
+      },
+      {
+        "name": "status",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Status cadastral do cliente ao fim da janela (ativo ou inativo)",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "ativo"
+      }
+    ],
+    "checks": {
+      "unique": [
+        "customer_id"
+      ],
+      "non_null": [
+        "customer_id",
+        "archetype",
+        "regiao",
+        "home_airport",
+        "join_date",
+        "current_tier",
+        "status"
+      ],
+      "allowed_values": {
+        "archetype": [
+          "executivo_recorrente",
+          "lazer_premium",
+          "maximizador_milhas",
+          "regional_dependente",
+          "eventual_promocional"
+        ],
+        "faixa_etaria": [
+          "18-24",
+          "25-34",
+          "35-44",
+          "45-59",
+          "60+"
+        ],
+        "genero": [
+          "M",
+          "F",
+          "Outro",
+          "Prefiro nao informar"
+        ],
+        "regiao": [
+          "Sudeste",
+          "Sul",
+          "Nordeste",
+          "Centro-Oeste",
+          "Norte"
+        ],
+        "current_tier": [
+          "azul",
+          "topazio",
+          "safira",
+          "diamante",
+          "diamante_unique"
+        ],
+        "status": [
+          "ativo",
+          "inativo"
+        ]
+      }
+    }
+  },
+  "synthetic_flights": {
+    "table": "synthetic_flights",
+    "description": "Voos individuais operados pela Azul na malha doméstica na janela de simulação (2023-09-01 a 2026-08-31)",
+    "granularity": "um voo por trecho operado",
+    "produced_by": "synthetic.generate",
+    "consumers": [
+      "dbt: curated -> analytics",
+      "synthetic.fidelity_report"
+    ],
+    "columns": [
+      {
+        "name": "flight_id",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Identificador único do voo sintético",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "FL0000001"
+      },
+      {
+        "name": "flight_number",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Número de voo com prefixo AD (Azul Linhas Aéreas)",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "AD4102"
+      },
+      {
+        "name": "origin_airport",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Código IATA do aeroporto de origem",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "VCP"
+      },
+      {
+        "name": "destination_airport",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Código IATA do aeroporto de destino",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "SDU"
+      },
+      {
+        "name": "departure_date",
+        "dtype": "datetime",
+        "nullable": false,
+        "description": "Data e horário programados de partida",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "2024-03-15 08:30:00"
+      },
+      {
+        "name": "distance_km",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Distância ortodrômica do trecho em quilômetros",
+        "unit": "km",
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": 410.0
+      },
+      {
+        "name": "scheduled_departure",
+        "dtype": "datetime",
+        "nullable": false,
+        "description": "Horário previsto de partida",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "2024-03-15 08:30:00"
+      },
+      {
+        "name": "actual_departure",
+        "dtype": "datetime",
+        "nullable": false,
+        "description": "Horário real observado de partida",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "2024-03-15 08:42:00"
+      },
+      {
+        "name": "delay_minutes",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Minutos de atraso na partida (>= 0)",
+        "unit": "minutos",
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": 12
+      },
+      {
+        "name": "has_delay",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Indicador binário de atraso relevante (> 15 minutos, critério ANAC)",
+        "unit": "binario",
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": 0
+      },
+      {
+        "name": "is_cancelled",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Indicador binário de cancelamento do voo",
+        "unit": "binario",
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": 0
+      }
+    ],
+    "checks": {
+      "unique": [
+        "flight_id"
+      ],
+      "non_null": [
+        "flight_id",
+        "flight_number",
+        "origin_airport",
+        "destination_airport",
+        "departure_date",
+        "distance_km",
+        "scheduled_departure",
+        "actual_departure",
+        "delay_minutes",
+        "has_delay",
+        "is_cancelled"
+      ],
+      "allowed_values": {
+        "has_delay": [
+          0,
+          1
+        ],
+        "is_cancelled": [
+          0,
+          1
+        ]
+      }
+    }
+  },
+  "synthetic_interactions": {
+    "table": "synthetic_interactions",
+    "description": "Interações de atendimento, pontos de contato nos canais e atritos vivenciados pelos clientes",
+    "granularity": "uma interação",
+    "produced_by": "synthetic.generate",
+    "consumers": [
+      "dbt: curated -> analytics",
+      "synthetic.fidelity_report",
+      "ml.churn",
+      "agent.pipeline"
+    ],
+    "columns": [
+      {
+        "name": "interaction_id",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Identificador único da interação",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "INT0000001"
+      },
+      {
+        "name": "customer_id",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Identificador do cliente que interagiu",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "C000001"
+      },
+      {
+        "name": "interaction_date",
+        "dtype": "datetime",
+        "nullable": false,
+        "description": "Data e hora do contato ou ocorrência do atrito",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "2024-05-12 16:45:00"
+      },
+      {
+        "name": "channel",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Canal da interação (app, web, call_center, aeroporto, whatsapp)",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "app"
+      },
+      {
+        "name": "aspect",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Aspecto central abordado (atraso, bagagem, app_checkin, resgate_milhas, atendimento, preco, nenhum)",
+        "unit": null,
+        "source": "synthetic.generate (config/generator.yaml: dominant_frictions)",
+        "sensitive": false,
+        "example": "atraso"
+      },
+      {
+        "name": "has_friction",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Indicador binário de experiência com atrito ou insatisfação",
+        "unit": "binario",
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": 1
+      },
+      {
+        "name": "friction_intensity",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Intensidade contínua calculada do atrito (escala 0.0 a 1.0)",
+        "unit": "escala_0_a_1",
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": 0.75
+      },
+      {
+        "name": "nps_rating",
+        "dtype": "float",
+        "nullable": true,
+        "description": "Nota de satisfação declarada no NPS (0 a 10); missing MAR documentado (~58% nulo)",
+        "unit": "nota_0_a_10",
+        "source": "synthetic.generate (config/generator.yaml: missing_data)",
+        "sensitive": false,
+        "example": 8.0
+      },
+      {
+        "name": "resolution_status",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Status do caso (resolvido, nao_resolvido, pendente)",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "resolvido"
+      }
+    ],
+    "checks": {
+      "unique": [
+        "interaction_id"
+      ],
+      "non_null": [
+        "interaction_id",
+        "customer_id",
+        "interaction_date",
+        "channel",
+        "aspect",
+        "has_friction",
+        "friction_intensity",
+        "resolution_status"
+      ],
+      "allowed_values": {
+        "channel": [
+          "app",
+          "web",
+          "call_center",
+          "aeroporto",
+          "whatsapp"
+        ],
+        "aspect": [
+          "atraso",
+          "bagagem",
+          "app_checkin",
+          "resgate_milhas",
+          "atendimento",
+          "preco",
+          "nenhum"
+        ],
+        "has_friction": [
+          0,
+          1
+        ],
+        "resolution_status": [
+          "resolvido",
+          "nao_resolvido",
+          "pendente"
+        ]
+      }
+    }
+  },
+  "synthetic_loyalty_events": {
+    "table": "synthetic_loyalty_events",
+    "description": "Eventos de fidelidade na conta do cliente: upgrades, downgrades, renovações de tier e expiração de lotes de pontos",
+    "granularity": "um evento de fidelidade por ocorrência",
+    "produced_by": "synthetic.generate",
+    "consumers": [
+      "dbt: curated -> analytics",
+      "synthetic.fidelity_report",
+      "agent.eligibility"
+    ],
+    "columns": [
+      {
+        "name": "event_id",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Identificador único do evento de fidelidade",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "EV0000001"
+      },
+      {
+        "name": "customer_id",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Identificador do cliente afetado",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "C000001"
+      },
+      {
+        "name": "event_date",
+        "dtype": "datetime",
+        "nullable": false,
+        "description": "Data e hora da ocorrência do evento",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "2024-06-15 10:00:00"
+      },
+      {
+        "name": "event_type",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Tipo de evento de fidelidade (upgrade, downgrade, retention de tier ou expiracao de lote)",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "tier_upgrade"
+      },
+      {
+        "name": "previous_tier",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Nível no programa antes da alteração",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "azul"
+      },
+      {
+        "name": "new_tier",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Nível no programa após a alteração",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "topazio"
+      },
+      {
+        "name": "trigger_reason",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Regra determinante do evento (pontos qualificaveis, trechos, gasto direto ou expiracao de ciclo)",
+        "unit": null,
+        "source": "synthetic.generate (config/program_rules.yaml)",
+        "sensitive": false,
+        "example": "qualifying_points_reached"
+      },
+      {
+        "name": "qualifying_points_at_event",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Saldo acumulado de pontos qualificáveis no ciclo no momento do evento",
+        "unit": "pontos_qualificaveis",
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": 6100
+      },
+      {
+        "name": "segments_at_event",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Contagem de trechos voados no ciclo no momento do evento",
+        "unit": "trechos",
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": 7
+      },
+      {
+        "name": "spend_brl_at_event",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Gasto acumulado em compras elegíveis no ciclo no momento do evento",
+        "unit": "BRL",
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": 6500.0
+      }
+    ],
+    "checks": {
+      "unique": [
+        "event_id"
+      ],
+      "non_null": [
+        "event_id",
+        "customer_id",
+        "event_date",
+        "event_type",
+        "previous_tier",
+        "new_tier",
+        "trigger_reason",
+        "qualifying_points_at_event",
+        "segments_at_event",
+        "spend_brl_at_event"
+      ],
+      "allowed_values": {
+        "event_type": [
+          "tier_upgrade",
+          "tier_downgrade",
+          "tier_retention",
+          "points_expiring"
+        ],
+        "trigger_reason": [
+          "qualifying_points_reached",
+          "segments_reached",
+          "alternative_spend_reached",
+          "qualification_cycle_expired"
+        ],
+        "previous_tier": [
+          "azul",
+          "topazio",
+          "safira",
+          "diamante",
+          "diamante_unique"
+        ],
+        "new_tier": [
+          "azul",
+          "topazio",
+          "safira",
+          "diamante",
+          "diamante_unique"
+        ]
+      }
+    }
+  },
+  "synthetic_transactions": {
+    "table": "synthetic_transactions",
+    "description": "Transações financeiras e de fidelidade realizadas pelos clientes (compras de passagens, ancillaries, acúmulos e resgates)",
+    "granularity": "uma transação",
+    "produced_by": "synthetic.generate",
+    "consumers": [
+      "dbt: curated -> analytics",
+      "synthetic.fidelity_report",
+      "ml.clv"
+    ],
+    "columns": [
+      {
+        "name": "transaction_id",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Identificador único da transação",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "TX0000001"
+      },
+      {
+        "name": "customer_id",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Identificador do cliente que realizou a transação",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "C000001"
+      },
+      {
+        "name": "transaction_date",
+        "dtype": "datetime",
+        "nullable": false,
+        "description": "Data e hora da transação",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "2024-03-10 14:20:00"
+      },
+      {
+        "name": "transaction_type",
+        "dtype": "string",
+        "nullable": false,
+        "description": "Natureza da transação (compra de passagem, serviço ancillary, acúmulo externo ou resgate)",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "compra_passagem"
+      },
+      {
+        "name": "amount_brl",
+        "dtype": "float",
+        "nullable": false,
+        "description": "Valor monetário pago em reais (BRL)",
+        "unit": "BRL",
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": 450.5
+      },
+      {
+        "name": "ancillary_type",
+        "dtype": "string",
+        "nullable": true,
+        "description": "Subtipo de serviço ancillary (quando transaction_type == servico_ancillary)",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "espaco_azul"
+      },
+      {
+        "name": "pontos_azul_acumulados",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Pontos Azul acumulados (multiplicador do nível vigente: 1x, 2x, 3x, 4x por R$ gasto)",
+        "unit": "pontos",
+        "source": "synthetic.generate (config/program_rules.yaml)",
+        "sensitive": false,
+        "example": 1800
+      },
+      {
+        "name": "pontos_qualificaveis_acumulados",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Pontos qualificáveis creditados (R$ 1 gasto em passagens/serviços = 1 QP; 10:1 cartão/clube)",
+        "unit": "pontos_qualificaveis",
+        "source": "synthetic.generate (config/program_rules.yaml: AF-QUALIFYING-POINTS)",
+        "sensitive": false,
+        "example": 450
+      },
+      {
+        "name": "pontos_azul_resgatados",
+        "dtype": "int",
+        "nullable": false,
+        "description": "Pontos Azul debitados em resgates (mínimo 3.000 pts/trecho, teto pelo nível)",
+        "unit": "pontos",
+        "source": "synthetic.generate (config/program_rules.yaml: AF-REDEMPTION)",
+        "sensitive": false,
+        "example": 0
+      },
+      {
+        "name": "flight_id",
+        "dtype": "string",
+        "nullable": true,
+        "description": "Identificador do voo associado à compra aérea (quando aplicável)",
+        "unit": null,
+        "source": "synthetic.generate",
+        "sensitive": false,
+        "example": "FL0000001"
+      }
+    ],
+    "checks": {
+      "unique": [
+        "transaction_id"
+      ],
+      "non_null": [
+        "transaction_id",
+        "customer_id",
+        "transaction_date",
+        "transaction_type",
+        "amount_brl",
+        "pontos_azul_acumulados",
+        "pontos_qualificaveis_acumulados",
+        "pontos_azul_resgatados"
+      ],
+      "allowed_values": {
+        "transaction_type": [
+          "compra_passagem",
+          "servico_ancillary",
+          "acumulo_cartao",
+          "acumulo_clube",
+          "acumulo_parceiro",
+          "resgate_passagem"
+        ],
+        "ancillary_type": [
+          "bagagem",
+          "espaco_azul",
+          "marcacao_assento",
+          "antecipacao_voo",
+          "nenhum"
+        ]
+      }
+    }
+  }
+}
