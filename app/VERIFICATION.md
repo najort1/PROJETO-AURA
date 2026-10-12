@@ -107,7 +107,7 @@ cache-control: no-cache
   | Preço & Tarifas | 0,1026 (10,26%) | 0,1026 (10,26%) | 222 | **OK** |
   | Conforto a Bordo | 0,0502 (5,02%) | 0,0502 (5,02%) | 144 | **OK** |
   | Total de Linhas no Dataset | 49 linhas | 49 combinações monitoradas | **OK** |
-  | Soma dos Pesos | 1,0000 (100,00%) | 1,0000 (100,00%) | 2.279 menções | **OK** |
+  | Soma dos Pesos | 1,0000 (100,00%) | 1,0000 (100,00%) | 2.074 menções | **OK** |
 
 ---
 

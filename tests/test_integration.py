@@ -176,3 +176,47 @@ def test_friction_map_e_peso_total() -> None:
         assert abs(total - 1.0) < 0.01, f"pesos de atrito somam {total:.4f} (esperado 1,0)"
     aspects = set(fm["aspect"].str.lower()) if "aspect" in fm.columns else set()
     assert {"atraso", "resgate_milhas"} <= aspects
+
+
+# ---------------------------------------------------------------------------
+# 7. Recomendações do agente (WS7b/WS8b): contrato e fail-safes sobre a base real
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="module")
+def recommendations() -> pd.DataFrame:
+    return _read("agent_recommendations")
+
+
+def test_recomendacoes_cobrem_a_carteira_com_ids_validos(
+    customers_scores: pd.DataFrame, recommendations: pd.DataFrame
+) -> None:
+    assert len(recommendations) == 50_000
+    assert recommendations["customer_id"].is_unique
+    assert set(recommendations["customer_id"]) == set(customers_scores["customer_id"])
+
+
+def test_recomendacoes_somente_do_inventario_e_offline(recommendations: pd.DataFrame) -> None:
+    import yaml
+
+    data = yaml.safe_load((ROOT / "config" / "actions.yaml").read_text(encoding="utf-8"))
+    actions = data.get("actions", data) if isinstance(data, dict) else data
+    if isinstance(actions, dict):
+        inventory = {v["id"] for v in actions.values() if isinstance(v, dict) and "id" in v}
+    else:
+        inventory = {a["id"] for a in actions}
+    inventory |= {"ACT-NO-ACTION"}
+    fora = set(recommendations["action_id"]) - inventory
+    assert not fora, f"recomendações fora do inventário (regra de ouro violada): {fora}"
+    assert (recommendations["mode"] == "offline").all()
+    assert (recommendations["snapshot_version"] == "research-2026-10-12").all()
+
+
+def test_recomendacoes_fail_safe_no_action_exige_revisao_humana(recommendations: pd.DataFrame) -> None:
+    """ACH-01: todo silêncio responsável (ACT-NO-ACTION) aciona revisão humana."""
+    no_action = recommendations[recommendations["action_id"] == "ACT-NO-ACTION"]
+    assert no_action["human_review"].all(), "existe ACT-NO-ACTION sem revisão humana (fail-safe violado)"
+    com_cit = recommendations[recommendations["citations_json"].astype(str).str.len() > 4]
+    for row in com_cit.head(200).itertuples():
+        cit = json.loads(row.citations_json)
+        assert isinstance(cit, list) and cit, "citations_json deve ser lista não vazia quando presente"
