@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# Ambientes virtuais
+.venv/
+venv/
+.env
+.env.*
+
+# Streamlit / segredos
+.streamlit/secrets.toml
+
+# Dados regeneráveis pelo pipeline (NÃO versionar):
+# - os microdados ANAC (3,2 GB) vivem em data/raw/anac/ (fornecidos fora do git)
+# - o staging original na raiz (ANAC/) também fica fora do git
+# - saídas geradas por `python tasks.py all` vivem em data/curated e data/analytics
+ANAC/
+data/raw/anac/
+data/raw/_manual/
+data/curated/
+data/analytics/
+logs/
+*.log
+*.parquet
+*.duckdb
+*.duckdb.wal
+
+# dbt
+dbt/target/
+dbt/logs/
+dbt/dbt_packages/
+
+# OS
+Thumbs.db
+.DS_Store

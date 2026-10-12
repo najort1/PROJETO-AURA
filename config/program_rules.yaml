@@ -1,0 +1,329 @@
+# =============================================================================
+# Azul Fidelidade - snapshot versionado das regras do programa
+# =============================================================================
+# PROPÓSITO: fonte única de verdade consumida por
+#   (a) gerador sintético      (synthetic/)
+#   (b) motor de elegibilidade  (agent/eligibility.py)
+#   (c) base de conhecimento do RAG (agent/rag/) - citações com id + vigência
+#   (d) painel (app/)          (tier cards, cores, metas)
+#
+# HONESTIDADE METODOLÓGICA (crítico):
+#   Este snapshot foi compilado por PESQUISA WEB em 12/10/2026 a partir de
+#   fontes oficiais da Azul e imprensa especializada, porque o site oficial
+#   bloqueia captura automática (HTTP 403 / Akamai - verificado nesta sessão).
+#   NÃO é uma captura oficial do regulamento. Cada bloco de fatos carrega
+#   `verification_status` e `valid_from`.
+#
+#   Quando houver um snapshot manual (HTML/PDF) do regulamento:
+#     1. coloque o arquivo em data/raw/_manual/
+#     2. registre-o no manifesto (ingestion.register --manual)
+#     3. atualize os fatos abaixo e incremente `snapshot_version`
+#     4. rode `python tasks.py rag` para reindexar
+# =============================================================================
+
+meta:
+  program_name: "Azul Fidelidade"
+  former_name: "TudoAzul"
+  renamed_at: "2024-04-01"
+  snapshot_version: "research-2026-10-12"
+  snapshot_status: "provisional"
+  snapshot_method: >-
+    Compilação via pesquisa web (12/10/2026): páginas oficiais da Azul,
+    comunicados corporativos, documento arquivado na SEC e imprensa
+    especializada. Captura direta do site oficial bloqueada (HTTP 403).
+  policy:
+    null_semantics: >-
+      Valor `null` = regra NÃO confirmada para a vigência de referência.
+      O motor de elegibilidade deve tratar todo valor null como INELEGÍVEL
+      (fail-safe) e sinalizar para revisão humana; nunca inferir.
+    citation_rule: >-
+      Toda recomendação do agente deve citar: fact_id, texto do fato,
+      verification_status, valid_from e snapshot_version deste arquivo.
+
+tiers:
+  - id: AF-TIER-AZUL
+    key: azul
+    name: "Azul Fidelidade"
+    aliases: ["Básico", "Nível Azul"]
+    order: 1
+    ui_color: "#9ae0e8"
+    is_entry_level: true
+    qualification:
+      qualifying_points: 0
+      segments: 0
+      combination: none
+      alternative_spend_brl: null
+    earn:
+      points_per_brl_flight: 1
+      points_validity_years: 2
+    redemption:
+      national_ceiling_points: 130000
+    beneficiaries: 5
+    benefits:
+      - "Wi-Fi em voos nacionais elegíveis"
+      - "Descontos em serviços como antecipação de voo e marcação de assento (condições aplicáveis)"
+    verification_status: official_historical
+    valid_from: "2024-04-01"
+    sources: [S1, S2]
+
+  - id: AF-TIER-TOPAZIO
+    key: topazio
+    name: "Topázio"
+    order: 2
+    ui_color: "#39b4db"
+    qualification:
+      qualifying_points: 6000
+      segments: 6
+      combination: or
+      alternative_spend_brl: null
+    earn:
+      points_per_brl_flight: 2
+      points_validity_years: 3
+    redemption:
+      national_ceiling_points: 120000
+    beneficiaries: 6
+    benefits:
+      - "Uma cortesia anual no Espaço Azul em voos nacionais"
+      - "Uma bagagem gratuita em rotas elegíveis"
+      - "Desconto na antecipação de voo"
+    verification_status: official_historical
+    valid_from: "2024-04-01"
+    sources: [S1, S2, S9]
+
+  - id: AF-TIER-SAFIRA
+    key: safira
+    name: "Safira"
+    order: 3
+    ui_color: "#147fb8"
+    qualification:
+      qualifying_points: 10000
+      segments: 10
+      combination: or
+      alternative_spend_brl: null
+    earn:
+      points_per_brl_flight: 3
+      points_validity_years: 4
+    redemption:
+      national_ceiling_points: 110000
+    beneficiaries: 7
+    benefits:
+      - "Duas bagagens gratuitas em rotas elegíveis"
+      - "Marcação antecipada gratuita de assento em voos nacionais"
+      - "Antecipação gratuita de voos nacionais"
+      - "Resgate Especial Azul: até 5 cotas anuais de passagem nacional a 70.000 pontos/trecho"
+    verification_status: official_historical
+    valid_from: "2024-04-01"
+    sources: [S1, S2, S8, S9]
+
+  - id: AF-TIER-DIAMANTE
+    key: diamante
+    name: "Diamante"
+    order: 4
+    ui_color: "#064c82"
+    qualification:
+      qualifying_points: 12000
+      segments: 12
+      combination: and
+      alternative_spend_brl: 25000
+      note: "(12 trechos E 12.000 pontos qualificáveis) OU R$ 25.000 em gastos aéreos"
+    earn:
+      points_per_brl_flight: 4
+      points_validity_years: 5
+    redemption:
+      national_ceiling_points: 90000
+    beneficiaries: 8
+    benefits:
+      - "Três bagagens gratuitas em rotas elegíveis"
+      - "Espaço Azul ilimitado"
+      - "Passagens cortesia para acompanhantes (condições aplicáveis)"
+      - "Resgate Especial Azul: até 10 cotas anuais de passagem nacional a 50.000 pontos/trecho"
+    verification_status: official_historical
+    valid_from: "2024-04-01"
+    sources: [S1, S2, S8, S9]
+
+  - id: AF-TIER-DIAMANTE-UNIQUE
+    key: diamante_unique
+    name: "Diamante Unique"
+    order: 5
+    ui_color: "#062b52"
+    badge: "Novo"
+    introduced_in: "2026"
+    qualification:
+      qualifying_points: 26000
+      segments: 26
+      combination: and
+      alternative_spend_brl: 50000
+      note: "(26 trechos E 26.000 pontos qualificáveis) OU R$ 50.000 em gastos aéreos"
+    earn:
+      # NÃO confirmado na pesquisa: não atribuir multiplicador sem snapshot vigente.
+      points_per_brl_flight: null
+      points_validity_years: null
+    redemption:
+      national_ceiling_points: null
+    beneficiaries: null
+    benefits:
+      - "Quatro passagens cortesia por ano (condições aplicáveis)"
+      - "Atendimento exclusivo via WhatsApp 24 horas"
+      - "Até três bagagens gratuitas"
+      - "Cortesia em assentos Espaço Azul e Economy Xtra"
+      - "Descontos em upgrades de cabine"
+      - "Acesso ao Lounge Azul em Viracopos"
+    verification_status: official_current_partial
+    valid_from: "2026"
+    sources: [S3, S4]
+
+program_facts:
+  qualifying_points:
+    id: AF-QUALIFYING-POINTS
+    description: "Como se acumulam pontos qualificáveis (definem o nível; distintos dos Pontos Azul de resgate)"
+    rules:
+      flight_and_eligible_services: "R$ 1 gasto em passagens e serviços elegíveis = 1 ponto qualificável"
+      eligible_services: ["bagagem", "Espaço Azul", "Economy Xtra", "marcação antecipada de assento", "upgrade de cabine"]
+      card_azul_itau: "a cada 10 Pontos Azul acumulados = 1 ponto qualificável"
+      clube_azul: "a cada 10 Pontos Azul acumulados = 1 ponto qualificável"
+      purchased_points_generate_qualifying: false
+    verification_status: official_historical
+    valid_from: "2024-04-01"
+    sources: [S2, S9]
+
+  points_purchase:
+    id: AF-POINTS-PURCHASE
+    description: "Condições de compra de Pontos Azul"
+    rules:
+      min_points_per_order: 1000
+      max_points_per_12_months: 100000
+      standard_price_brl_per_point: 0.07
+      credit_deadline_hours: 24
+    verification_status: official_current_partial
+    sources: [S7]
+
+  redemption:
+    id: AF-REDEMPTION
+    description: "Uso de Pontos Azul"
+    rules:
+      min_points_per_flight_segment: 3000
+      redemption_uses:
+        - "Passagens aéreas da Azul"
+        - "Passagens em companhias parceiras"
+        - "Hospedagens"
+        - "Produtos e serviços do Shopping Azul"
+        - "Outras opções de parceiros"
+      note: "Disponibilidade e preço efetivo dependem do produto e das condições da oferta."
+    verification_status: official_current_partial
+    sources: [S1]
+
+  resgate_especial_2025:
+    id: AF-RESGATE-ESPECIAL-2025
+    description: "Resgate Especial Azul - cotas anuais de passagem nacional por valor fixo em pontos"
+    rules:
+      safira: { annual_vouchers: 5, points_per_segment: 70000 }
+      diamante: { annual_vouchers: 10, points_per_segment: 50000 }
+    verification_status: official_current_partial
+    valid_from: "2025-02"
+    notes: "Cotas anuais; elegibilidade e utilização sujeitas a condições específicas do regulamento do benefício."
+    sources: [S8]
+
+  passagem_cortesia_2026:
+    id: AF-PASSAGEM-CORTESIA-2026
+    description: "Retomada da emissão de Passagem Cortesia com pontos e Pontos + Reais"
+    rules:
+      eligible_publics:
+        - "Clientes Diamante Unique"
+        - "Clientes Diamante (condições aplicáveis)"
+        - "Determinados portadores de cartões Azul Itaú"
+        - "Integrantes do Azul One"
+      exclusive_channel: "WhatsApp exclusivo para clientes Diamante Unique"
+    verification_status: official_current_partial
+    valid_from: "2026-02-27"
+    sources: [S4]
+
+  azul_one:
+    id: AF-AZUL-ONE
+    description: "Azul One - grupo por convite (NÃO é um nível ordinal)"
+    rules:
+      access: "Convite anual e nominal, considerando o relacionamento do cliente"
+      not_achievable_by_points: true
+    verification_status: official_current
+    sources: [S1, S3]
+
+  points_validity_transition:
+    id: AF-VALIDITY-TRANSITION
+    description: "Transição de validade na reformulação"
+    rules:
+      points_earned_after: "2024-04-01"       # validade conforme nível no momento do acúmulo
+      points_earned_before: "mantêm a validade originalmente adquirida"
+      promotional_points: "seguem regulamentos específicos de cada campanha"
+    verification_status: official_historical
+    sources: [S2]
+
+scale_facts:
+  total_members:
+    id: AF-SCALE-MEMBERS
+    description: "Membros cadastrados no programa (base total, não ativos)"
+    value_by_year: { 2023: 16600000, 2024: 18200000, 2025: 20100000 }
+    as_of_2025: "2025-12-31"
+    verification_status: official_historical
+    sources: [S5]
+  monthly_active_members:
+    id: AF-SCALE-MAU
+    description: "Membros ativos por mês (aproximado)"
+    value: 1400000
+    period: "média mensal de 2025"
+    verification_status: official_historical
+    sources: [S6]
+
+sources:
+  - id: S1
+    label: "Página oficial do Azul Fidelidade"
+    url: "https://www.voeazul.com.br/br/pt/programa-fidelidade"
+    retrieved_at: "2026-10-12"
+    method: "pesquisa web (captura direta bloqueada - HTTP 403)"
+  - id: S2
+    label: "Página oficial da reformulação do programa (abr/2024)"
+    url: "https://www.voeazul.com.br/br/pt/programa-fidelidade/novo-programa"
+    retrieved_at: "2026-10-12"
+    method: "pesquisa web"
+    note: "Critérios de qualificação, acúmulo, validade, tetos de resgate e beneficiários divulgados na reformulação de 2024 (vigência de referência: 2025)."
+  - id: S3
+    label: "Comunicado oficial da Azul sobre o nível Diamante Unique (2026)"
+    url: "https://www.voeazul.com.br/content/dam/azul/voe-azul/imprensa/Com%20show%20de%20Alceu%20Valen%C3%A7a.pdf"
+    retrieved_at: "2026-10-12"
+    method: "pesquisa web"
+  - id: S4
+    label: "Comunicado oficial da Azul sobre Passagem Cortesia e atendimento exclusivo (27/02/2026)"
+    url: "https://www.voeazul.com.br/content/dam/azul/voe-azul/imprensa/"
+    retrieved_at: "2026-10-12"
+    method: "pesquisa web (PDF específico listado em docs/source_verification.md)"
+  - id: S5
+    label: "Documento corporativo da Azul arquivado na SEC (exercício 2025)"
+    url: "https://www.sec.gov/Archives/edgar/data/1432364/000162828026023423/azul-20251231.htm"
+    retrieved_at: "2026-10-12"
+    method: "pesquisa web"
+  - id: S6
+    label: "Azul - Relações com Investidores (por que investir / Azul Fidelidade)"
+    url: "https://ri.voeazul.com.br"
+    retrieved_at: "2026-10-12"
+    method: "pesquisa web"
+  - id: S7
+    label: "Termos oficiais de compra de Pontos Azul"
+    url: "https://www.voeazul.com.br/br/pt/programa-fidelidade"
+    retrieved_at: "2026-10-12"
+    method: "pesquisa web"
+    note: "Condições comerciais sujeitas a mudança; reconsultar em produção."
+  - id: S8
+    label: "Regulamento do Resgate Especial Azul (fev/2025)"
+    url: "https://www.voeazul.com.br/br/pt/programa-fidelidade"
+    retrieved_at: "2026-10-12"
+    method: "pesquisa web"
+  - id: S9
+    label: "Passageiro de Primeira - pontos qualificáveis no Azul Fidelidade (fonte secundária)"
+    url: "https://www.passageiodeprimeira.com"
+    retrieved_at: "2026-10-12"
+    method: "pesquisa web"
+    type: "imprensa especializada"
+  - id: S10
+    label: "Serasa - histórico TudoAzul -> Azul Fidelidade (fonte secundária)"
+    url: "https://www.serasa.com.br"
+    retrieved_at: "2026-10-12"
+    method: "pesquisa web"
+    type: "fonte secundária"

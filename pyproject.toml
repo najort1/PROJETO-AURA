@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aura-retention"
+version = "2.0.0"
+description = "Aura 2.0 — pipeline reproduzível de inteligência de clientes e retenção sobre base sintética calibrada com fontes públicas brasileiras (ANAC, Azul Fidelidade)."
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+license = { text = "MIT" }
+authors = [{ name = "Projeto Aura" }]
+keywords = ["clv", "churn", "retention", "loyalty", "rag", "responsible-ai"]
+
+dependencies = [
+  "pandas>=2.2,<3",
+  "numpy>=1.26",
+  "pyarrow>=15",
+  "duckdb>=1.1",
+  "PyYAML>=6.0",
+  "scipy>=1.13",
+  "scikit-learn>=1.5",
+  "lightgbm>=4.4",
+  "matplotlib>=3.9",
+  "pandera>=0.20",
+  "pydantic>=2.7",
+  "streamlit>=1.37",
+  "dbt-duckdb>=1.9",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.6", "pre-commit>=3.7"]
+
+[tool.setuptools.packages.find]
+include = ["aura_core*", "ingestion*", "synthetic*", "ml*", "agent*", "app*", "schemas*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q --strict-markers"
+markers = [
+  "slow: testes de integração lentos (exigem artefatos do pipeline completo)",
+  "requires_data: testes que exigem os microdados ANAC em data/raw/",
+]

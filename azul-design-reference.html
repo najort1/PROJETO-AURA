@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Referência visual e de código dos padrões de interface observados nas páginas Azul Viagens e Azul Fidelidade.">
+  <title>Azul Design Patterns — Referência para implementação</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            azul: {
+              50: '#effaff', 100: '#d8f4fd', 200: '#b5eafb', 300: '#78d8f3',
+              400: '#36bce3', 500: '#079acb', 600: '#087eb3', 700: '#08648f',
+              800: '#084e70', 900: '#083e5b', 950: '#032943'
+            },
+            brand: {
+              blue: '#0874B5', cyan: '#008BC4', deep: '#033774', navy: '#0B3558',
+              magenta: '#E832A5', lime: '#D8ED00', canvas: '#F8F9FA', border: '#E2E6E9',
+              ink: '#1E2A30'
+            }
+          },
+          boxShadow: { 'panel': '0 8px 24px rgba(3, 55, 116, .08)' },
+          borderRadius: { 'azul': '5px' },
+          maxWidth: { 'site': '1100px' }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --azul-primary: #008BC4;
+      --azul-action: #0874B5;
+      --azul-sky: #2DA6D4;
+      --azul-deep: #033774;
+      --azul-navy: #0B3558;
+      --magenta-cta: #E832A5;
+      --lime-campaign: #D8ED00;
+      --text-primary: #1E2A30;
+      --text-secondary: #657681;
+      --surface: #FFFFFF;
+      --canvas: #F8F9FA;
+      --border-subtle: #E2E6E9;
+      --radius-sm: 4px;
+      --radius-md: 7px;
+      --content-max: 1100px;
+    }
+    html { scroll-behavior: smooth; scroll-padding-top: 88px; }
+    body { color: var(--text-primary); background: var(--canvas); font-family: Arial, Helvetica, sans-serif; }
+    .container-site { width: min(calc(100% - 40px), var(--content-max)); margin-inline: auto; }
+    .section-mark { width: 34px; height: 3px; background: var(--magenta-cta); margin-top: 8px; }
+    .hero-travel { background-image: linear-gradient(90deg, rgba(2,43,76,.58), rgba(2,43,76,.08) 64%, rgba(2,43,76,.06)), url('https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=1800&q=85'); background-position: center 52%; background-size: cover; }
+    .hero-fidelity { background: radial-gradient(circle at 72% 54%, rgba(0,153,207,.8), transparent 28%), linear-gradient(115deg, #075b9b 0%, #088cc3 49%, #34b5dc 100%); }
+    .photo-overlay { position: relative; isolation: isolate; }
+    .photo-overlay::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(0deg, rgba(0,22,44,.78), rgba(0,22,44,.03) 76%); }
+    .tier-1 { background: #9ae0e8; color: #0b4760; }
+    .tier-2 { background: #39b4db; color: #073c62; }
+    .tier-3 { background: #147fb8; color: white; }
+    .tier-4 { background: #064c82; color: white; }
+    .tier-5 { background: #062b52; color: white; }
+    .nav-link { color: #4f626d; transition: color .18s ease; }
+    .nav-link:hover, .nav-link:focus-visible { color: var(--azul-action); }
+    .demo-tab[aria-selected="true"] { background: white; color: var(--azul-action); border-bottom: 3px solid var(--magenta-cta); font-weight: 700; }
+    .demo-tab[aria-selected="false"] { background: #f0f3f5; color: #647681; }
+    .field { min-width: 0; }
+    .field label { display: block; margin-bottom: 6px; color: #61717a; font-size: 10px; font-weight: 700; letter-spacing: .035em; text-transform: uppercase; }
+    .field input, .field select { width: 100%; height: 38px; border: 1px solid #d7dee2; border-radius: 4px; background: white; padding: 0 10px; font-size: 12px; color: #35454d; outline: none; }
+    .field input:focus, .field select:focus { border-color: var(--azul-action); box-shadow: 0 0 0 3px rgba(8,116,181,.13); }
+    .focus-ring:focus-visible { outline: 3px solid rgba(232,50,165,.7); outline-offset: 3px; }
+    .swatch { min-height: 88px; }
+    .scrollbar-none { scrollbar-width: none; }
+    .scrollbar-none::-webkit-scrollbar { display: none; }
+    .small-link { color: var(--azul-action); font-size: 12px; font-weight: 700; text-decoration: none; }
+    .small-link:hover { text-decoration: underline; }
+    .tier-scroll { scrollbar-width: thin; scrollbar-color: #a8bdca transparent; }
+    @media (max-width: 640px) {
+      .container-site { width: min(calc(100% - 28px), var(--content-max)); }
+      .hero-travel { background-position: 58% center; }
+      .mobile-hide { display: none !important; }
+    }
+  </style>
+</head>
+<body class="antialiased">
+  <!--
+    AZUL DESIGN PATTERNS — SINGLE-FILE REFERENCE
+    Purpose: visual source of truth for an implementation agent. This is a designed reference/demo,
+    not a pixel-perfect reproduction and not the original Azul source code.
+    Stack: one HTML file, Tailwind CSS CDN, small custom CSS token layer, vanilla JS for demo controls.
+    Images are loaded from Unsplash URLs and require an internet connection.
+  -->
+
+  <!-- Top documentation bar -->
+  <div class="bg-brand-navy text-white">
+    <div class="container-site flex min-h-10 items-center justify-between gap-4 py-2 text-[11px] sm:text-xs">
+      <div class="flex items-center gap-2"><span class="inline-flex h-2 w-2 rounded-full bg-brand-lime"></span><span class="font-bold tracking-[.16em]">AZUL UI REFERENCE</span><span class="hidden text-white/60 sm:inline">/ Design patterns inventory</span></div>
+      <div class="flex items-center gap-3 text-white/75"><span class="hidden sm:inline">Documento visual para agentes de implementação</span><a href="#implementation-rules" class="focus-ring rounded underline decoration-white/40 underline-offset-4 hover:text-white">Regras para IA ↓</a></div>
+    </div>
+  </div>
+
+  <!-- Reference navigation -->
+  <header class="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <div class="container-site flex min-h-[64px] items-center justify-between gap-5">
+      <a href="#overview" class="focus-ring flex shrink-0 items-center gap-2 rounded" aria-label="Ir para o início da referência">
+        <span class="relative block text-[29px] font-extrabold leading-none tracking-[-.09em] text-brand-navy">Azul<span class="absolute -bottom-1 left-0 block h-[2px] w-full bg-sky-400"></span></span>
+        <span class="pt-3 text-[9px] font-bold uppercase tracking-[.13em] text-brand-blue">design patterns</span>
+      </a>
+      <nav class="hidden items-center gap-5 text-xs font-semibold lg:flex" aria-label="Navegação da referência">
+        <a class="nav-link" href="#tokens">Tokens</a><a class="nav-link" href="#travel">Viagens</a><a class="nav-link" href="#fidelity">Fidelidade</a><a class="nav-link" href="#components">Componentes</a><a class="nav-link" href="#implementation-rules">Regras para IA</a>
+      </nav>
+      <a href="#implementation-rules" class="focus-ring rounded bg-brand-blue px-3 py-2 text-xs font-bold text-white transition hover:bg-brand-deep">Usar como referência</a>
+    </div>
+    <div class="container-site flex gap-4 overflow-x-auto pb-2 text-[11px] font-semibold lg:hidden scrollbar-none">
+      <a class="nav-link whitespace-nowrap" href="#tokens">Tokens</a><a class="nav-link whitespace-nowrap" href="#travel">Azul Viagens</a><a class="nav-link whitespace-nowrap" href="#fidelity">Azul Fidelidade</a><a class="nav-link whitespace-nowrap" href="#components">Componentes</a><a class="nav-link whitespace-nowrap" href="#implementation-rules">Regras para IA</a>
+    </div>
+  </header>
+
+  <main id="overview">
+    <!-- Intro / system overview -->
+    <section class="bg-white py-12 sm:py-16">
+      <div class="container-site grid items-center gap-10 lg:grid-cols-[1.1fr_.9fr]">
+        <div>
+          <p class="mb-3 text-[11px] font-bold uppercase tracking-[.2em] text-brand-blue">Design system de referência</p>
+          <h1 class="max-w-2xl text-3xl font-bold leading-tight tracking-tight text-brand-navy sm:text-5xl">Padrões de interface do ecossistema <span class="text-brand-blue">Azul</span></h1>
+          <p class="mt-5 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">Uma página de consulta para reproduzir a linguagem visual observada nas experiências Azul Viagens e Azul Fidelidade: estrutura, cores, navegação, formulários, cards, banners, carrosséis e componentes reutilizáveis.</p>
+          <div class="mt-7 flex flex-wrap gap-3"><a href="#travel" class="focus-ring rounded bg-brand-magenta px-5 py-3 text-sm font-bold text-white hover:brightness-95">Ver padrões de Viagens</a><a href="#fidelity" class="focus-ring rounded border border-brand-blue px-5 py-3 text-sm font-bold text-brand-blue hover:bg-azul-50">Ver padrões de Fidelidade</a></div>
+          <p class="mt-5 max-w-xl text-[11px] leading-5 text-slate-500">Referência inferida a partir de capturas de tela. A paleta é aproximada; esta página não representa o código oficial da Azul nem confirma o comportamento real do site.</p>
+        </div>
+        <div class="grid grid-cols-2 gap-3 sm:gap-4">
+          <div class="relative col-span-2 overflow-hidden rounded-sm bg-brand-navy p-6 text-white sm:p-8">
+            <div class="absolute -right-8 -top-12 h-52 w-52 rounded-full border-[24px] border-white/10"></div><div class="absolute -right-3 bottom-[-48px] h-40 w-40 rounded-full bg-brand-blue/70"></div>
+            <span class="relative text-[10px] font-bold uppercase tracking-[.2em] text-sky-200">Base compartilhada</span><h2 class="relative mt-2 max-w-md text-2xl font-bold">Azul institucional + superfícies claras + conteúdo comercial</h2><p class="relative mt-3 max-w-md text-sm leading-6 text-white/75">O conteúdo e as imagens geram impacto; a estrutura branca e os espaços claros mantêm leitura e organização.</p>
+          </div>
+          <div class="rounded-sm border border-slate-200 bg-brand-canvas p-5"><div class="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-azul-100 text-brand-blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7.5h18M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z"/><path d="m7 12 2 2 4-4"/></svg></div><h3 class="text-sm font-bold">Viagens</h3><p class="mt-1 text-xs leading-5 text-slate-600">Busca, preço, destino e exploração de ofertas.</p></div>
+          <div class="rounded-sm border border-slate-200 bg-brand-canvas p-5"><div class="mb-3 flex h-9 w-9 items-center justify-center rounded-full bg-azul-100 text-brand-blue"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3 19 6v5c0 4.5-3 7.5-7 10-4-2.5-7-5.5-7-10V6l7-3Z"/><path d="m9 12 2 2 4-4"/></svg></div><h3 class="text-sm font-bold">Fidelidade</h3><p class="mt-1 text-xs leading-5 text-slate-600">Educação, tiers, benefícios e parceiros.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tokens -->
+    <section id="tokens" class="py-14 sm:py-16">
+      <div class="container-site">
+        <div class="flex flex-wrap items-end justify-between gap-4"><div><p class="text-[10px] font-bold uppercase tracking-[.18em] text-brand-blue">01 / Fundamentos</p><h2 class="mt-2 text-2xl font-bold text-brand-navy sm:text-3xl">Tokens visuais aproximados</h2><p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Use estes valores como ponto de partida. Não foram extraídos do CSS original e devem ser ajustados quando houver assets ou especificações oficiais.</p></div><span class="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-500">Estimativas visuais</span></div>
+        <div class="mt-7 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <div class="swatch rounded-sm bg-[#0874B5] p-3 text-white"><div class="flex h-full flex-col justify-between gap-6"><span class="text-xs font-bold">Azul ação</span><span class="font-mono text-[11px]">#0874B5</span></div></div>
+          <div class="swatch rounded-sm bg-[#008BC4] p-3 text-white"><div class="flex h-full flex-col justify-between gap-6"><span class="text-xs font-bold">Azul primário</span><span class="font-mono text-[11px]">#008BC4</span></div></div>
+          <div class="swatch rounded-sm bg-[#033774] p-3 text-white"><div class="flex h-full flex-col justify-between gap-6"><span class="text-xs font-bold">Azul profundo</span><span class="font-mono text-[11px]">#033774</span></div></div>
+          <div class="swatch rounded-sm bg-[#0B3558] p-3 text-white"><div class="flex h-full flex-col justify-between gap-6"><span class="text-xs font-bold">Navy</span><span class="font-mono text-[11px]">#0B3558</span></div></div>
+          <div class="swatch rounded-sm bg-[#E832A5] p-3 text-white"><div class="flex h-full flex-col justify-between gap-6"><span class="text-xs font-bold">Magenta CTA</span><span class="font-mono text-[11px]">#E832A5</span></div></div>
+          <div class="swatch rounded-sm bg-[#D8ED00] p-3 text-brand-navy"><div class="flex h-full flex-col justify-between gap-6"><span class="text-xs font-bold">Lima campanha</span><span class="font-mono text-[11px]">#D8ED00</span></div></div>
+        </div>
+        <div class="mt-4 grid gap-3 md:grid-cols-3">
+          <div class="rounded-sm border border-slate-200 bg-white p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Canvas / superfície</p><div class="mt-3 flex gap-2"><span class="h-8 flex-1 rounded-sm border border-slate-200 bg-[#F8F9FA]"></span><span class="h-8 flex-1 rounded-sm border border-slate-200 bg-white"></span><span class="h-8 flex-1 rounded-sm border border-slate-200 bg-[#E2E6E9]"></span></div><p class="mt-2 font-mono text-[10px] text-slate-500">#F8F9FA · #FFFFFF · #E2E6E9</p></div>
+          <div class="rounded-sm border border-slate-200 bg-white p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Texto</p><div class="mt-3 flex gap-2"><span class="h-8 flex-1 rounded-sm bg-[#1E2A30]"></span><span class="h-8 flex-1 rounded-sm bg-[#657681]"></span><span class="h-8 flex-1 rounded-sm bg-[#B5C0C6]"></span></div><p class="mt-2 font-mono text-[10px] text-slate-500">Principal · secundário · desabilitado</p></div>
+          <div class="rounded-sm border border-slate-200 bg-white p-4"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Forma / espaço</p><div class="mt-3 flex items-center gap-3"><span class="h-8 w-12 rounded-[4px] border border-brand-blue"></span><span class="h-8 w-12 rounded-[7px] border border-brand-blue"></span><span class="h-8 w-12 rounded-full border border-brand-blue"></span></div><p class="mt-2 text-[10px] text-slate-500">4px inputs/cards · 7px painéis · pill para badges/CTA</p></div>
+        </div>
+        <div class="mt-5 grid gap-5 rounded-sm border border-slate-200 bg-white p-5 md:grid-cols-2 md:p-6">
+          <div><h3 class="text-sm font-bold text-brand-navy">Escala tipográfica sugerida</h3><div class="mt-4 space-y-3"><div class="flex items-baseline justify-between gap-3 border-b border-slate-100 pb-2"><span class="text-2xl font-bold">Hero headline</span><code class="text-[10px] text-slate-500">28–40px / bold</code></div><div class="flex items-baseline justify-between gap-3 border-b border-slate-100 pb-2"><span class="text-xl font-bold">Título de seção</span><code class="text-[10px] text-slate-500">18–24px</code></div><div class="flex items-baseline justify-between gap-3 border-b border-slate-100 pb-2"><span class="text-sm font-semibold">Título de card</span><code class="text-[10px] text-slate-500">14–16px</code></div><div class="flex items-baseline justify-between gap-3"><span class="text-xs text-slate-600">Metadados / apoio</span><code class="text-[10px] text-slate-500">12–13px preferível</code></div></div></div>
+          <div><h3 class="text-sm font-bold text-brand-navy">Ritmo de espaçamento</h3><div class="mt-4 space-y-3"><div class="flex items-center gap-3"><span class="w-12 text-[10px] text-slate-500">4 px</span><span class="h-2 w-1 rounded bg-brand-blue"></span><span class="text-xs">Detalhes compactos</span></div><div class="flex items-center gap-3"><span class="w-12 text-[10px] text-slate-500">8 px</span><span class="h-2 w-2 rounded bg-brand-blue"></span><span class="text-xs">Espaço curto</span></div><div class="flex items-center gap-3"><span class="w-12 text-[10px] text-slate-500">16 px</span><span class="h-2 w-4 rounded bg-brand-blue"></span><span class="text-xs">Padding interno comum</span></div><div class="flex items-center gap-3"><span class="w-12 text-[10px] text-slate-500">24 px</span><span class="h-2 w-6 rounded bg-brand-blue"></span><span class="text-xs">Gap entre elementos</span></div><div class="flex items-center gap-3"><span class="w-12 text-[10px] text-slate-500">48 px</span><span class="h-2 w-12 rounded bg-brand-blue"></span><span class="text-xs">Separação entre blocos</span></div></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Travel page pattern preview -->
+    <section id="travel" class="border-y border-slate-200 bg-white py-12 sm:py-16">
+      <div class="container-site">
+        <div class="mb-8 flex flex-wrap items-end justify-between gap-4"><div><p class="text-[10px] font-bold uppercase tracking-[.18em] text-brand-magenta">02 / Experiência comercial</p><h2 class="mt-2 text-2xl font-bold text-brand-navy sm:text-3xl">Azul Viagens</h2><p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Padrões de descoberta e conversão: hero fotográfico, busca sobreposta, cards de preço, mosaico editorial e ofertas horizontais.</p></div><span class="rounded-sm bg-brand-canvas px-3 py-2 text-[10px] font-bold text-slate-500">DEMO DE COMPONENTES</span></div>
+
+        <!-- Travel header -->
+        <div class="overflow-hidden rounded-sm border border-slate-200 bg-white shadow-sm">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-4 py-3 sm:px-6">
+            <div class="flex items-end gap-1"><span class="text-[25px] font-extrabold leading-none tracking-[-.08em] text-brand-navy">Azul</span><span class="text-[13px] leading-none text-brand-blue">viagens</span></div>
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-[10px] text-slate-600"><span class="font-bold text-brand-magenta">☎ 4003 1181</span><span class="mobile-hide">◉ ◎ f</span><a href="#travel-search" class="nav-link">Consultar sua reserva</a><button class="rounded-sm bg-brand-magenta px-3 py-1.5 font-bold text-white">Acesso</button><button class="rounded-sm border border-slate-200 px-2 py-1">BRL⌄</button><button class="rounded-sm border border-slate-200 px-2 py-1">Português⌄</button></div>
+          </div>
+          <nav class="flex gap-5 overflow-x-auto px-4 py-3 text-[11px] font-semibold sm:justify-center sm:px-6 scrollbar-none" aria-label="Menu Azul Viagens">
+            <a class="whitespace-nowrap font-bold text-brand-navy" href="#travel-search">Home</a><a class="nav-link whitespace-nowrap" href="#travel-offers">Europamundo</a><a class="nav-link whitespace-nowrap" href="#travel-offers">Cruzeiros⌄</a><a class="nav-link whitespace-nowrap" href="#travel-offers">Feriados⌄</a><a class="nav-link whitespace-nowrap" href="#travel-mosaic">Experiências⌄</a><a class="nav-link whitespace-nowrap" href="#travel-offers">Combinadas</a><a class="nav-link whitespace-nowrap" href="#travel-mosaic">Destinos Azul⌄</a><a class="nav-link whitespace-nowrap" href="#travel-footer">Blogueiros⌄</a>
+          </nav>
+          <!-- Hero and campaign treatment -->
+          <div class="hero-travel relative flex min-h-[270px] items-start sm:min-h-[320px]">
+            <div class="container-site relative z-10 flex w-full flex-col items-start justify-center py-9 sm:py-11">
+              <div class="max-w-[610px] pl-1 text-white sm:pl-4">
+                <span class="inline-block rounded-sm bg-brand-deep px-4 py-2 text-lg font-extrabold sm:text-2xl">Resorts <span class="mt-1 block text-[10px] font-bold text-brand-lime sm:text-xs">Seleção Azul Viagens</span></span>
+                <h3 class="mt-4 max-w-xl text-2xl font-bold leading-tight drop-shadow sm:text-3xl">Se hospedar em um resort é inesquecível. Você merece viver essa experiência.</h3>
+                <a href="#travel-offers" class="focus-ring mt-5 inline-flex rounded-full bg-brand-lime px-5 py-2.5 text-sm font-extrabold text-brand-blue shadow-sm transition hover:brightness-95 sm:text-base">Aproveitar ofertas <span aria-hidden="true" class="ml-2">→</span></a>
+              </div>
+            </div>
+            <button class="focus-ring absolute left-2 top-1/2 z-10 hidden -translate-y-1/2 rounded-full bg-white/80 px-3 py-2 text-xl text-brand-magenta sm:block" aria-label="Banner anterior">‹</button><button class="focus-ring absolute right-2 top-1/2 z-10 hidden -translate-y-1/2 rounded-full bg-white/80 px-3 py-2 text-xl text-brand-magenta sm:block" aria-label="Próximo banner">›</button>
+            <div class="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5" aria-label="Indicadores de slides"><span class="h-1.5 w-5 rounded-full bg-white"></span><span class="h-1.5 w-1.5 rounded-full bg-white/70"></span><span class="h-1.5 w-1.5 rounded-full bg-white/70"></span><span class="h-1.5 w-1.5 rounded-full bg-white/70"></span></div>
+          </div>
+
+          <!-- Search panel -->
+          <div id="travel-search" class="container-site relative z-20 -mt-8 pb-7 sm:-mt-10">
+            <div class="rounded-sm bg-white shadow-panel ring-1 ring-black/5">
+              <div class="flex gap-0 overflow-x-auto border-b border-slate-200 scrollbar-none" role="tablist" aria-label="Produto de viagem">
+                <button class="demo-tab whitespace-nowrap px-4 py-3 text-[11px]" role="tab" aria-selected="true" data-search-tab="Pacotes">Pacotes</button><button class="demo-tab whitespace-nowrap px-4 py-3 text-[11px]" role="tab" aria-selected="false" data-search-tab="Hospedagens">Hospedagens</button><button class="demo-tab whitespace-nowrap px-4 py-3 text-[11px]" role="tab" aria-selected="false" data-search-tab="Ingressos e passeios">Ingressos e passeios</button><button class="demo-tab whitespace-nowrap px-4 py-3 text-[11px]" role="tab" aria-selected="false" data-search-tab="Carros">Carros</button><button class="demo-tab whitespace-nowrap px-4 py-3 text-[11px]" role="tab" aria-selected="false" data-search-tab="Traslados">Traslados</button><button class="demo-tab whitespace-nowrap px-4 py-3 text-[11px]" role="tab" aria-selected="false" data-search-tab="Seguros">Seguros</button>
+              </div>
+              <div class="px-4 py-4 sm:px-5 sm:py-5">
+                <div class="mb-4 flex flex-wrap items-center gap-4 text-[10px] text-slate-500"><span class="font-bold text-brand-blue">● Voo + Hotel</span><span>○ Outras combinações</span><span id="search-product-note" class="ml-auto text-slate-400">Pacotes de viagem</span></div>
+                <form class="grid grid-cols-1 gap-x-3 gap-y-4 sm:grid-cols-2 lg:grid-cols-12" onsubmit="event.preventDefault(); document.getElementById('search-feedback').classList.remove('hidden');">
+                  <div class="field lg:col-span-2"><label for="origin">Cidade de origem</label><input id="origin" placeholder="⌖ Cidade de origem" autocomplete="off"></div>
+                  <div class="field lg:col-span-2"><label for="destination">Cidade de destino</label><input id="destination" placeholder="⌖ Cidade de destino" autocomplete="off"></div>
+                  <div class="field lg:col-span-3"><label for="airport">Aeroporto de destino</label><select id="airport"><option>Selecione um aeroporto</option><option>Cancún (CUN)</option><option>Punta Cana (PUJ)</option><option>Orlando (MCO)</option></select></div>
+                  <div class="field lg:col-span-2"><label for="depart">Data de saída</label><input id="depart" type="date" value="2026-11-14"></div>
+                  <div class="field lg:col-span-2"><label for="return">Volta</label><input id="return" type="date" value="2026-11-21"></div>
+                  <div class="field lg:col-span-1"><label for="passengers">Pessoas</label><select id="passengers"><option>1 +</option><option selected>2</option><option>3</option><option>4</option><option>5+</option></select></div>
+                  <div class="field sm:col-span-1 lg:col-span-3"><label for="class">Classe</label><select id="class"><option>Econômica</option><option>Executiva</option><option>Premium Economy</option></select></div>
+                  <div class="field sm:col-span-1 lg:col-span-3"><label for="baggage">Franquia de bagagem</label><select id="baggage"><option>Indiferente</option><option>Bagagem de mão</option><option>Bagagem despachada</option></select></div>
+                  <div class="flex flex-wrap items-end gap-3 sm:col-span-2 lg:col-span-6 lg:justify-end"><label class="flex items-center gap-2 pb-2 text-[11px] text-slate-600"><input type="checkbox" class="accent-brand-blue"> Casa de temporada</label><span class="pb-2 text-[10px] uppercase text-slate-400">Exibir valores em:</span><label class="flex items-center gap-1 pb-2 text-[11px]"><input type="radio" name="currency-view" checked class="accent-brand-magenta"> Reais</label><label class="flex items-center gap-1 pb-2 text-[11px] text-slate-500"><input type="radio" name="currency-view" class="accent-brand-magenta"> Pontos</label></div>
+                  <div class="flex flex-wrap items-center justify-between gap-3 sm:col-span-2 lg:col-span-12"><button id="more-options" type="button" class="focus-ring text-[11px] font-semibold text-slate-600 hover:text-brand-blue" aria-expanded="false">Mais opções <span aria-hidden="true">⌄</span></button><button type="submit" class="focus-ring rounded-sm bg-brand-magenta px-8 py-3 text-xs font-bold text-white transition hover:brightness-95">Buscar viagens <span aria-hidden="true" class="ml-1">→</span></button></div>
+                  <div id="extra-options" class="hidden grid-cols-1 gap-3 border-t border-slate-100 pt-4 sm:col-span-2 sm:grid-cols-3 lg:col-span-12"><div class="field"><label for="flex-date">Flexibilidade de datas</label><select id="flex-date"><option>Datas exatas</option><option>Até 3 dias de flexibilidade</option></select></div><div class="field"><label for="rooms">Quartos</label><select id="rooms"><option>1 quarto</option><option>2 quartos</option><option>3 quartos</option></select></div><div class="field"><label for="promo">Código promocional</label><input id="promo" placeholder="Informe seu código"></div></div>
+                  <p id="search-feedback" class="hidden text-xs font-semibold text-brand-blue sm:col-span-2 lg:col-span-12" role="status">Demonstração: formulário validado visualmente. Conecte este componente ao fluxo de busca real.</p>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Destination offers -->
+        <section id="travel-offers" class="pt-10">
+          <div class="mb-5"><h3 class="text-lg font-normal text-brand-navy">Ofertas para conhecer novos lugares</h3><div class="section-mark"></div></div>
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <article class="group overflow-hidden border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:shadow-panel"><a href="#implementation-rules" class="focus-ring block"><div class="relative h-28 overflow-hidden"><img class="h-full w-full object-cover transition duration-300 group-hover:scale-105" src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80" alt="Praia de água azul em destino tropical"><span class="absolute left-2 top-2 rounded-full bg-white px-2 py-1 text-[9px] font-bold text-brand-navy">6 dias / 5 noites</span><span class="absolute right-2 top-2 text-xs text-white drop-shadow">✈ ◉</span></div><div class="p-3"><h4 class="text-xs font-bold text-brand-navy">Punta Cana</h4><div class="mt-2 flex items-end justify-between gap-2"><span class="text-[9px] text-slate-500">A partir de</span><strong class="text-sm text-brand-magenta">R$ 5.984,87</strong></div></div></a></article>
+            <article class="group overflow-hidden border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:shadow-panel"><a href="#implementation-rules" class="focus-ring block"><div class="relative h-28 overflow-hidden"><img class="h-full w-full object-cover transition duration-300 group-hover:scale-105" src="https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=600&q=80" alt="Praia e hospedagem cercadas por água turquesa"><span class="absolute left-2 top-2 rounded-full bg-white px-2 py-1 text-[9px] font-bold text-brand-navy">8 dias / 7 noites</span><span class="absolute right-2 top-2 text-xs text-white drop-shadow">✈ ◉</span></div><div class="p-3"><h4 class="text-xs font-bold text-brand-navy">Curaçao</h4><div class="mt-2 flex items-end justify-between gap-2"><span class="text-[9px] text-slate-500">A partir de</span><strong class="text-sm text-brand-magenta">R$ 1.457,22</strong></div></div></a></article>
+            <article class="group overflow-hidden border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:shadow-panel"><a href="#implementation-rules" class="focus-ring block"><div class="relative h-28 overflow-hidden"><img class="h-full w-full object-cover transition duration-300 group-hover:scale-105" src="https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=600&q=80" alt="Costa com hotéis e mar azul"><span class="absolute left-2 top-2 rounded-full bg-white px-2 py-1 text-[9px] font-bold text-brand-navy">8 dias / 7 noites</span><span class="absolute right-2 top-2 text-xs text-white drop-shadow">✈ ◉</span></div><div class="p-3"><h4 class="text-xs font-bold text-brand-navy">Cancún</h4><div class="mt-2 flex items-end justify-between gap-2"><span class="text-[9px] text-slate-500">A partir de</span><strong class="text-sm text-brand-magenta">R$ 8.300,82</strong></div></div></a></article>
+            <article class="group overflow-hidden border border-slate-200 bg-white transition hover:-translate-y-0.5 hover:shadow-panel"><a href="#implementation-rules" class="focus-ring block"><div class="relative h-28 overflow-hidden"><img class="h-full w-full object-cover transition duration-300 group-hover:scale-105" src="https://images.unsplash.com/photo-1510414842594-a61c69b5ae57?auto=format&fit=crop&w=600&q=80" alt="Praia tropical com areia clara"><span class="absolute left-2 top-2 rounded-full bg-white px-2 py-1 text-[9px] font-bold text-brand-navy">6 dias / 5 noites</span><span class="absolute right-2 top-2 text-xs text-white drop-shadow">✈ ◉</span></div><div class="p-3"><h4 class="text-xs font-bold text-brand-navy">Aruba</h4><div class="mt-2 flex items-end justify-between gap-2"><span class="text-[9px] text-slate-500">A partir de</span><strong class="text-sm text-brand-magenta">R$ 8.808,82</strong></div></div></a></article>
+          </div>
+          <p class="mt-2 text-[10px] text-slate-400">Valores e destinos são dados ilustrativos para demonstrar a hierarquia visual; não são ofertas verificadas.</p>
+        </section>
+
+        <!-- Editorial mosaic -->
+        <section id="travel-mosaic" class="pt-14 sm:pt-16">
+          <div class="mb-5"><h3 class="text-lg font-normal text-brand-navy">Muito mais que aéreo + hotel</h3><div class="section-mark"></div></div>
+          <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <a href="#implementation-rules" class="photo-overlay focus-ring group relative z-0 min-h-[150px] overflow-hidden bg-slate-300 sm:min-h-[180px]"><img class="absolute inset-0 -z-10 h-full w-full object-cover transition duration-500 group-hover:scale-105" src="https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=1000&q=80" alt="Piscina de resort à beira-mar"><div class="absolute bottom-0 left-0 p-4 text-white"><h4 class="text-lg font-bold">+ que Hotéis: Resorts</h4><p class="text-xs text-white/90">Todo tipo de resort para todo tipo de viagem</p></div></a>
+            <a href="#implementation-rules" class="photo-overlay focus-ring group relative z-0 min-h-[150px] overflow-hidden bg-slate-300 sm:min-h-[180px]"><img class="absolute inset-0 -z-10 h-full w-full object-cover transition duration-500 group-hover:scale-105" src="https://images.unsplash.com/photo-1530789253388-582c481c54b0?auto=format&fit=crop&w=1000&q=80" alt="Pessoa explorando uma paisagem natural"><div class="absolute bottom-0 left-0 p-4 text-white"><h4 class="text-lg font-bold">Alter do Chão</h4><p class="text-xs text-white/90">A Amazônia brasileira pertinho de você</p></div></a>
+            <a href="#implementation-rules" class="photo-overlay focus-ring group relative z-0 min-h-[150px] overflow-hidden bg-slate-300 sm:min-h-[180px]"><img class="absolute inset-0 -z-10 h-full w-full object-cover transition duration-500 group-hover:scale-105" src="https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=1000&q=80" alt="Pessoas correndo em evento esportivo"><div class="absolute bottom-0 left-0 p-4 text-white"><h4 class="text-lg font-bold">Azul Corridas</h4><p class="text-xs text-white/90">Conheça o Brasil correndo</p></div></a>
+            <a href="#implementation-rules" class="photo-overlay focus-ring group relative z-0 min-h-[150px] overflow-hidden bg-slate-300 sm:min-h-[180px]"><img class="absolute inset-0 -z-10 h-full w-full object-cover transition duration-500 group-hover:scale-105" src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1000&q=80" alt="Paisagem natural de ecoturismo"><div class="absolute bottom-0 left-0 p-4 text-white"><h4 class="text-lg font-bold">Verde e Azul</h4><p class="text-xs text-white/90">Destinos de ecoturismo</p></div></a>
+            <a href="#implementation-rules" class="photo-overlay focus-ring group relative z-0 min-h-[150px] overflow-hidden bg-slate-300 sm:min-h-[180px]"><img class="absolute inset-0 -z-10 h-full w-full object-cover transition duration-500 group-hover:scale-105" src="https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1000&q=80" alt="Hotel de luxo em área tropical"><div class="absolute bottom-0 left-0 p-4 text-white"><h4 class="text-lg font-bold">Resorts e hotéis</h4><p class="text-xs text-white/90">Encontre uma hospedagem para sua viagem</p></div></a>
+            <a href="#implementation-rules" class="photo-overlay focus-ring group relative z-0 min-h-[150px] overflow-hidden bg-slate-300 sm:min-h-[180px]"><img class="absolute inset-0 -z-10 h-full w-full object-cover transition duration-500 group-hover:scale-105" src="https://images.unsplash.com/photo-1548574505-5e239809ee19?auto=format&fit=crop&w=1000&q=80" alt="Navio de cruzeiro no mar"><div class="absolute bottom-0 left-0 p-4 text-white"><h4 class="text-lg font-bold">Cruzeiros</h4><p class="text-xs text-white/90">Para quem ama curtir e navegar</p></div></a>
+            <a href="#implementation-rules" class="photo-overlay focus-ring group relative z-0 min-h-[150px] overflow-hidden bg-slate-300 sm:min-h-[180px]"><img class="absolute inset-0 -z-10 h-full w-full object-cover transition duration-500 group-hover:scale-105" src="https://images.unsplash.com/photo-1500759285222-a95626b934cb?auto=format&fit=crop&w=1000&q=80" alt="Parque temático com castelo colorido"><div class="absolute bottom-0 left-0 p-4 text-white"><h4 class="text-lg font-bold">Parques temáticos</h4><p class="text-xs text-white/90">Momentos para toda a família</p></div></a>
+            <a href="#implementation-rules" class="photo-overlay focus-ring group relative z-0 min-h-[150px] overflow-hidden bg-slate-300 sm:min-h-[180px]"><img class="absolute inset-0 -z-10 h-full w-full object-cover transition duration-500 group-hover:scale-105" src="https://images.unsplash.com/photo-1516483638261-f4dbaf036963?auto=format&fit=crop&w=1000&q=80" alt="Vila colorida na costa italiana"><div class="absolute bottom-0 left-0 p-4 text-white"><h4 class="text-lg font-bold">Destinos especiais</h4><p class="text-xs text-white/90">Inspire-se para sua próxima viagem</p></div></a>
+          </div>
+        </section>
+
+        <!-- Offer carousel -->
+        <section class="pt-14 sm:pt-16">
+          <div class="mb-5 flex items-end justify-between gap-3"><div><h3 class="text-lg font-normal text-brand-navy">Ofertas Azul</h3><div class="section-mark"></div></div><div class="flex gap-2"><button class="focus-ring rounded-full border border-brand-magenta px-3 py-1 text-lg leading-none text-brand-magenta hover:bg-pink-50" data-carousel="offers" data-direction="-1" aria-label="Ver ofertas anteriores">‹</button><button class="focus-ring rounded-full border border-brand-magenta px-3 py-1 text-lg leading-none text-brand-magenta hover:bg-pink-50" data-carousel="offers" data-direction="1" aria-label="Ver próximas ofertas">›</button></div></div>
+          <div id="offers-carousel" class="scrollbar-none flex snap-x snap-mandatory gap-3 overflow-x-auto pb-3">
+            <article class="min-w-[210px] snap-start border border-slate-200 bg-white sm:min-w-0 sm:flex-1"><div class="relative h-24 overflow-hidden"><img class="h-full w-full object-cover" src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=550&q=75" alt="Praia de destino tropical"><span class="absolute left-2 top-2 rounded-full bg-white px-2 py-1 text-[9px] font-bold">6 dias / 5 noites</span><span class="absolute right-2 top-2 text-xs text-white">✈ ◉</span></div><div class="p-3"><p class="text-[10px] text-slate-500">Hotel</p><h4 class="text-xs font-bold text-brand-navy">Hotel Das Baques</h4><div class="mt-2 flex items-end justify-between gap-1"><span class="text-[9px] text-slate-500">A partir de</span><strong class="text-sm text-brand-magenta">R$ 1.926,58</strong></div></div></article>
+            <article class="min-w-[210px] snap-start border border-slate-200 bg-white sm:min-w-0 sm:flex-1"><div class="relative h-24 overflow-hidden"><img class="h-full w-full object-cover" src="https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&w=550&q=75" alt="Mar azul junto à ilha"><span class="absolute left-2 top-2 rounded-full bg-white px-2 py-1 text-[9px] font-bold">5 dias / 4 noites</span><span class="absolute right-2 top-2 text-xs text-white">✈ ◉</span></div><div class="p-3"><p class="text-[10px] text-slate-500">Aéreo + Hotel</p><h4 class="text-xs font-bold text-brand-navy">Hotel Porto das Âncoras</h4><div class="mt-2 flex items-end justify-between gap-1"><span class="text-[9px] text-slate-500">A partir de</span><strong class="text-sm text-brand-magenta">R$ 1.542,28</strong></div></div></article>
+            <article class="min-w-[210px] snap-start border border-slate-200 bg-white sm:min-w-0 sm:flex-1"><div class="relative h-24 overflow-hidden"><img class="h-full w-full object-cover" src="https://images.unsplash.com/photo-1533105079780-92b9be482077?auto=format&fit=crop&w=550&q=75" alt="Hotel na costa"><span class="absolute left-2 top-2 rounded-full bg-white px-2 py-1 text-[9px] font-bold">8 dias / 7 noites</span><span class="absolute right-2 top-2 text-xs text-white">✈ ◉</span></div><div class="p-3"><p class="text-[10px] text-slate-500">Aéreo + Hotel</p><h4 class="text-xs font-bold text-brand-navy">Pousada Borda Home</h4><div class="mt-2 flex items-end justify-between gap-1"><span class="text-[9px] text-slate-500">A partir de</span><strong class="text-sm text-brand-magenta">R$ 1.575,00</strong></div></div></article>
+            <article class="min-w-[210px] snap-start border border-slate-200 bg-white sm:min-w-0 sm:flex-1"><div class="relative h-24 overflow-hidden"><img class="h-full w-full object-cover" src="https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=550&q=75" alt="Ondas em praia com água azul"><span class="absolute left-2 top-2 rounded-full bg-white px-2 py-1 text-[9px] font-bold">6 dias / 5 noites</span><span class="absolute right-2 top-2 text-xs text-white">✈ ◉</span></div><div class="p-3"><p class="text-[10px] text-slate-500">Aéreo + Hotel</p><h4 class="text-xs font-bold text-brand-navy">Hotel Évora</h4><div class="mt-2 flex items-end justify-between gap-1"><span class="text-[9px] text-slate-500">A partir de</span><strong class="text-sm text-brand-magenta">R$ 1.350,88</strong></div></div></article>
+          </div>
+        </section>
+
+        <!-- Travel footer pattern -->
+        <footer id="travel-footer" class="mt-14 border-t border-slate-200 bg-white px-5 py-8 sm:px-7">
+          <div class="grid gap-7 text-[10px] text-slate-500 sm:grid-cols-2 lg:grid-cols-4">
+            <div><h4 class="mb-3 text-xs font-bold text-brand-navy">Informações e suporte</h4><ul class="space-y-2"><li><a href="#implementation-rules" class="nav-link">Regulamento e condições</a></li><li><a href="#implementation-rules" class="nav-link">Política de privacidade</a></li><li><a href="#implementation-rules" class="nav-link">Termos e condições</a></li><li><a href="#implementation-rules" class="nav-link">Acessibilidade</a></li><li><a href="#implementation-rules" class="nav-link">Fale conosco</a></li><li><a href="#implementation-rules" class="nav-link">FAQ — Perguntas frequentes</a></li></ul></div>
+            <div><h4 class="mb-3 text-xs font-bold text-brand-navy">Parceiros</h4><div class="flex flex-wrap gap-2"><span class="rounded border border-slate-200 px-2 py-1">VISA</span><span class="rounded border border-slate-200 px-2 py-1">Mastercard</span><span class="rounded border border-slate-200 px-2 py-1">elo</span><span class="rounded border border-slate-200 px-2 py-1">Amex</span></div><p class="mt-3 leading-5">Marcas e selos são demonstrativos. Preserve os assets oficiais no produto final.</p></div>
+            <div><h4 class="mb-3 text-xs font-bold text-brand-navy">Referência de moedas</h4><div class="space-y-3"><p class="flex justify-between border-b border-slate-100 pb-2"><span>ARS · 🇦🇷</span><b class="text-brand-navy">R$ 0</b></p><p class="flex justify-between border-b border-slate-100 pb-2"><span>EUR · 🇪🇺</span><b class="text-brand-navy">R$ 5,62</b></p><p class="flex justify-between"><span>USD · 🇺🇸</span><b class="text-brand-navy">R$ 5,01</b></p></div></div>
+            <div><h4 class="mb-3 text-xs font-bold text-brand-navy">Confiança e reputação</h4><div class="rounded-sm border border-lime-300 bg-lime-50 p-3"><span class="text-sm font-extrabold text-green-700">ReclameAQUI</span><div class="mt-1 flex items-end gap-2"><strong class="text-2xl text-green-700">8,2</strong><span class="pb-1 text-[10px] text-slate-600">Excelente</span></div><div class="mt-2 h-1.5 rounded bg-green-100"><div class="h-1.5 w-[82%] rounded bg-green-600"></div></div></div></div>
+          </div>
+          <div class="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4 text-[10px] text-slate-400"><span class="font-bold text-brand-navy">Azul <span class="font-normal text-brand-blue">viagens</span></span><span>Informações legais e créditos da plataforma • conteúdo de demonstração</span><span>© Azul Viagens — referência de layout</span></div>
+        </footer>
+      </div>
+    </section>
+
+    <!-- Loyalty page pattern preview -->
+    <section id="fidelity" class="py-12 sm:py-16">
+      <div class="container-site">
+        <div class="mb-8 flex flex-wrap items-end justify-between gap-4"><div><p class="text-[10px] font-bold uppercase tracking-[.18em] text-brand-blue">03 / Programa e benefícios</p><h2 class="mt-2 text-2xl font-bold text-brand-navy sm:text-3xl">Azul Fidelidade</h2><p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Padrões para explicar o programa: hero humano, atalhos, consulta, sequência de passos, tiers, benefícios, parceiros e suporte.</p></div><span class="rounded-sm bg-white px-3 py-2 text-[10px] font-bold text-slate-500 ring-1 ring-slate-200">DEMO DE COMPONENTES</span></div>
+
+        <div class="overflow-hidden rounded-sm border border-slate-200 bg-white shadow-sm">
+          <!-- Fidelity top nav -->
+          <div class="bg-brand-navy text-white"><div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6"><div class="flex items-center gap-5"><span class="text-lg font-extrabold tracking-tight">Azul<span class="ml-1 text-[9px] font-normal text-sky-200">fidelidade</span></span><span class="hidden text-[10px] text-white/70 sm:inline">Conheça · Use seus pontos · Viaje</span></div><div class="flex items-center gap-3 text-[10px] text-white/80"><span class="hidden sm:inline">Ajuda</span><span class="hidden sm:inline">Entrar</span><button class="rounded-sm bg-white px-3 py-1.5 font-bold text-brand-blue">Minha conta</button></div></div></div>
+          <nav class="flex gap-0 overflow-x-auto border-b border-slate-200 bg-white px-3 sm:justify-center sm:px-6 scrollbar-none" aria-label="Atalhos Azul Fidelidade"><a href="#fidelity-tiers" class="flex min-w-[92px] flex-col items-center gap-2 border-r border-slate-100 px-4 py-4 text-center text-[10px] font-semibold text-brand-blue"><span class="text-lg">✧</span>Meus pontos</a><a href="#fidelity-benefits" class="flex min-w-[92px] flex-col items-center gap-2 border-r border-slate-100 px-4 py-4 text-center text-[10px] font-semibold text-brand-blue"><span class="text-lg">◎</span>Benefícios</a><a href="#fidelity-partners" class="flex min-w-[92px] flex-col items-center gap-2 border-r border-slate-100 px-4 py-4 text-center text-[10px] font-semibold text-brand-blue"><span class="text-lg">▣</span>Parceiros</a><a href="#fidelity-tiers" class="flex min-w-[92px] flex-col items-center gap-2 border-r border-slate-100 px-4 py-4 text-center text-[10px] font-semibold text-brand-blue"><span class="text-lg">♧</span>Categoria</a><a href="#fidelity-support" class="flex min-w-[92px] flex-col items-center gap-2 px-4 py-4 text-center text-[10px] font-semibold text-brand-blue"><span class="text-lg">➜</span>Mais vantagens</a></nav>
+
+          <!-- Loyalty hero -->
+          <div class="hero-fidelity relative overflow-hidden">
+            <div class="absolute -right-6 top-3 h-56 w-56 rounded-full border-[25px] border-[#006aa5]/80 sm:right-[7%] sm:h-72 sm:w-72"></div><div class="absolute right-[10%] top-12 h-36 w-36 rounded-full bg-brand-deep/50 sm:right-[13%] sm:top-16 sm:h-48 sm:w-48"></div>
+            <div class="container-site relative grid min-h-[280px] items-center gap-6 py-8 sm:min-h-[320px] sm:grid-cols-[1fr_.8fr] sm:py-10">
+              <div class="relative z-10 max-w-md rounded-sm bg-brand-deep/90 p-5 text-white shadow-lg sm:p-6"><p class="text-[10px] font-bold uppercase tracking-[.16em] text-sky-200">Viajar pode ir mais longe</p><h3 class="mt-2 text-2xl font-bold leading-tight sm:text-3xl">Azul Fidelidade. Quanto mais Azul, melhor.</h3><p class="mt-3 text-xs leading-5 text-white/85">Descubra formas de acumular pontos, aproveitar benefícios e transformar suas próximas viagens.</p><div class="mt-4 flex items-center gap-3"><a href="#fidelity-tiers" class="focus-ring rounded-sm bg-white px-4 py-2 text-xs font-bold text-brand-blue hover:bg-azul-50">Conheça o programa →</a><span class="text-[10px] text-white/70">● ● ● ○</span></div></div>
+              <div class="relative hidden h-full min-h-[220px] sm:block"><img class="absolute bottom-[-32px] right-2 z-10 h-[270px] w-[220px] rounded-t-full object-cover object-top mix-blend-normal" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=650&q=85" alt="Retrato de pessoa sorrindo, imagem ilustrativa para o hero de fidelidade"><span class="absolute right-[2%] top-8 z-20 rounded-full bg-white/90 px-3 py-1 text-[10px] font-bold text-brand-blue">Viaje mais</span><span class="absolute right-[-2%] top-1/2 z-20 text-white">✈</span></div>
+            </div>
+          </div>
+
+          <!-- Points lookup panel on blue background -->
+          <section class="bg-[#008DBB] px-4 py-9 sm:px-6 sm:py-11">
+            <div class="mx-auto max-w-[850px]"><h3 class="text-center text-lg font-bold text-white sm:text-xl">Precisa juntar mais pontos, ou quer saber como usar seus pontos Azul?</h3><p class="mx-auto mt-2 max-w-xl text-center text-xs leading-5 text-white/85">Um módulo de descoberta destacado por fundo azul, com conteúdo interno branco e navegação em abas.</p>
+              <div class="mt-6 overflow-hidden rounded-sm bg-white shadow-panel">
+                <div class="flex"><button class="demo-tab flex-1 px-4 py-3 text-xs" aria-selected="true" data-points-tab="juntar">Juntar pontos</button><button class="demo-tab flex-1 px-4 py-3 text-xs" aria-selected="false" data-points-tab="usar">Usar pontos</button></div>
+                <div id="points-panel" class="grid gap-0 sm:grid-cols-3">
+                  <article class="border-b border-slate-100 p-4 sm:border-b-0 sm:border-r"><img class="h-28 w-full rounded-sm object-cover" src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=500&q=75" alt="Mala de viagem em cenário de aeroporto"><h4 class="mt-3 text-sm font-bold text-brand-navy" data-point-title="0">Viaje e acumule</h4><p class="mt-2 text-xs leading-5 text-slate-600" data-point-copy="0">Transforme viagens e compras elegíveis em oportunidades para acumular pontos.</p><a href="#fidelity-partners" class="small-link mt-3 inline-block">Saiba mais →</a></article>
+                  <article class="border-b border-slate-100 p-4 sm:border-b-0 sm:border-r"><img class="h-28 w-full rounded-sm object-cover" src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?auto=format&fit=crop&w=500&q=75" alt="Pagamento com cartão"><h4 class="mt-3 text-sm font-bold text-brand-navy" data-point-title="1">Use parceiros</h4><p class="mt-2 text-xs leading-5 text-slate-600" data-point-copy="1">Confira parceiros e serviços que podem ampliar suas possibilidades.</p><a href="#fidelity-partners" class="small-link mt-3 inline-block">Ver parceiros →</a></article>
+                  <article class="p-4"><img class="h-28 w-full rounded-sm object-cover" src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=500&q=75" alt="Viajantes em uma paisagem natural"><h4 class="mt-3 text-sm font-bold text-brand-navy" data-point-title="2">Planeje a próxima</h4><p class="mt-2 text-xs leading-5 text-slate-600" data-point-copy="2">Acompanhe oportunidades e planeje quando usar seus pontos.</p><a href="#fidelity-tiers" class="small-link mt-3 inline-block">Explorar benefícios →</a></article>
+                </div>
+              </div>
+              <div class="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-sm bg-white px-5 py-4"><div><h4 class="text-sm font-bold text-brand-navy">Quer saber todas as ofertas do Azul Fidelidade?</h4><p class="mt-1 text-xs text-slate-500">Veja as opções disponíveis e conheça as regras de cada campanha.</p></div><a href="#fidelity-partners" class="focus-ring rounded-sm bg-brand-blue px-5 py-2.5 text-xs font-bold text-white hover:bg-brand-deep">Ver ofertas →</a></div>
+            </div>
+          </section>
+
+          <!-- Explainers -->
+          <section class="px-4 py-10 sm:px-8 sm:py-14"><div class="mx-auto max-w-[950px]"><div class="mx-auto max-w-2xl text-center"><p class="text-[10px] font-bold uppercase tracking-[.18em] text-brand-blue">Entenda como funciona</p><h3 class="mt-2 text-xl font-bold text-brand-navy">Seu próximo destino começa aqui</h3><p class="mt-2 text-sm leading-6 text-slate-600">Cards explicativos com ícones leves, títulos objetivos e links curtos.</p></div>
+            <div class="mt-7 grid gap-4 sm:grid-cols-3"><article class="border-t-2 border-brand-blue px-3 py-5"><div class="flex h-10 w-10 items-center justify-center rounded-full bg-azul-50 text-xl text-brand-blue">✧</div><h4 class="mt-3 text-sm font-bold text-brand-navy">Acumule pontos</h4><p class="mt-2 text-xs leading-5 text-slate-600">Conheça maneiras de acumular pontos no programa e com parceiros.</p><a href="#fidelity-partners" class="small-link mt-3 inline-block">Saiba mais →</a></article><article class="border-t-2 border-brand-blue px-3 py-5"><div class="flex h-10 w-10 items-center justify-center rounded-full bg-azul-50 text-xl text-brand-blue">◎</div><h4 class="mt-3 text-sm font-bold text-brand-navy">Use seus pontos</h4><p class="mt-2 text-xs leading-5 text-slate-600">Veja possibilidades de resgate e como planejar sua experiência.</p><a href="#fidelity-benefits" class="small-link mt-3 inline-block">Descobrir opções →</a></article><article class="border-t-2 border-brand-blue px-3 py-5"><div class="flex h-10 w-10 items-center justify-center rounded-full bg-azul-50 text-xl text-brand-blue">♧</div><h4 class="mt-3 text-sm font-bold text-brand-navy">Desbloqueie vantagens</h4><p class="mt-2 text-xs leading-5 text-slate-600">Entenda níveis, metas e benefícios associados a cada categoria.</p><a href="#fidelity-tiers" class="small-link mt-3 inline-block">Ver categorias →</a></article></div>
+            </div></section>
+
+          <!-- Three-step explainer -->
+          <section class="border-y border-slate-100 bg-[#fbfcfd] px-4 py-10 sm:px-8"><div class="mx-auto max-w-[950px]"><div class="text-center"><h3 class="text-xl font-bold text-brand-navy">É, para começar a aproveitar, não tem segredo</h3><p class="mt-2 text-xs text-slate-500">Sequência horizontal de três etapas.</p></div><div class="relative mt-7 grid gap-6 sm:grid-cols-3"><div class="absolute left-[16%] right-[16%] top-4 hidden border-t border-dashed border-brand-blue/40 sm:block"></div><article class="relative text-center"><span class="relative z-10 inline-flex h-8 min-w-8 items-center justify-center rounded-full border border-brand-blue bg-white px-3 text-xs font-bold text-brand-blue">1</span><h4 class="mt-3 text-sm font-bold text-brand-navy">Faça seu cadastro</h4><p class="mx-auto mt-2 max-w-xs text-xs leading-5 text-slate-600">Entre no programa e mantenha seus dados atualizados.</p><a href="#implementation-rules" class="mt-4 inline-flex rounded-sm bg-brand-blue px-4 py-2 text-xs font-bold text-white">Começar agora</a></article><article class="relative text-center"><span class="relative z-10 inline-flex h-8 min-w-8 items-center justify-center rounded-full border border-brand-blue bg-white px-3 text-xs font-bold text-brand-blue">2</span><h4 class="mt-3 text-sm font-bold text-brand-navy">Acumule pontos</h4><p class="mx-auto mt-2 max-w-xs text-xs leading-5 text-slate-600">Conheça as opções de acúmulo e as regras de cada parceiro.</p><a href="#fidelity-partners" class="mt-4 inline-flex rounded-sm bg-brand-blue px-4 py-2 text-xs font-bold text-white">Ver parceiros</a></article><article class="relative text-center"><span class="relative z-10 inline-flex h-8 min-w-8 items-center justify-center rounded-full border border-brand-blue bg-white px-3 text-xs font-bold text-brand-blue">3</span><h4 class="mt-3 text-sm font-bold text-brand-navy">Aproveite benefícios</h4><p class="mx-auto mt-2 max-w-xs text-xs leading-5 text-slate-600">Confira sua categoria e explore as vantagens disponíveis.</p><a href="#fidelity-benefits" class="mt-4 inline-flex rounded-sm bg-brand-blue px-4 py-2 text-xs font-bold text-white">Ver benefícios</a></article></div></div></section>
+
+          <!-- Tier cards -->
+          <section id="fidelity-tiers" class="px-4 py-10 sm:px-8 sm:py-14"><div class="mx-auto max-w-[980px]"><div class="text-center"><p class="text-[10px] font-bold uppercase tracking-[.18em] text-brand-blue">Evolua no programa</p><h3 class="mt-2 text-xl font-bold text-brand-navy">Níveis e benefícios</h3><p class="mt-2 text-xs text-slate-500">Cinco cartões alinhados, com progressão cromática do ciano ao azul-marinho.</p></div>
+            <div class="tier-scroll mt-7 grid grid-cols-2 gap-2 overflow-x-auto pb-3 sm:grid-cols-3 lg:grid-cols-5">
+              <article class="tier-1 min-w-0 p-3 sm:p-4"><div class="flex items-start justify-between gap-1"><div><span class="text-xl">✧</span><h4 class="mt-1 text-sm font-extrabold">Nível Azul</h4></div><span class="text-[8px] font-bold uppercase">Base</span></div><div class="my-4 border-y border-black/10 py-3"><p class="text-[9px] uppercase tracking-wide">Comece aqui</p><strong class="mt-1 block text-xl">0 pts</strong></div><p class="text-[10px] leading-4">Benefícios iniciais e acesso ao programa.</p><div class="mt-4 border-t border-black/10 pt-3 text-[10px] font-bold">Conheça o nível →</div></article>
+              <article class="tier-2 min-w-0 p-3 sm:p-4"><div class="flex items-start justify-between gap-1"><div><span class="text-xl">✧</span><h4 class="mt-1 text-sm font-extrabold">Topázio</h4></div><span class="text-[8px] font-bold uppercase">Nível 2</span></div><div class="my-4 border-y border-black/15 py-3"><p class="text-[9px] uppercase tracking-wide">Meta ilustrativa</p><strong class="mt-1 block text-xl">6 mil</strong><p class="text-[9px]">pontos qualificáveis</p></div><p class="text-[10px] leading-4">Mais possibilidades para sua jornada.</p><div class="mt-4 border-t border-black/15 pt-3 text-[10px] font-bold">Conheça o nível →</div></article>
+              <article class="tier-3 min-w-0 p-3 sm:p-4"><div class="flex items-start justify-between gap-1"><div><span class="text-xl">✧</span><h4 class="mt-1 text-sm font-extrabold">Safira</h4></div><span class="text-[8px] font-bold uppercase">Nível 3</span></div><div class="my-4 border-y border-white/20 py-3"><p class="text-[9px] uppercase tracking-wide text-white/80">Meta ilustrativa</p><strong class="mt-1 block text-xl">10 mil</strong><p class="text-[9px] text-white/80">pontos qualificáveis</p></div><p class="text-[10px] leading-4 text-white/90">Uma experiência com vantagens adicionais.</p><div class="mt-4 border-t border-white/20 pt-3 text-[10px] font-bold">Conheça o nível →</div></article>
+              <article class="tier-4 min-w-0 p-3 sm:p-4"><div class="flex items-start justify-between gap-1"><div><span class="text-xl">✧</span><h4 class="mt-1 text-sm font-extrabold">Diamante</h4></div><span class="text-[8px] font-bold uppercase">Nível 4</span></div><div class="my-4 border-y border-white/20 py-3"><p class="text-[9px] uppercase tracking-wide text-white/80">Meta ilustrativa</p><strong class="mt-1 block text-xl">12 mil</strong><p class="text-[9px] text-white/80">pontos qualificáveis</p></div><p class="text-[10px] leading-4 text-white/90">Reconhecimento e mais benefícios de viagem.</p><div class="mt-4 border-t border-white/20 pt-3 text-[10px] font-bold">Conheça o nível →</div></article>
+              <article class="tier-5 relative min-w-0 p-3 sm:p-4"><span class="absolute right-2 top-2 rounded-full bg-brand-magenta px-2 py-1 text-[8px] font-extrabold text-white">Novo</span><div class="flex items-start justify-between gap-1 pt-4"><div><span class="text-xl">✧</span><h4 class="mt-1 text-sm font-extrabold">Diamante Unique</h4></div></div><div class="my-4 border-y border-white/20 py-3"><p class="text-[9px] uppercase tracking-wide text-white/80">Meta ilustrativa</p><strong class="mt-1 block text-xl">26 mil</strong><p class="text-[9px] text-white/80">pontos qualificáveis</p></div><p class="text-[10px] leading-4 text-white/90">Um patamar superior de benefícios e experiência.</p><div class="mt-4 border-t border-white/20 pt-3 text-[10px] font-bold">Conheça o nível →</div></article>
+            </div><p class="mt-2 text-[10px] text-slate-400">Nomes, metas e valores nesta demonstração são ilustrativos. Não usar como descrição vigente de regras reais do programa.</p>
+          </div></section>
+
+          <!-- Contextual help strip -->
+          <section class="px-4 pb-10 sm:px-8"><div class="mx-auto flex max-w-[980px] flex-wrap items-center gap-4 border-y border-slate-200 py-5"><div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-azul-50 text-xl text-brand-blue">ⓘ</div><div class="min-w-[220px] flex-1"><h3 class="text-sm font-bold text-brand-navy">O que são faixas e pontos qualificáveis?</h3><p class="mt-1 text-xs leading-5 text-slate-600">Explique critérios e condições em uma área compacta e próxima do conteúdo relevante.</p></div><a href="#implementation-rules" class="focus-ring rounded-sm bg-brand-blue px-5 py-2.5 text-xs font-bold text-white">Saiba mais →</a></div></section>
+
+          <!-- Benefits -->
+          <section id="fidelity-benefits" class="bg-white px-4 py-10 sm:px-8 sm:py-12"><div class="mx-auto max-w-[980px]"><div class="text-center"><p class="text-[10px] font-bold uppercase tracking-[.18em] text-brand-blue">Vantagens em destaque</p><h3 class="mt-2 text-xl font-bold text-brand-navy">Continue aproveitando benefícios exclusivos do programa</h3></div><div class="mt-7 grid grid-cols-2 gap-5 sm:grid-cols-4"><div class="text-center"><span class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-azul-50 text-2xl text-brand-blue">♧</span><h4 class="mt-3 text-xs font-bold text-brand-navy">Mais experiências</h4><p class="mt-1 text-[11px] leading-5 text-slate-500">Explore destinos e novas possibilidades.</p></div><div class="text-center"><span class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-azul-50 text-2xl text-brand-blue">▣</span><h4 class="mt-3 text-xs font-bold text-brand-navy">Parcerias especiais</h4><p class="mt-1 text-[11px] leading-5 text-slate-500">Conheça marcas e oportunidades.</p></div><div class="text-center"><span class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-azul-50 text-2xl text-brand-blue">↗</span><h4 class="mt-3 text-xs font-bold text-brand-navy">Mais possibilidades</h4><p class="mt-1 text-[11px] leading-5 text-slate-500">Confira opções para sua próxima viagem.</p></div><div class="text-center"><span class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-azul-50 text-2xl text-brand-blue">✈</span><h4 class="mt-3 text-xs font-bold text-brand-navy">Vantagens para viajar</h4><p class="mt-1 text-[11px] leading-5 text-slate-500">Entenda os benefícios disponíveis por nível.</p></div></div><div class="mt-6 text-center"><a href="#fidelity-partners" class="focus-ring inline-flex rounded-sm bg-brand-blue px-6 py-3 text-xs font-bold text-white hover:bg-brand-deep">Veja todos os benefícios</a></div></div></section>
+
+          <!-- Two promo tiles -->
+          <section class="px-4 py-10 sm:px-8"><div class="mx-auto grid max-w-[980px] gap-3 sm:grid-cols-2"><a href="#implementation-rules" class="focus-ring group relative min-h-[170px] overflow-hidden bg-brand-deep"><img class="absolute inset-0 h-full w-full object-cover opacity-70 transition duration-300 group-hover:scale-105" src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=850&q=80" alt="Viajante em aeroporto"><div class="absolute inset-0 bg-gradient-to-r from-brand-deep/95 via-brand-deep/45 to-transparent"></div><div class="relative max-w-[75%] p-5 text-white"><span class="text-[9px] font-bold uppercase tracking-widest text-sky-200">Benefício em destaque</span><h4 class="mt-2 text-lg font-bold">Viaje com mais vantagens</h4><p class="mt-1 text-xs leading-5 text-white/85">Descubra opções especiais para sua próxima experiência.</p><span class="mt-3 inline-block text-xs font-bold underline underline-offset-4">Saiba mais →</span></div></a><a href="#implementation-rules" class="focus-ring group relative min-h-[170px] overflow-hidden bg-brand-blue"><img class="absolute inset-0 h-full w-full object-cover opacity-65 transition duration-300 group-hover:scale-105" src="https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?auto=format&fit=crop&w=850&q=80" alt="Cartões de embarque e viagem"><div class="absolute inset-0 bg-gradient-to-r from-brand-blue/95 via-brand-blue/50 to-transparent"></div><div class="relative max-w-[75%] p-5 text-white"><span class="text-[9px] font-bold uppercase tracking-widest text-sky-100">Planeje melhor</span><h4 class="mt-2 text-lg font-bold">Mais motivos para ir além</h4><p class="mt-1 text-xs leading-5 text-white/85">Conecte ofertas, parceiros e benefícios em uma experiência.</p><span class="mt-3 inline-block text-xs font-bold underline underline-offset-4">Conhecer opções →</span></div></a></div></section>
+
+          <!-- Partner logo cloud -->
+          <section id="fidelity-partners" class="border-y border-slate-100 bg-white px-4 py-10 sm:px-8 sm:py-12"><div class="mx-auto max-w-[980px]"><div class="text-center"><h3 class="text-lg font-bold text-brand-navy">Troque ou acumule pontos com marcas parceiras</h3><p class="mt-2 text-xs text-slate-500">Logo cloud: preservar as cores das marcas e normalizar a altura visual.</p></div><div class="mt-6 flex flex-wrap items-center justify-center gap-x-7 gap-y-5 text-sm font-extrabold"><span class="text-indigo-900">◈ <span class="text-[11px]">itau</span></span><span class="text-pink-600">✦ livelo</span><span class="text-slate-700">Esfera<span class="text-orange-500">.</span></span><span class="text-blue-700">▦ CAIXA</span><span class="text-slate-900">C6 BANK</span><span class="text-green-600">◭ SICOOB</span><span class="text-green-700">✣ Sicredi</span><span class="text-orange-600">AMT</span><span class="text-slate-600">PortoBank</span><span class="text-blue-700">AZUL</span></div><div class="mt-5 text-center"><a href="#implementation-rules" class="focus-ring inline-flex rounded-sm bg-brand-blue px-7 py-2.5 text-xs font-bold text-white">Ver todos os parceiros</a></div>
+            <div class="mt-10 border-t border-slate-100 pt-8 text-center"><h3 class="text-lg font-bold text-brand-navy">Ganhe pontos comprando nas nossas lojas parceiras</h3><div class="mt-5 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 text-xs font-extrabold text-slate-600"><span class="text-brand-blue">ALL</span><span class="text-pink-600">CAMPANHA</span><span class="text-brand-blue">MOGU</span><span class="text-slate-800">NMV</span><span class="text-purple-700">AVITUR</span><span class="text-orange-600">alugol</span></div><div class="mt-5"><a href="#implementation-rules" class="focus-ring inline-flex rounded-sm bg-brand-blue px-7 py-2.5 text-xs font-bold text-white">Conheça as opções</a></div></div>
+          </div></section>
+
+          <!-- Split banner -->
+          <section class="px-4 py-10 sm:px-8"><div class="mx-auto max-w-[980px]"><div class="grid overflow-hidden rounded-sm bg-brand-deep sm:grid-cols-[1.1fr_.9fr]"><div class="flex flex-col items-start justify-center p-6 text-white sm:p-8"><span class="text-[10px] font-bold uppercase tracking-[.18em] text-sky-200">Uma viagem inesquecível</span><h3 class="mt-2 text-xl font-bold">Planeje sua próxima grande aventura</h3><p class="mt-2 max-w-md text-xs leading-5 text-white/80">Banners de campanha podem combinar painel de texto azul escuro, fotografia e botão claro.</p><a href="#travel" class="focus-ring mt-4 rounded-sm bg-white px-4 py-2 text-xs font-bold text-brand-blue hover:bg-azul-50">Planejar viagem →</a></div><img class="min-h-[190px] h-full w-full object-cover" src="https://images.unsplash.com/photo-1499856871958-5b9627545d1a?auto=format&fit=crop&w=900&q=80" alt="Pessoa visitando uma cidade europeia"></div></div></section>
+
+          <!-- Support strips and footer -->
+          <section id="fidelity-support" class="px-4 pb-8 sm:px-8"><div class="mx-auto max-w-[980px] space-y-3"><div class="flex flex-wrap items-center gap-4 border-y border-slate-200 py-4"><span class="text-2xl text-brand-blue">ⓘ</span><div class="min-w-[220px] flex-1"><h3 class="text-sm font-bold text-brand-navy">Quer conferir as regras do Azul Fidelidade?</h3><p class="mt-1 text-xs text-slate-500">Consulte condições, critérios e perguntas frequentes.</p></div><a href="#implementation-rules" class="focus-ring rounded-sm bg-brand-blue px-5 py-2.5 text-xs font-bold text-white">Acessar ajuda</a></div><div class="flex flex-wrap items-center gap-4 bg-brand-navy px-5 py-5 text-white"><span class="text-2xl">▤</span><div class="min-w-[220px] flex-1"><h3 class="text-sm font-bold">Ficou com alguma dúvida?</h3><p class="mt-1 text-xs text-white/70">Encontre respostas e saiba como falar com a equipe.</p></div><a href="#implementation-rules" class="focus-ring rounded-sm bg-white px-5 py-2.5 text-xs font-bold text-brand-blue">Fale conosco</a></div><div class="pt-4"><h3 class="text-sm font-bold text-brand-navy">Links relacionados</h3><div class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-[10px] text-brand-blue"><a href="#travel">Azul Viagens</a><a href="#fidelity-tiers">Categorias do programa</a><a href="#fidelity-partners">Parceiros</a><a href="#fidelity-benefits">Benefícios</a><a href="#implementation-rules">Perguntas frequentes</a><a href="#tokens">Acessibilidade</a></div></div></div></section>
+
+          <footer class="border-t border-slate-200 bg-[#fbfcfd] px-4 py-8 sm:px-8"><div class="mx-auto max-w-[1100px]"><div class="grid grid-cols-2 gap-x-6 gap-y-7 text-[10px] sm:grid-cols-3 lg:grid-cols-5"><div><h4 class="mb-3 text-xs font-bold text-brand-navy">Sobre a Azul</h4><ul class="space-y-2 text-slate-500"><li>Quem somos</li><li>Imprensa</li><li>Trabalhe conosco</li><li>Investidores</li><li>Responsabilidade social</li></ul></div><div><h4 class="mb-3 text-xs font-bold text-brand-navy">Ajuda</h4><ul class="space-y-2 text-slate-500"><li>Central de atendimento</li><li>Fale conosco</li><li>Perguntas frequentes</li><li>Acessibilidade</li><li>Ouvidoria</li></ul></div><div><h4 class="mb-3 text-xs font-bold text-brand-navy">Azul Fidelidade</h4><ul class="space-y-2 text-slate-500"><li>Regulamento</li><li>Política de privacidade</li><li>Termos e condições</li><li>Parceiros</li><li>Resgate de pontos</li></ul></div><div><h4 class="mb-3 text-xs font-bold text-brand-navy">Outros canais</h4><ul class="space-y-2 text-slate-500"><li>Azul Viagens</li><li>Aplicativo</li><li>Redes sociais</li><li>Notícias</li><li>Clube</li></ul></div><div><h4 class="mb-3 text-xs font-bold text-brand-navy">Conecte-se</h4><div class="flex gap-2 text-sm text-brand-blue"><span>◎</span><span>f</span><span>▶</span><span>in</span></div><p class="mt-4 leading-5 text-slate-500">Aplicativos, canais de atendimento e materiais oficiais entram nesta região.</p><div class="mt-2 flex gap-2"><span class="rounded border border-slate-300 px-2 py-1 text-[9px]">App Store</span><span class="rounded border border-slate-300 px-2 py-1 text-[9px]">Google Play</span></div></div></div><div class="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4 text-[9px] text-slate-400"><span class="font-bold text-brand-navy">Azul <span class="font-normal text-brand-blue">fidelidade</span></span><span>Regulamentos, políticas, dados corporativos e créditos</span><span>© Referência visual de interface</span></div></div></footer>
+        </div>
+      </div>
+    </section>
+
+    <!-- Shared component inventory -->
+    <section id="components" class="border-y border-slate-200 bg-white py-12 sm:py-16">
+      <div class="container-site"><p class="text-[10px] font-bold uppercase tracking-[.18em] text-brand-blue">04 / Biblioteca de padrões</p><h2 class="mt-2 text-2xl font-bold text-brand-navy sm:text-3xl">Componentes reutilizáveis</h2><p class="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Escolha a família correta para a função. Nem todo conteúdo deve virar o mesmo card genérico: busca, oferta, explicação e comparação possuem anatomias diferentes.</p>
+        <div class="mt-7 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <article class="rounded-sm border border-slate-200 p-5"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Action / primary</p><h3 class="mt-2 text-sm font-bold text-brand-navy">Botões</h3><div class="mt-4 flex flex-wrap gap-2"><button class="focus-ring rounded-sm bg-brand-blue px-4 py-2.5 text-xs font-bold text-white">Primário azul</button><button class="focus-ring rounded-sm bg-brand-magenta px-4 py-2.5 text-xs font-bold text-white">Primário magenta</button><button class="focus-ring rounded-sm border border-brand-blue px-4 py-2.5 text-xs font-bold text-brand-blue">Secundário</button><button class="focus-ring rounded-full bg-brand-lime px-4 py-2.5 text-xs font-bold text-brand-blue">CTA de campanha</button></div><p class="mt-4 text-xs leading-5 text-slate-500">Azul para ações institucionais; magenta para conversão de viagem; lima apenas para destaque promocional pontual.</p></article>
+          <article class="rounded-sm border border-slate-200 p-5"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Status / metadata</p><h3 class="mt-2 text-sm font-bold text-brand-navy">Badges e etiquetas</h3><div class="mt-4 flex flex-wrap gap-2"><span class="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-bold text-brand-navy">6 dias / 5 noites</span><span class="rounded-sm bg-brand-deep px-3 py-1 text-[10px] font-bold text-white">Seleção Azul</span><span class="rounded-full bg-brand-magenta px-3 py-1 text-[10px] font-bold text-white">Novo</span><span class="rounded-sm bg-azul-50 px-3 py-1 text-[10px] font-bold text-brand-blue">A partir de</span></div><p class="mt-4 text-xs leading-5 text-slate-500">Texto curto, leitura imediata e sem disputar com a headline.</p></article>
+          <article class="rounded-sm border border-slate-200 p-5"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Information / lightweight</p><h3 class="mt-2 text-sm font-bold text-brand-navy">Card explicativo</h3><div class="mt-4 border-t-2 border-brand-blue p-3"><span class="text-xl text-brand-blue">✧</span><h4 class="mt-2 text-sm font-bold text-brand-navy">Título da informação</h4><p class="mt-2 text-xs leading-5 text-slate-600">Texto compacto para explicar uma funcionalidade ou benefício.</p><a class="small-link mt-3 inline-block" href="#implementation-rules">Saiba mais →</a></div></article>
+          <article class="rounded-sm border border-slate-200 p-5"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Contextual CTA strip</p><h3 class="mt-2 text-sm font-bold text-brand-navy">Faixa de ajuda</h3><div class="mt-4 flex items-center gap-3 border-y border-slate-200 py-3"><span class="text-xl text-brand-blue">ⓘ</span><div class="min-w-0 flex-1"><p class="text-xs font-bold text-brand-navy">Precisa de mais informações?</p><p class="mt-1 text-[10px] text-slate-500">Ajuda curta associada ao contexto.</p></div><button class="rounded-sm bg-brand-blue px-3 py-2 text-[10px] font-bold text-white">Ver ajuda</button></div><p class="mt-4 text-xs leading-5 text-slate-500">Ícone, chamada, descrição e CTA alinhados em uma única faixa.</p></article>
+          <article class="rounded-sm border border-slate-200 p-5"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Section heading</p><h3 class="mt-2 text-sm font-bold text-brand-navy">Título com assinatura magenta</h3><div class="mt-5"><h4 class="text-lg font-normal text-brand-navy">Título de seção</h4><div class="section-mark"></div></div><p class="mt-4 text-xs leading-5 text-slate-500">Traço curto sob o título. Não estender a cor por toda a largura.</p></article>
+          <article class="rounded-sm border border-slate-200 p-5"><p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Partner area</p><h3 class="mt-2 text-sm font-bold text-brand-navy">Logo cloud</h3><div class="mt-4 flex flex-wrap items-center gap-x-4 gap-y-3"><span class="font-extrabold text-blue-800">VISA</span><span class="font-extrabold text-orange-500">elo</span><span class="font-extrabold text-slate-600">C6</span><span class="font-extrabold text-green-600">Sicredi</span><span class="font-extrabold text-pink-600">livelo</span></div><p class="mt-4 text-xs leading-5 text-slate-500">Preservar as cores originais dos logos e equalizar a altura visual, não a largura.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Implementation rules for another AI -->
+    <section id="implementation-rules" class="bg-brand-navy py-12 text-white sm:py-16">
+      <div class="container-site grid gap-8 lg:grid-cols-[.85fr_1.15fr]">
+        <div><p class="text-[10px] font-bold uppercase tracking-[.18em] text-sky-300">05 / Instruções de implementação</p><h2 class="mt-2 text-2xl font-bold sm:text-3xl">Como uma IA deve usar esta referência</h2><p class="mt-4 text-sm leading-6 text-white/75">Use os exemplos como padrões de composição e estilo, não como telas que precisam ser copiadas literalmente. Reaproveite componentes, mas preserve diferenças entre objetivos comerciais e informativos.</p><div class="mt-6 rounded-sm border border-white/15 bg-white/5 p-4"><p class="text-xs font-bold text-brand-lime">Princípio essencial</p><p class="mt-2 text-sm leading-6">Recrie o sistema de design com fidelidade visual e comportamento coerente. Não invente conteúdo, ofertas, regras de programa, logos ou estados de negócio que não tenham sido fornecidos pelo projeto.</p></div></div>
+        <div class="space-y-3">
+          <details open class="group rounded-sm border border-white/15 bg-white/5 p-4"><summary class="cursor-pointer list-none text-sm font-bold">01. Base visual e layout <span class="float-right text-sky-300 group-open:rotate-180">⌄</span></summary><ul class="mt-3 space-y-2 pl-4 text-xs leading-5 text-white/75 marker:text-sky-300 list-disc"><li>Use fonte sans-serif corporativa; headlines claras e fortes; textos auxiliares contidos.</li><li>Centralize o conteúdo num container consistente com padding lateral fluido.</li><li>Priorize branco, canvas quase branco, azul institucional e linhas finas; use sombras leves.</li><li>Espaçamentos de referência: 8–16 px dentro de componentes, 24–40 px antes do conteúdo de seção e 48–72 px entre seções em desktop.</li></ul></details>
+          <details class="group rounded-sm border border-white/15 bg-white/5 p-4"><summary class="cursor-pointer list-none text-sm font-bold">02. Cor e hierarquia de ação <span class="float-right text-sky-300 group-open:rotate-180">⌄</span></summary><ul class="mt-3 space-y-2 pl-4 text-xs leading-5 text-white/75 marker:text-sky-300 list-disc"><li>Azul: marca, navegação, ações institucionais, links e módulos da Fidelidade.</li><li>Magenta: busca/conversão da área de Viagens e preço em evidência.</li><li>Lima: CTA especial de campanha sobre hero; nunca usar indiscriminadamente.</li><li>Um componente deve ter uma ação primária óbvia; ações secundárias devem ter menos peso visual.</li></ul></details>
+          <details class="group rounded-sm border border-white/15 bg-white/5 p-4"><summary class="cursor-pointer list-none text-sm font-bold">03. Famílias de componentes <span class="float-right text-sky-300 group-open:rotate-180">⌄</span></summary><ul class="mt-3 space-y-2 pl-4 text-xs leading-5 text-white/75 marker:text-sky-300 list-disc"><li>Viagens: hero fotográfico, busca em tabs, cards com duração e preço, mosaico editorial, carrossel horizontal e rodapé comercial.</li><li>Fidelidade: hero humano com fundo azul, shortcuts, módulo branco dentro de faixa azul, etapas numeradas, tier cards, benefícios, logo cloud, banners split e faixas de suporte.</li><li>Não converta todas as famílias em cards genéricos idênticos; mantenha anatomia e propósito de cada padrão.</li></ul></details>
+          <details class="group rounded-sm border border-white/15 bg-white/5 p-4"><summary class="cursor-pointer list-none text-sm font-bold">04. Responsividade e acessibilidade <span class="float-right text-sky-300 group-open:rotate-180">⌄</span></summary><ul class="mt-3 space-y-2 pl-4 text-xs leading-5 text-white/75 marker:text-sky-300 list-disc"><li>Em mobile, formulário vira grid de uma coluna; mosaicos passam a uma coluna quando necessário; carrosséis podem ter scroll horizontal com snap.</li><li>Não comprimir cinco tiers numa única linha estreita: usar carrossel acessível ou cards empilhados.</li><li>Controle todos os menus, abas, carrosséis e formulários por teclado; inclua focus-visible e aria-labels nos controles de ícone.</li><li>Não comunicar estados apenas pela cor; manter texto, ícone ou forma complementar.</li><li>Respeite prefers-reduced-motion em transições e movimento automático.</li></ul></details>
+          <details class="group rounded-sm border border-white/15 bg-white/5 p-4"><summary class="cursor-pointer list-none text-sm font-bold">05. Precisão e validação <span class="float-right text-sky-300 group-open:rotate-180">⌄</span></summary><ul class="mt-3 space-y-2 pl-4 text-xs leading-5 text-white/75 marker:text-sky-300 list-disc"><li>Não alegar que as cores, fonte, medidas ou breakpoints estimados são valores oficiais.</li><li>Substitua imagens ilustrativas pelos assets aprovados do produto; preserve proporção, crop e contraste do texto.</li><li>Não usar preços, ofertas, metas de fidelidade ou texto legal de demonstração em produção sem validação.</li><li>Compare a tela implementada com a referência em desktop e mobile; ajuste alinhamento, densidade, espaçamento e ritmo vertical.</li></ul></details>
+          <div class="pt-2"><button id="copy-ai-brief" class="focus-ring rounded-sm bg-brand-lime px-5 py-3 text-xs font-extrabold text-brand-navy transition hover:brightness-95">Copiar instrução resumida para IA</button><span id="copy-status" class="ml-3 text-xs text-white/60" role="status"></span></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="bg-[#02243A] py-5 text-white/50"><div class="container-site flex flex-wrap items-center justify-between gap-3 text-[10px]"><span>AZUL UI REFERENCE · single-file HTML</span><span>Tailwind CSS CDN + CSS custom properties + vanilla JavaScript</span><a class="focus-ring rounded underline underline-offset-4 hover:text-white" href="#overview">Voltar ao topo ↑</a></div></div>
+
+  <script>
+    // Demo behavior for the reference itself. Replace with real application logic in production.
+    const productNotes = {
+      'Pacotes': 'Pacotes de viagem', 'Hospedagens': 'Busca de hospedagem', 'Ingressos e passeios': 'Experiências e atrações',
+      'Carros': 'Aluguel de veículos', 'Traslados': 'Traslados de aeroporto', 'Seguros': 'Seguro viagem'
+    };
+    document.querySelectorAll('[data-search-tab]').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('[data-search-tab]').forEach((item) => item.setAttribute('aria-selected', String(item === tab)));
+        document.getElementById('search-product-note').textContent = productNotes[tab.dataset.searchTab] || tab.dataset.searchTab;
+      });
+    });
+
+    const moreOptions = document.getElementById('more-options');
+    const extraOptions = document.getElementById('extra-options');
+    moreOptions.addEventListener('click', () => {
+      const isExpanded = moreOptions.getAttribute('aria-expanded') === 'true';
+      moreOptions.setAttribute('aria-expanded', String(!isExpanded));
+      extraOptions.classList.toggle('hidden', isExpanded);
+      extraOptions.classList.toggle('grid', !isExpanded);
+      moreOptions.innerHTML = isExpanded ? 'Mais opções <span aria-hidden="true">⌄</span>' : 'Menos opções <span aria-hidden="true">⌃</span>';
+    });
+
+    // Simple, touch-friendly carousel controls.
+    document.querySelectorAll('[data-carousel="offers"]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const carousel = document.getElementById('offers-carousel');
+        const direction = Number(button.dataset.direction || 1);
+        carousel.scrollBy({ left: direction * Math.max(220, carousel.clientWidth * .7), behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      });
+    });
+
+    // Demo tabs for loyalty point panel. Keep all content illustrative.
+    const pointsContent = {
+      juntar: [
+        ['Viaje e acumule', 'Transforme viagens e compras elegíveis em oportunidades para acumular pontos.'],
+        ['Use parceiros', 'Confira parceiros e serviços que podem ampliar suas possibilidades.'],
+        ['Planeje a próxima', 'Acompanhe oportunidades e planeje quando usar seus pontos.']
+      ],
+      usar: [
+        ['Pesquise resgates', 'Confira opções, valores e regras antes de planejar sua viagem.'],
+        ['Compare possibilidades', 'Avalie destinos e experiências conforme seus objetivos.'],
+        ['Confira as condições', 'Verifique disponibilidade, validade e requisitos de cada opção.']
+      ]
+    };
+    document.querySelectorAll('[data-points-tab]').forEach((tab) => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('[data-points-tab]').forEach((item) => item.setAttribute('aria-selected', String(item === tab)));
+        const mode = tab.dataset.pointsTab;
+        document.querySelectorAll('[data-point-title]').forEach((title, index) => { title.textContent = pointsContent[mode][index][0]; });
+        document.querySelectorAll('[data-point-copy]').forEach((copy, index) => { copy.textContent = pointsContent[mode][index][1]; });
+      });
+    });
+
+    const brief = `Implemente as telas seguindo o arquivo azul-design-reference.html como referência de design. Use a base visual Azul: container centralizado, sans-serif, superfícies brancas/cinza muito claro, azul institucional, magenta para conversão de Viagens e lima apenas em CTA de campanha. Reproduza os padrões específicos do contexto: Viagens = hero fotográfico, formulário de busca em abas, cards com imagem/duração/preço, mosaico editorial, carrossel de ofertas e rodapé comercial; Fidelidade = hero humano em fundo azul, atalhos, módulos brancos sobre faixa azul, cards explicativos, passos numerados, tiers em progressão cromática, benefícios, logos de parceiros, banners divididos e faixas de suporte. Não uniformize todas as famílias como um único card genérico. Faça layout responsivo e acessível, com foco visível, aria-labels, estados ativos claros e teclado. Cores, textos, preços, metas e imagens deste exemplo são ilustrativos: validar/substituir com assets e dados reais. A referência é baseada em screenshots, não no CSS oficial.`;
+    document.getElementById('copy-ai-brief').addEventListener('click', async () => {
+      const status = document.getElementById('copy-status');
+      try {
+        await navigator.clipboard.writeText(brief);
+        status.textContent = 'Instrução copiada.';
+      } catch (error) {
+        status.textContent = 'A cópia automática não foi permitida pelo navegador. Copie o texto pelo código-fonte.';
+      }
+    });
+  </script>
+</body>
+</html>

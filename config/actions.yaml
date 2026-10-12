@@ -1,0 +1,143 @@
+# =============================================================================
+# Playbook de retenção: inventário de ações do agente
+# =============================================================================
+# REGRA DE OURO (WS7): o agente só pode oferecer ações DESTE inventário que
+# passarem pelo motor determinístico de elegibilidade (agent/eligibility.py),
+# que valida tier/saldo/validade/orçamento contra config/program_rules.yaml.
+# Toda ação tem custo, KPI e orçamento. `regulation_support` referencia fact_id
+# de program_rules.yaml que sustenta a ação (ou é null p/ ação não-benefício).
+# =============================================================================
+
+meta:
+  currency: BRL
+  budget:
+    max_cost_brl_per_client: 400
+    max_actions_per_client_per_campaign: 1
+  note: "Custos são premissas operacionais declaradas (status: premise); revisar com dados reais no piloto."
+
+actions:
+  contato_proativo_relacionamento:
+    id: ACT-CONTATO
+    description: "Contato proativo do time de relacionamento para entender insatisfação e recuperar confiança"
+    cost_brl: 35
+    channels: [telefone, whatsapp]
+    regulation_support: null        # não promete benefício: sem citação obrigatória
+    eligibility:
+      personas_any: [executivo_recorrente, regional_dependente, maximizador_milhas]
+      risk_states_any: [risco_alto_valor_alto]
+      max_per_client_per_campaign: 1
+    kpi: "taxa de contato efetivo; satisfação pós-contato"
+    notes: "Sem promessa de benefício na primeira abordagem."
+
+  gesto_reconhecimento_bonus_pontos:
+    id: ACT-BONUS-PONTOS
+    description: "Bônus de Pontos Azul como gesto de reconhecimento pelo relacionamento"
+    cost_brl: 60
+    channels: [email, app]
+    regulation_support: AF-QUALIFYING-POINTS   # Pontos Azul = instrumento do programa
+    eligibility:
+      risk_states_any: [risco_alto_valor_alto, risco_medio_valor_alto]
+      tiers_any: [azul, topazio, safira, diamante]
+      max_points_grant: 2000
+      max_per_client_per_campaign: 1
+    kpi: "reativação em 90 dias; uso do saldo"
+    notes: "Campanhas promocionais podem ter regulamento próprio; mensagem não inventa regra."
+
+  antecipacao_de_nivel:
+    id: ACT-ANTECIPACAO-NIVEL
+    description: "Antecipação/conquista assistida do próximo nível quando o cliente está próximo da meta"
+    cost_brl: 25
+    channels: [app, email]
+    regulation_support: AF-TIER-TOPAZIO | AF-TIER-SAFIRA | AF-TIER-DIAMANTE | AF-TIER-DIAMANTE-UNIQUE
+    eligibility:
+      personas_any: [executivo_recorrente, maximizador_milhas, eventual_ascendente]
+      requires: [proximo_do_proximo_nivel]   # motor verifica: >=80% da meta em pontos qualificáveis ou trechos
+      max_per_client_per_campaign: 1
+    kpi: "conversão ao próximo nível em 6 meses"
+    notes: "Comunica a meta REAL do nível vigente (snapshot); nunca inventa isenção."
+
+  oferta_resgate_especial:
+    id: ACT-RESGATE-ESPECIAL
+    description: "Facilitação de resgate via cotas do Resgate Especial Azul (passagem nacional a valor fixo)"
+    cost_brl: 0                          # benefício contratual do tier; custo de oportunidade documentado
+    channels: [app, email]
+    regulation_support: AF-RESGATE-ESPECIAL-2025
+    eligibility:
+      personas_any: [maximizador_milhas, lazer_premium]
+      tiers_any: [safira, diamante]
+      requires: [saldo_suficiente_para_cota, atrito_resgate_observado]
+      max_per_client_per_campaign: 1
+    kpi: "resgates realizados; redução do atrito 'resgate'"
+    notes: "Só oferece se tier realmente elegível E saldo >= pontos/trecho da cota."
+
+  oferta_rota_favorita:
+    id: ACT-OFERTA-ROTA
+    description: "Oferta da rota favorita do cliente com bônus de pontos em data sazonal"
+    cost_brl: 45
+    channels: [email, app]
+    regulation_support: AF-QUALIFYING-POINTS
+    eligibility:
+      personas_any: [lazer_premium, eventual_promocional]
+      risk_states_any: [risco_baixo_potencial_alto]
+      requires: [rota_favorita_definida]
+      max_per_client_per_campaign: 1
+    kpi: "conversão da oferta; receita incremental"
+
+  pacote_experiencia_destino:
+    id: ACT-PACOTE-EXPERIENCIA
+    description: "Sugestão de pacote/experiência no destino preferido (Azul Viagens)"
+    cost_brl: 15
+    channels: [email]
+    regulation_support: null
+    eligibility:
+      personas_any: [lazer_premium]
+      risk_states_any: [risco_baixo_potencial_alto]
+      max_per_client_per_campaign: 1
+    kpi: "cliques/reservas via parceiro"
+
+  missao_acumulo_parceiro:
+    id: ACT-MISSAO-ACUMULO
+    description: "Missão de acúmulo com parceiro/cartão (clube/itau) para quem valoriza pontos"
+    cost_brl: 20
+    channels: [app, email]
+    regulation_support: AF-QUALIFYING-POINTS
+    eligibility:
+      personas_any: [maximizador_milhas]
+      risk_states_any: [risco_baixo_potencial_alto, risco_medio_valor_alto]
+      max_per_client_per_campaign: 1
+    kpi: "acúmulo via parceiro em 90 dias"
+
+  aviso_antecipado_prioridade:
+    id: ACT-AVISO-ANTENCIPADO
+    description: "Aviso antecipado de ofertas e prioridade de informação na rota do cliente"
+    cost_brl: 5
+    channels: [email, whatsapp]
+    regulation_support: null
+    eligibility:
+      personas_any: [regional_dependente]
+      max_per_client_per_campaign: 1
+    kpi: "retenção da rota; abertura de comunicação"
+
+  reencaminhamento_atraso:
+    id: ACT-ATRATRIBUI-ATRASO
+    description: "Comunicação proativa + alternativa de voo quando o atrito dominante é atraso"
+    cost_brl: 30
+    channels: [whatsapp, telefone]
+    regulation_support: null
+    eligibility:
+      requires: [atrito_atraso_observado]
+      risk_states_any: [risco_alto_valor_alto, risco_medio_valor_alto]
+      max_per_client_per_campaign: 1
+    kpi: "reclamações evitadas; continuidade da rota"
+
+  educacao_beneficio_existente:
+    id: ACT-EDUCA-BENEFICIO
+    description: "Comunicar benefício JÁ garantido pelo nível vigente (ex.: bagagens, antecipação) que o cliente não usa"
+    cost_brl: 3
+    channels: [app, email]
+    regulation_support: "AF-TIER-* (benefício do nível vigente do cliente)"
+    eligibility:
+      requires: [beneficio_nivel_nao_utilizado]
+      max_per_client_per_campaign: 1
+    kpi: "utilização do benefício em 90 dias"
+    notes: "Mensagem cita o benefício exato do tier conforme snapshot."

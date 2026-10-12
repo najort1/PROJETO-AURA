@@ -1,0 +1,64 @@
+# =============================================================================
+# Premissas COMPORTAMENTAIS do gerador sintético (status: premise)
+# =============================================================================
+# Estes parâmetros NÃO são fatos de fonte pública: são premissas declaradas.
+# Fatos de mercado vêm de config/calibration_map.yaml (ingestion.curate);
+# regras do programa vêm de config/program_rules.yaml.
+#
+# TODO(synthetic): o especialista da frente WS2 preenche/valida os valores
+# marcados com TODO, sempre com justificativa no docs/fidelity_report.md.
+# =============================================================================
+
+meta:
+  note: >-
+    O gerador usa processo latente com ruído (heterogeneidade individual,
+    eventos exógenos, dados faltantes) para que modelos treinados no sintético
+    não obtenham acurácia trivial (plano mestre, seção 3).
+  ground_truth_rule: >-
+    A verdade latente (arquétipo, CLV 'real', hazard de churn) é gravada SOMENTE
+    em data/curated/ground_truth.parquet e consumida EXCLUSIVAMENTE pela
+    avaliação (fidelity_report, ARI de recuperação, métricas oracle). Modelos
+    e features nunca leem essa tabela.
+
+archetypes:
+  # 5 famílias latentes (nomes de personas comerciais só surgem APÓS o
+  # clustering, WS5). Shares devem somar 1.0. TODO(synthetic): calibrar.
+  executivo_recorrente:
+    share: 0.16
+    sketch: "alta frequência, rotas troncais, antecedência curta, corporativo"
+  lazer_premium:
+    share: 0.22
+    sketch: "baixa frequência, ticket alto, sazonal, antecedência longa"
+  maximizador_milhas:
+    share: 0.14
+    sketch: "acúmulo via cartão/parceiros, sensível a resgate"
+  regional_dependente:
+    share: 0.18
+    sketch: "rotas com pouca concorrência, dependência de conectividade"
+  eventual_promocional:
+    share: 0.30
+    sketch: "eventual, caça promoções, baixa lealdade"
+
+latent:
+  # TODO(synthetic): efeitos aleatórios por cliente (correlação frequência x
+  # monetário, dispersão individual de propensões).
+  heterogeneity: { todo: true }
+  # Eventos exógenos de mercado (ex.: meses de baixa demanda) que afetam todos.
+  exogenous_events: { todo: true }
+  # Mecanismo de dados faltantes (documentar MNAR/MAR; never silently impute).
+  missing_data: { todo: true }
+
+behavior:
+  # Premissas de comportamento individual (status: premise).
+  frequency: { todo: true }        # distribuição de viagens/ano por arquétipo
+  price_sensitivity: { todo: true }  # elasticidade por arquétipo
+  churn_hazard: { todo: true }      # baseline + efeito de atritos (frictions.aspect_weights)
+  redemption_propensity: { todo: true }
+  friction_response: { todo: true } # como cada atrito eleva o hazard
+  action_response: { todo: true }   # efeito plausível da ação de retenção (para impact sim)
+
+pricing:
+  # Fallback declarado em calibration_map (tarifa média por rota x dispersão).
+  base_fare_per_km_brl: { todo: true }
+  fare_dispersion_cv: { todo: true }
+  ancillary_share_of_spend: { todo: true }

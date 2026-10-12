@@ -1,0 +1,114 @@
+# =============================================================================
+# Mapa de calibração: parâmetro do gerador -> fonte -> valor -> status
+# =============================================================================
+# REGRA DE OURO (plano mestre, seção 3):
+#   "Nenhum valor numérico de fonte pública entra no gerador sem registro
+#    no calibration_map."
+#
+# Separação de responsabilidades:
+#   - Valores medidos dos dados locais são COMPUTADOS por ingestion.curate e
+#     gravados em data/curated/calibration_values.json (chaves = ids abaixo).
+#   - Valores verificados por pesquisa podem ser registrados inline (value:).
+#   - Premissas comportamentais ficam em config/generator.yaml (status: premise).
+#   - O relatório legível é renderizado em docs/calibration_report.md
+#     (ingestion.render_calibration), nunca editado à mão.
+# =============================================================================
+
+meta:
+  values_output: data/curated/calibration_values.json
+  render_output: docs/calibration_report.md
+  status_legend:
+    verified_local: "medido dos microdados ANAC locais (data/raw/anac) por ingestion.curate"
+    verified_research: "verificado em fonte pública via pesquisa web (ver config/program_rules.yaml sources e docs/source_verification.md)"
+    premise: "premissa declarada e parametrizada; NÃO é fato de fonte pública"
+    derived_synthetic: "derivado de corpus sintético rotulado (validação de pipeline; não representa mundo real)"
+    pending: "pendente de medição ou verificação"
+
+parameters:
+  market.route_inventory:
+    description: "Rotas domésticas ativas (origem-destino) e aeroportos, extraídas dos microdados"
+    source: "ANAC · voos_basica/voos_combinada (local)"
+    status: verified_local
+    computed: true
+    used_by: [synthetic.generate]
+
+  market.volume_by_route_month:
+    description: "Passageiros pagos por rota e mês (distribuição de demanda de mercado)"
+    source: "ANAC · voos_basica/voos_combinada (local)"
+    status: verified_local
+    computed: true
+    used_by: [synthetic.generate]
+
+  market.seasonality_by_route:
+    description: "Índice sazonal mensal por rota (12 índices por rota)"
+    source: "ANAC · estatísticas de voos (local)"
+    status: verified_local
+    computed: true
+    used_by: [synthetic.generate]
+
+  market.delay_rate_by_route:
+    description: "Taxa de atraso (>15 min) por rota (insumo de atrito)"
+    source: "ANAC · histórico de voos (local)"
+    status: verified_local
+    computed: true
+    used_by: [synthetic.generate]
+
+  market.cancellation_rate_by_route:
+    description: "Taxa de cancelamento por rota (insumo de atrito)"
+    source: "ANAC · histórico de voos (local)"
+    status: verified_local
+    computed: true
+    used_by: [synthetic.generate]
+
+  market.airport_inventory:
+    description: "Aeródromos com código ICAO/IATA e região (para regionalização do sintético)"
+    source: "ANAC · aerodromos (local)"
+    status: verified_local
+    computed: true
+    used_by: [synthetic.generate]
+
+  pricing.fare_distribution_by_route:
+    description: "Distribuição de tarifa efetivamente vendida por rota/mês"
+    source: "ANAC · microdados de tarifas aéreas comercializadas"
+    status: pending
+    blocker: "Portal ANAC exige CAPTCHA; download automático bloqueado nesta sessão (ver docs/source_verification.md)."
+    fallback: >-
+      Premissa parametrizada (generator.yaml: pricing) com tarifa média base
+      por distância de rota e dispersão declarada; a limitação é explícita.
+    used_by: [synthetic.generate]
+
+  program_scale.total_members:
+    description: "Escala da base de membros do programa"
+    source: "Azul RI / documento SEC (exercício 2025)"
+    status: verified_research
+    value: 20100000
+    as_of: "2025-12-31"
+    used_by: [synthetic.generate (escala documentada), ml.impact]
+
+  program_scale.monthly_active_members:
+    description: "Membros ativos por mês (escala da base 'viva')"
+    source: "Azul RI (2025)"
+    status: verified_research
+    value: 1400000
+    used_by: [synthetic.generate (proporção ativo/cadastrado documentada)]
+
+  program_rules.tiers:
+    description: "Níveis, qualificação, acúmulo por R$, validade, tetos de resgate e beneficiários"
+    source: "config/program_rules.yaml (snapshot research-2026-10-12)"
+    status: verified_research
+    used_by: [synthetic.generate, agent.eligibility, agent.rag, app]
+
+  frictions.aspect_weights:
+    description: "Peso de cada atrito (atraso, bagagem, app, resgate, atendimento, preço) no hazard de evasão"
+    source: "ml/sentiment (corpus sintético rotulado por aspecto)"
+    status: derived_synthetic
+    note: "Honestidade: pesos derivados de corpus SINTÉTICO; validam o pipeline, não provam prevalência real."
+    computed: true
+    used_by: [synthetic.generate, agent.pipeline, app]
+
+  behavior.*:
+    description: "Frequência individual, sensibilidade a preço, propensão a churn, resposta a ação (premissas)"
+    source: "config/generator.yaml"
+    status: premise
+    note: "Comportamento individual não é observável em fonte pública; premissa declarada e parametrizada."
+    used_by: [synthetic.generate]

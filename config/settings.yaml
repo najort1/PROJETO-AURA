@@ -1,0 +1,87 @@
+# =============================================================================
+# Aura 2.0 - parâmetros globais do pipeline
+# =============================================================================
+# Separações de verdade (fonte única por tema):
+#   - Premissas comportamentais do gerador sintético  -> config/generator.yaml
+#   - Regras do Azul Fidelidade (versionadas)          -> config/program_rules.yaml
+#   - Mapa parâmetro -> fonte -> valor                 -> config/calibration_map.yaml
+#   - Playbook de retenção (ações, custos, elegib.)    -> config/actions.yaml
+# =============================================================================
+
+meta:
+  project: "Aura 2.0"
+  config_version: 1
+
+seed: 42
+
+paths:
+  data_raw: data/raw
+  data_curated: data/curated
+  data_analytics: data/analytics
+  manifests: data/manifests
+  logs: logs
+
+timeline:
+  # Janela sintética de 36 meses (2023-09 a 2026-08), alinhada à disponibilidade
+  # dos microdados ANAC locais (voos_basica/voos_combinada até 2026-08).
+  synthetic_start: "2023-09-01"
+  synthetic_end: "2026-08-31"
+  # Coorte de treinamento: features APENAS com informação <= cutoff.
+  feature_cutoff: "2025-08-31"
+  # Alvo: 12 meses à frente (CLV_12m e evasão_12m).
+  target_start: "2025-09-01"
+  target_end: "2026-08-31"
+  # Coorte de validação temporal (origem móvel anterior).
+  validation_cutoff: "2025-02-28"
+  validation_target_start: "2025-03-01"
+  validation_target_end: "2026-02-28"
+
+cohorts:
+  n_customers: 50000        # amostra documentada; escala real do programa: 20,1M membros (RI 2025)
+  n_reviews_corpus: 1200    # corpus de avaliações SINTÉTICAS rotuladas por aspecto
+
+modeling:
+  clv_horizon_months: 12
+  churn_horizon_months: 12
+  # Definição operacional de evasão: inatividade > 2x o intervalo típico entre
+  # atividades do cliente (ajustada à frequência individual; mínimo absoluto).
+  churn_inactivity_multiplier: 2.0
+  churn_min_inactivity_days: 180
+
+score_av:
+  # ScoreAV = 0,60·pct(CLV_12m) + 0,20·pct(RFM composto) + 0,20·pct(Potencial)
+  weights:
+    clv: 0.60
+    rfm: 0.20
+    potential: 0.20
+  # Corte provisório; definido formalmente por análise de Pareto em
+  # ml/segmentation (ver docs/segmentation_report.md).
+  cutoff_top_percent: 10
+
+fairness:
+  # Atributos sensíveis existem APENAS para auditoria; são excluídos das
+  # features dos modelos (ver ml/fairness e tests/test_fairness.py).
+  sensitive_attributes: ["faixa_etaria", "genero", "regiao"]
+  excluded_from_features: true
+  selection_rate_threshold_ratio: 0.8   # razão mínima entre grupos (4/5ths rule)
+
+agent:
+  default_mode: "offline"   # offline (compositor determinístico) | llm (requer credencial)
+  llm:
+    provider: "openai_compatible"
+    model: "gpt-4o-mini"
+    temperature: 0.2
+    timeout_seconds: 45
+    max_output_tokens: 900
+  guardrails:
+    min_confidence_for_auto: 0.55
+    human_review_threshold: 0.55
+  budget:
+    max_cost_brl_per_client: 400
+
+app:
+  port: 8501
+  synthetic_banner: true    # banner "DADOS SINTÉTICOS" obrigatório em todas as telas
+
+logging:
+  level: "INFO"
