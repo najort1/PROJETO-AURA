@@ -72,7 +72,7 @@ python tasks.py app        # abre o Streamlit em http://localhost:8501
 ├── dbt/                     # modelos SQL curated → analytics (DuckDB ↔ Snowflake)
 ├── schemas/                 # contratos de dados (fonte do dicionário gerado)
 ├── ml/                      # clv/ churn/ segmentation/ sentiment/ fairness/ impact/
-├── agent/                   # rag/ prompts/ guardrails/ eval/ + eligibilidade determinística
+├── agent/                   # rag/ guardrails/ eval/ compositor offline + eligibilidade determinística
 ├── app/                     # painel Streamlit (7 telas, tema Azul, modo offline)
 ├── sql/snowflake/           # DDL + COPY INTO + plano de transição p/ dados reais
 ├── tests/                   # unit + integração + anti-vazamento + adversarial
