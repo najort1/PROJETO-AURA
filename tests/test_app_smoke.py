@@ -236,3 +236,68 @@ def test_simulation_math_consistency() -> None:
     assert custos <= orcamento
     assert isinstance(delta_receita, float)
     assert not np.isnan(delta_receita)
+
+
+# =============================================================================
+# 6. TESTES DE INTEGRIDADE ANALÍTICA REAL (WS8b - 50k CLIENTES)
+# =============================================================================
+def test_real_analytics_dataset_metrics() -> None:
+    df_customers, is_fixture = load_customers_data()
+    assert is_fixture is False
+    assert len(df_customers) == 50000
+
+    # Cruzamento 01: Carteira
+    clv_total = float(df_customers["clv_12m_previsto"].sum())
+    assert abs(clv_total - 39554463.12) < 0.05
+
+    var_total = float((df_customers["clv_12m_previsto"] * df_customers["churn_prob"]).sum())
+    assert abs(var_total - 8305496.50) < 0.05
+
+    av_count = int(df_customers["alto_valor"].sum())
+    assert av_count == 5005
+    assert abs(df_customers["alto_valor"].mean() - 0.1001) < 0.0001
+
+    # Cruzamento 02: Personas
+    df_personas, _ = load_personas_data()
+    assert len(df_personas) == 6
+    shares = df_personas.set_index("persona")["share_pct"].to_dict()
+    assert abs(shares["eventual_promocional"] - 0.4842) < 0.0001
+    assert abs(shares["regional_dependente"] - 0.1953) < 0.0001
+    assert abs(shares["eventual_ascendente"] - 0.1024) < 0.0001
+    assert abs(shares["maximizador_milhas"] - 0.0990) < 0.0001
+    assert abs(shares["lazer_premium"] - 0.0929) < 0.0001
+    assert abs(shares["executivo_recorrente"] - 0.0262) < 0.0001
+
+    # Cruzamento 03: Linha do tempo sem eventos pós-cutoff
+    df_timeline, _ = load_timeline_data()
+    assert not df_timeline.empty
+    assert (df_timeline["data"].astype(str) <= "2025-08-31").all()
+
+    # Cruzamento 04: Agente de Retenção (50.000 recomendações)
+    df_recs, is_r_fixture = load_recommendations_data()
+    assert is_r_fixture is False
+    assert len(df_recs) == 50000
+    assert "ACT-NO-ACTION" in df_recs["action_id"].values
+    assert "ACT-AVISO-ANTENCIPADO" in df_recs["action_id"].values
+    assert "ACT-ANTECIPACAO-NIVEL" in df_recs["action_id"].values
+    c038454_rec = df_recs[df_recs["customer_id"] == "C038454"]
+    assert not c038454_rec.empty
+    assert c038454_rec.iloc[0]["action_id"] == "ACT-ATRATRIBUI-ATRASO"
+
+    # Cruzamento 05: Friction Map (49 linhas e pesos)
+    df_friction, _ = load_friction_data()
+    assert len(df_friction) == 49
+    weights = df_friction.groupby("aspect")["aspect_weight"].first().to_dict()
+    assert abs(weights["atraso"] - 0.1965) < 0.0001
+    assert abs(weights["conforto"] - 0.0502) < 0.0001
+    assert abs(sum(weights.values()) - 1.0) < 0.001
+
+    # Cruzamento 07: IA Responsável (14 informados, 9 conformes, 5 não conformes)
+    df_fairness, _ = load_fairness_data()
+    assert len(df_fairness) == 16
+    is_nao_inf = df_fairness["group_value"].str.lower().str.contains("informado", na=False) & ~df_fairness["group_value"].str.lower().str.contains("prefiro", na=False)
+    assert is_nao_inf.sum() == 2
+    df_inf = df_fairness[~is_nao_inf]
+    assert len(df_inf) == 14
+    assert df_inf["four_fifths_compliant"].sum() == 9
+    assert (~df_inf["four_fifths_compliant"]).sum() == 5
