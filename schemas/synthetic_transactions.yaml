@@ -1,0 +1,103 @@
+table: synthetic_transactions
+description: "Transações financeiras e de fidelidade realizadas pelos clientes (compras de passagens, ancillaries, acúmulos e resgates)"
+granularity: "uma transação"
+produced_by: "synthetic.generate"
+consumers: ["dbt: curated -> analytics", "synthetic.fidelity_report", "ml.clv"]
+columns:
+  - name: transaction_id
+    dtype: string
+    nullable: false
+    description: "Identificador único da transação"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "TX0000001"
+  - name: customer_id
+    dtype: string
+    nullable: false
+    description: "Identificador do cliente que realizou a transação"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "C000001"
+  - name: transaction_date
+    dtype: datetime
+    nullable: false
+    description: "Data e hora da transação"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "2024-03-10 14:20:00"
+  - name: transaction_type
+    dtype: string
+    nullable: false
+    description: "Natureza da transação (compra de passagem, serviço ancillary, acúmulo externo ou resgate)"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "compra_passagem"
+  - name: amount_brl
+    dtype: float
+    nullable: false
+    description: "Valor monetário pago em reais (BRL)"
+    unit: "BRL"
+    source: "synthetic.generate"
+    sensitive: false
+    example: 450.50
+  - name: ancillary_type
+    dtype: string
+    nullable: true
+    description: "Subtipo de serviço ancillary (quando transaction_type == servico_ancillary)"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "espaco_azul"
+  - name: pontos_azul_acumulados
+    dtype: int
+    nullable: false
+    description: "Pontos Azul acumulados (multiplicador do nível vigente: 1x, 2x, 3x, 4x por R$ gasto)"
+    unit: "pontos"
+    source: "synthetic.generate (config/program_rules.yaml)"
+    sensitive: false
+    example: 1800
+  - name: pontos_qualificaveis_acumulados
+    dtype: int
+    nullable: false
+    description: "Pontos qualificáveis creditados (R$ 1 gasto em passagens/serviços = 1 QP; 10:1 cartão/clube)"
+    unit: "pontos_qualificaveis"
+    source: "synthetic.generate (config/program_rules.yaml: AF-QUALIFYING-POINTS)"
+    sensitive: false
+    example: 450
+  - name: pontos_azul_resgatados
+    dtype: int
+    nullable: false
+    description: "Pontos Azul debitados em resgates (mínimo 3.000 pts/trecho, teto pelo nível)"
+    unit: "pontos"
+    source: "synthetic.generate (config/program_rules.yaml: AF-REDEMPTION)"
+    sensitive: false
+    example: 0
+  - name: flight_id
+    dtype: string
+    nullable: true
+    description: "Identificador do voo associado à compra aérea (quando aplicável)"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "FL0000001"
+checks:
+  unique: [transaction_id]
+  non_null: [transaction_id, customer_id, transaction_date, transaction_type, amount_brl, pontos_azul_acumulados, pontos_qualificaveis_acumulados, pontos_azul_resgatados]
+  allowed_values:
+    transaction_type:
+      - "compra_passagem"
+      - "servico_ancillary"
+      - "acumulo_cartao"
+      - "acumulo_clube"
+      - "acumulo_parceiro"
+      - "resgate_passagem"
+    ancillary_type:
+      - "bagagem"
+      - "espaco_azul"
+      - "marcacao_assento"
+      - "antecipacao_voo"
+      - "nenhum"

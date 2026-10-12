@@ -1,64 +1,246 @@
 # =============================================================================
-# Premissas COMPORTAMENTAIS do gerador sintético (status: premise)
+# Aura 2.0 - Premissas COMPORTAMENTAIS do gerador sintético (status: premise)
 # =============================================================================
-# Estes parâmetros NÃO são fatos de fonte pública: são premissas declaradas.
-# Fatos de mercado vêm de config/calibration_map.yaml (ingestion.curate);
-# regras do programa vêm de config/program_rules.yaml.
+# Estes parâmetros NÃO são fatos diretos de fonte pública: são premissas
+# comportamentais declaradas e justificadas metodologicamente (seção 3 do plano mestre).
+# Fatos agregados de mercado vêm de config/calibration_map.yaml (medidos da ANAC
+# via ingestion.curate ou verificados no RI da Azul);
+# Regras do programa vêm de config/program_rules.yaml (snapshot versionado).
 #
-# TODO(synthetic): o especialista da frente WS2 preenche/valida os valores
-# marcados com TODO, sempre com justificativa no docs/fidelity_report.md.
+# REGRA DE RIGOR (plano mestre, seção 3):
+#   - Todo parâmetro comportamental possui justificativa explícita (# premise: ...).
+#   - O dataset sintético incorpora ruído estocástico, heterogeneidade individual
+#     correlacionada e atritos multifatoriais para impedir acurácia preditiva trivial.
+#   - O ground truth latente é segregado exclusivamente em data/curated/ground_truth.parquet.
 # =============================================================================
 
 meta:
+  config_version: 2
   note: >-
-    O gerador usa processo latente com ruído (heterogeneidade individual,
-    eventos exógenos, dados faltantes) para que modelos treinados no sintético
-    não obtenham acurácia trivial (plano mestre, seção 3).
+    O gerador utiliza processo estocástico latente com ruído (heterogeneidade
+    individual multivariada, choques exógenos de mercado, dados faltantes MAR/MNAR)
+    para que modelos de ML não aprendam regras determinísticas óbvias.
   ground_truth_rule: >-
-    A verdade latente (arquétipo, CLV 'real', hazard de churn) é gravada SOMENTE
-    em data/curated/ground_truth.parquet e consumida EXCLUSIVAMENTE pela
-    avaliação (fidelity_report, ARI de recuperação, métricas oracle). Modelos
-    e features nunca leem essa tabela.
+    A verdade latente (arquétipo verdadeiro, CLV realizado no período alvo de 12 meses,
+    parâmetros latentes de hazard de churn) é gravada SOMENTE em
+    data/curated/ground_truth.parquet e consumida EXCLUSIVAMENTE por módulos de avaliação
+    (fidelity_report, ARI de recuperação, métricas oracle). Modelos de produção e features
+    nunca têm acesso a essa tabela (evaluation_only).
 
 archetypes:
-  # 5 famílias latentes (nomes de personas comerciais só surgem APÓS o
-  # clustering, WS5). Shares devem somar 1.0. TODO(synthetic): calibrar.
+  # 5 famílias latentes de clientes. A soma exata dos shares é 1.00.
+  # As personas comerciais definitivas emergem após clustering não-supervisionado em WS5.
   executivo_recorrente:
     share: 0.16
-    sketch: "alta frequência, rotas troncais, antecedência curta, corporativo"
+    sketch: "alta frequência corporativa, rotas troncais, compra de última hora, inelástico a preço"
+    # premise: Executivos corporativos representam parcela menor da base (~16%), mas geram
+    # alta receita por voo e frequência constante ao longo do ano útil (fevereiro a novembro).
+    trips_per_year_mean: 10.0
+    trips_per_year_std: 3.5
+    advance_days_mean: 5.5
+    advance_days_std: 2.5
+    price_elasticity: -0.35
+    ancillary_propensity: 0.72
+    redemption_propensity: 0.22
+    base_churn_hazard_annual: 0.09
+    dominant_frictions: ["atraso", "app_checkin"]
+
   lazer_premium:
     share: 0.22
-    sketch: "baixa frequência, ticket alto, sazonal, antecedência longa"
+    sketch: "turismo de alto padrão, viagens em família, antecedência longa, foco em conforto"
+    # premise: Viajantes a lazer com alta renda representam ~22% da base, compram com meses
+    # de antecedência, contratam bagagem/Espaço Azul e viajam em férias escolares e feriados.
+    trips_per_year_mean: 2.0
+    trips_per_year_std: 1.0
+    advance_days_mean: 52.0
+    advance_days_std: 18.0
+    price_elasticity: -0.75
+    ancillary_propensity: 0.85
+    redemption_propensity: 0.38
+    base_churn_hazard_annual: 0.14
+    dominant_frictions: ["bagagem", "atendimento"]
+
   maximizador_milhas:
     share: 0.14
-    sketch: "acúmulo via cartão/parceiros, sensível a resgate"
+    sketch: "acúmulo acelerado via cartão Itaú/Clube, caçador de passagens com pontos, sensível a resgate"
+    # premise: Especialistas em programas de fidelidade (~14%) monitoram promoções, transferem
+    # pontos de parceiros bancários e demandam disponibilidade de assentos para resgate eficiente.
+    trips_per_year_mean: 2.2
+    trips_per_year_std: 1.2
+    advance_days_mean: 28.0
+    advance_days_std: 12.0
+    price_elasticity: -1.45
+    ancillary_propensity: 0.18
+    redemption_propensity: 0.78
+    base_churn_hazard_annual: 0.25
+    dominant_frictions: ["resgate_milhas", "atendimento"]
+
   regional_dependente:
     share: 0.18
-    sketch: "rotas com pouca concorrência, dependência de conectividade"
+    sketch: "rotas do interior e conexões exclusivas Azul, baixa concorrência, dependência de conectividade"
+    # premise: Passageiros de cidades do interior onde a Azul detém monopólio ou liderança isolada
+    # (~18%). Têm menor sensibilidade a preço por falta de alternativas aéreas, mas sofrem com cancelamentos.
+    trips_per_year_mean: 3.5
+    trips_per_year_std: 1.5
+    advance_days_mean: 14.0
+    advance_days_std: 6.0
+    price_elasticity: -0.45
+    ancillary_propensity: 0.48
+    redemption_propensity: 0.20
+    base_churn_hazard_annual: 0.08
+    dominant_frictions: ["atraso", "atendimento"]
+
   eventual_promocional:
     share: 0.30
-    sketch: "eventual, caça promoções, baixa lealdade"
+    sketch: "baixa frequência esporádica, viaja apenas em promoções relâmpago, alta taxa de abandono"
+    # premise: Maior contingente da base (~30%), mas com engajamento transitório. Extremamente
+    # sensível a preço, raramente contrata adicionais e deixa pontos expirarem com frequência.
+    trips_per_year_mean: 0.5
+    trips_per_year_std: 0.4
+    advance_days_mean: 18.0
+    advance_days_std: 8.0
+    price_elasticity: -2.30
+    ancillary_propensity: 0.08
+    redemption_propensity: 0.12
+    base_churn_hazard_annual: 0.46
+    dominant_frictions: ["preco", "atendimento"]
 
 latent:
-  # TODO(synthetic): efeitos aleatórios por cliente (correlação frequência x
-  # monetário, dispersão individual de propensões).
-  heterogeneity: { todo: true }
-  # Eventos exógenos de mercado (ex.: meses de baixa demanda) que afetam todos.
-  exogenous_events: { todo: true }
-  # Mecanismo de dados faltantes (documentar MNAR/MAR; never silently impute).
-  missing_data: { todo: true }
+  # Efeitos aleatórios multivariados por cliente: epsilon_i ~ N(0, Sigma).
+  # Correlaciona frequência individual e gasto monetário, adicionando heterogeneidade
+  # não-observável direta aos dados comportamentais.
+  heterogeneity:
+    # premise: Indivíduos com maior propensão de voo tendem a ter maior gasto médio por voo
+    # (rho = 0.52), enquanto propensão de voo correlaciona negativamente com churn (rho = -0.34).
+    dimensions: ["frequency", "spend", "redemption", "churn"]
+    std_deviations: [0.38, 0.32, 0.40, 0.28]
+    correlations:
+      freq_spend: 0.52
+      freq_redemption: 0.15
+      freq_churn: -0.34
+      spend_redemption: 0.20
+      spend_churn: -0.25
+      redemption_churn: 0.12
+
+  # Eventos exógenos agregados de mercado que afetam a demanda global ao longo do ano civil.
+  exogenous_events:
+    # premise: Sazonalidade da aviação civil brasileira segundo estatísticas históricas ANAC:
+    # Alta temporada de verão (dez-jan) e inverno (jul); baixa temporada em mar, mai, ago, set.
+    monthly_seasonality:
+      1: 1.32   # Janeiro: férias de verão
+      2: 0.98   # Fevereiro: carnaval variável
+      3: 0.85   # Março: baixa temporada
+      4: 0.95   # Abril: feriados prolongados
+      5: 0.82   # Maio: mês de menor demanda
+      6: 1.02   # Junho: início férias
+      7: 1.28   # Julho: férias de meio de ano
+      8: 0.86   # Agosto: baixa corporativa/turística
+      9: 0.88   # Setembro: baixa moderada
+      10: 1.00  # Outubro: estabilidade
+      11: 1.08  # Novembro: pré-feriados / Black Friday
+      12: 1.35  # Dezembro: festas e férias
+    shocks:
+      winter_fog_delay_multiplier: 1.18   # Aumento de atrasos por nevoeiro em VCP/CWB/POA (jun-ago)
+      summer_peak_baggage_friction: 1.22  # Congestionamento de bagagens no pico de verão (dez-jan)
+
+  # Mecanismos formais de dados faltantes (auditoria e prevenção de imputação ingênua).
+  missing_data:
+    # 1. MAR (Missing at Random) em pesquisas de satisfação (NPS nas interações):
+    # premise: Clientes que vivenciaram atrito grave ou que tiveram experiência excepcional
+    # têm probabilidade significativamente maior de responder ao NPS do que clientes indiferentes.
+    interaction_nps_missing_rate: 0.58
+    nps_mar_mechanism:
+      base_response_prob: 0.30
+      friction_response_boost: 0.45
+      high_tier_response_boost: 0.15
+
+    # 2. MNAR (Missing Not at Random) no motivo de inatividade/churn:
+    # premise: Clientes que abandonam o programa raramente formalizam encerramento de conta (94% saem
+    # silenciosamente sem motivo registrado na base transacional).
+    churn_reason_unrecorded_rate: 0.94
+
+    # 3. MCAR (Missing Completely at Random) em cadastros demográficos:
+    # premise: Preenchimento opcional de gênero no cadastro rápido resulta em ~3.8% de ausência.
+    demographic_missing_rates:
+      genero: 0.038
+      faixa_etaria: 0.012
 
 behavior:
-  # Premissas de comportamento individual (status: premise).
-  frequency: { todo: true }        # distribuição de viagens/ano por arquétipo
-  price_sensitivity: { todo: true }  # elasticidade por arquétipo
-  churn_hazard: { todo: true }      # baseline + efeito de atritos (frictions.aspect_weights)
-  redemption_propensity: { todo: true }
-  friction_response: { todo: true } # como cada atrito eleva o hazard
-  action_response: { todo: true }   # efeito plausível da ação de retenção (para impact sim)
+  # Modelagem de frequência de voos: distribuição de Poisson mista com parâmetro Gamma
+  # parametrizado por arquétipo e efeito aleatório individual.
+  frequency:
+    distribution: "negative_binomial"
+    dispersion_alpha: 0.45
+
+  # Elasticidade de preço: resposta a desvios da tarifa média de mercado.
+  price_sensitivity:
+    reference_elasticity: -1.0
+    booking_curve_steepness: 0.045  # Crescimento diário da tarifa conforme antecedência diminui
+
+  # Processo estocástico de Churn: modelo de risco proporcional (Cox-style hazard)
+  # lambda_i(t) = lambda_0 * exp(theta_churn_i + sum(w_k * friction_k) - beta_tier * tier_score)
+  churn_hazard:
+    # premise: Coeficientes de atenuação de risco baseados em benefícios e status acumulado.
+    tier_hazard_reduction:
+      azul: 0.00
+      topazio: 0.20
+      safira: 0.38
+      diamante: 0.60
+      diamante_unique: 0.85
+    inactivity_threshold_days: 180
+    inactivity_multiplier: 2.0
+
+  # Pesos dos atritos no hazard de evasão.
+  # Se data/curated/friction_weights.json existir (produzido por ml/sentiment),
+  # estes valores são sobrescritos dinamicamente; caso contrário, utiliza-se esta
+  # premissa comportamental declarada.
+  friction_response:
+    # premise: Atrito em resgate de milhas e atrasos severos geram impacto desproporcional
+    # na insatisfação percebida, conforme literatura de loyalty aéreo.
+    weights:
+      atraso: 0.32
+      bagagem: 0.28
+      app_checkin: 0.18
+      resgate_milhas: 0.35
+      atendimento: 0.25
+      preco: 0.22
+    pending_replacement_source: "data/curated/friction_weights.json (ml.sentiment.friction_map)"
+
+  # Propensão e volume de resgate de pontos por transação de queima.
+  redemption_propensity:
+    min_points_redemption: 3000   # Conforme regra oficial AF-REDEMPTION
+    average_points_per_flight_redemption: 18500
+    points_cash_co_payment_share: 0.28
+
+  # Efeito de intervenções proativas de retenção (para simulação de impacto do WS9).
+  action_response:
+    # premise: Redução esperada no hazard de evasão dependendo da adequação entre
+    # a ação ofertada e a persona do cliente (benchmark de CRM aéreo).
+    hazard_reduction_matched: 0.40
+    hazard_reduction_generic: 0.15
+    duration_months: 6
 
 pricing:
-  # Fallback declarado em calibration_map (tarifa média por rota x dispersão).
-  base_fare_per_km_brl: { todo: true }
-  fare_dispersion_cv: { todo: true }
-  ancillary_share_of_spend: { todo: true }
+  # Microdados de tarifas da ANAC exigem CAPTCHA; premissa parametrizada transparente
+  # documentada no calibration_map (pricing.fare_distribution_by_route).
+  # premise: Yield médio doméstico no Brasil gira em torno de R$ 0,48 por km voado,
+  # com piso operacional de R$ 180,00 e coeficiente de variação de 35% via yield management.
+  base_fare_per_km_brl: 0.48
+  min_fare_brl: 180.0
+  fare_dispersion_cv: 0.35
+  ancillary_share_of_spend: 0.11
+
+  # Distribuição de tipos de serviços adicionais (ancillaries)
+  ancillary_types:
+    bagagem:
+      share: 0.52
+      base_price_brl: 110.0
+    espaco_azul:
+      share: 0.28
+      base_price_brl: 65.0
+    marcacao_assento:
+      share: 0.14
+      base_price_brl: 35.0
+    antecipacao_voo:
+      share: 0.06
+      base_price_brl: 75.0

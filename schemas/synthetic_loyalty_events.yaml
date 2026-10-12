@@ -1,0 +1,112 @@
+table: synthetic_loyalty_events
+description: "Eventos de fidelidade na conta do cliente: upgrades, downgrades, renovações de tier e expiração de lotes de pontos"
+granularity: "um evento de fidelidade por ocorrência"
+produced_by: "synthetic.generate"
+consumers: ["dbt: curated -> analytics", "synthetic.fidelity_report", "agent.eligibility"]
+columns:
+  - name: event_id
+    dtype: string
+    nullable: false
+    description: "Identificador único do evento de fidelidade"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "EV0000001"
+  - name: customer_id
+    dtype: string
+    nullable: false
+    description: "Identificador do cliente afetado"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "C000001"
+  - name: event_date
+    dtype: datetime
+    nullable: false
+    description: "Data e hora da ocorrência do evento"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "2024-06-15 10:00:00"
+  - name: event_type
+    dtype: string
+    nullable: false
+    description: "Tipo de evento de fidelidade (upgrade, downgrade, retention de tier ou expiracao de lote)"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "tier_upgrade"
+  - name: previous_tier
+    dtype: string
+    nullable: false
+    description: "Nível no programa antes da alteração"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "azul"
+  - name: new_tier
+    dtype: string
+    nullable: false
+    description: "Nível no programa após a alteração"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "topazio"
+  - name: trigger_reason
+    dtype: string
+    nullable: false
+    description: "Regra determinante do evento (pontos qualificaveis, trechos, gasto direto ou expiracao de ciclo)"
+    unit: null
+    source: "synthetic.generate (config/program_rules.yaml)"
+    sensitive: false
+    example: "qualifying_points_reached"
+  - name: qualifying_points_at_event
+    dtype: int
+    nullable: false
+    description: "Saldo acumulado de pontos qualificáveis no ciclo no momento do evento"
+    unit: "pontos_qualificaveis"
+    source: "synthetic.generate"
+    sensitive: false
+    example: 6100
+  - name: segments_at_event
+    dtype: int
+    nullable: false
+    description: "Contagem de trechos voados no ciclo no momento do evento"
+    unit: "trechos"
+    source: "synthetic.generate"
+    sensitive: false
+    example: 7
+  - name: spend_brl_at_event
+    dtype: float
+    nullable: false
+    description: "Gasto acumulado em compras elegíveis no ciclo no momento do evento"
+    unit: "BRL"
+    source: "synthetic.generate"
+    sensitive: false
+    example: 6500.0
+checks:
+  unique: [event_id]
+  non_null: [event_id, customer_id, event_date, event_type, previous_tier, new_tier, trigger_reason, qualifying_points_at_event, segments_at_event, spend_brl_at_event]
+  allowed_values:
+    event_type:
+      - "tier_upgrade"
+      - "tier_downgrade"
+      - "tier_retention"
+      - "points_expiring"
+    trigger_reason:
+      - "qualifying_points_reached"
+      - "segments_reached"
+      - "alternative_spend_reached"
+      - "qualification_cycle_expired"
+    previous_tier:
+      - "azul"
+      - "topazio"
+      - "safira"
+      - "diamante"
+      - "diamante_unique"
+    new_tier:
+      - "azul"
+      - "topazio"
+      - "safira"
+      - "diamante"
+      - "diamante_unique"

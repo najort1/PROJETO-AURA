@@ -1,0 +1,100 @@
+table: synthetic_flights
+description: "Voos individuais operados pela Azul na malha doméstica na janela de simulação (2023-09-01 a 2026-08-31)"
+granularity: "um voo por trecho operado"
+produced_by: "synthetic.generate"
+consumers: ["dbt: curated -> analytics", "synthetic.fidelity_report"]
+columns:
+  - name: flight_id
+    dtype: string
+    nullable: false
+    description: "Identificador único do voo sintético"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "FL0000001"
+  - name: flight_number
+    dtype: string
+    nullable: false
+    description: "Número de voo com prefixo AD (Azul Linhas Aéreas)"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "AD4102"
+  - name: origin_airport
+    dtype: string
+    nullable: false
+    description: "Código IATA do aeroporto de origem"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "VCP"
+  - name: destination_airport
+    dtype: string
+    nullable: false
+    description: "Código IATA do aeroporto de destino"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "SDU"
+  - name: departure_date
+    dtype: datetime
+    nullable: false
+    description: "Data e horário programados de partida"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "2024-03-15 08:30:00"
+  - name: distance_km
+    dtype: float
+    nullable: false
+    description: "Distância ortodrômica do trecho em quilômetros"
+    unit: "km"
+    source: "synthetic.generate"
+    sensitive: false
+    example: 410.0
+  - name: scheduled_departure
+    dtype: datetime
+    nullable: false
+    description: "Horário previsto de partida"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "2024-03-15 08:30:00"
+  - name: actual_departure
+    dtype: datetime
+    nullable: false
+    description: "Horário real observado de partida"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "2024-03-15 08:42:00"
+  - name: delay_minutes
+    dtype: int
+    nullable: false
+    description: "Minutos de atraso na partida (>= 0)"
+    unit: "minutos"
+    source: "synthetic.generate"
+    sensitive: false
+    example: 12
+  - name: has_delay
+    dtype: int
+    nullable: false
+    description: "Indicador binário de atraso relevante (> 15 minutos, critério ANAC)"
+    unit: "binario"
+    source: "synthetic.generate"
+    sensitive: false
+    example: 0
+  - name: is_cancelled
+    dtype: int
+    nullable: false
+    description: "Indicador binário de cancelamento do voo"
+    unit: "binario"
+    source: "synthetic.generate"
+    sensitive: false
+    example: 0
+checks:
+  unique: [flight_id]
+  non_null: [flight_id, flight_number, origin_airport, destination_airport, departure_date, distance_km, scheduled_departure, actual_departure, delay_minutes, has_delay, is_cancelled]
+  allowed_values:
+    has_delay: [0, 1]
+    is_cancelled: [0, 1]

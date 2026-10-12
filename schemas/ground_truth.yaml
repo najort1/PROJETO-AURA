@@ -1,0 +1,122 @@
+table: ground_truth
+description: "Verdade latente individual e parâmetros geradores verdadeiros (estritamente segregada para avaliação e auditoria)"
+granularity: "um registro por cliente sintético"
+produced_by: "synthetic.generate"
+consumers: [evaluation_only]
+columns:
+  - name: customer_id
+    dtype: string
+    nullable: false
+    description: "Identificador único do cliente"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "C000001"
+  - name: latent_archetype
+    dtype: string
+    nullable: false
+    description: "Família latente real geradora do cliente (usada para cálculo de ARI de recuperação de personas)"
+    unit: null
+    source: "synthetic.generate (config/generator.yaml)"
+    sensitive: false
+    example: "executivo_recorrente"
+  - name: clv_real_12m
+    dtype: float
+    nullable: false
+    description: "Receita líquida total efetivamente realizada pelo cliente na janela alvo de 12 meses (2025-09-01 a 2026-08-31)"
+    unit: "BRL"
+    source: "synthetic.generate"
+    sensitive: false
+    example: 4250.80
+  - name: churn_observed_12m
+    dtype: int
+    nullable: false
+    description: "Indicador binário de inatividade observada (> 2x intervalo individual e >= 180 dias sem transação no período alvo)"
+    unit: "binario"
+    source: "synthetic.generate (config/settings.yaml: modeling)"
+    sensitive: false
+    example: 0
+  - name: latent_churn_event_12m
+    dtype: int
+    nullable: false
+    description: "Indicador estocástico latente de desistência do programa disparado pelo processo de hazard"
+    unit: "binario"
+    source: "synthetic.generate"
+    sensitive: false
+    example: 0
+  - name: latent_base_hazard
+    dtype: float
+    nullable: false
+    description: "Taxa anual basal de hazard de churn atribuída ao arquétipo do cliente"
+    unit: "taxa_anual"
+    source: "synthetic.generate"
+    sensitive: false
+    example: 0.09
+  - name: latent_annual_frequency
+    dtype: float
+    nullable: false
+    description: "Frequência esperada latente de voos por ano calibrada com efeito aleatório"
+    unit: "voos_por_ano"
+    source: "synthetic.generate"
+    sensitive: false
+    example: 22.5
+  - name: latent_price_sensitivity
+    dtype: float
+    nullable: false
+    description: "Elasticidade-preço individual latente do cliente"
+    unit: "elasticidade"
+    source: "synthetic.generate"
+    sensitive: false
+    example: -0.35
+  - name: latent_redemption_propensity
+    dtype: float
+    nullable: false
+    description: "Propensão individual de queima/resgate de pontos acumulados"
+    unit: "propensao_0_a_1"
+    source: "synthetic.generate"
+    sensitive: false
+    example: 0.22
+  - name: latent_freq_effect
+    dtype: float
+    nullable: false
+    description: "Efeito aleatório individual de frequência epsilon_freq ~ N(0, sigma)"
+    unit: "desvio_padrao"
+    source: "synthetic.generate"
+    sensitive: false
+    example: 0.12
+  - name: latent_spend_effect
+    dtype: float
+    nullable: false
+    description: "Efeito aleatório individual de gasto monetário epsilon_spend ~ N(0, sigma)"
+    unit: "desvio_padrao"
+    source: "synthetic.generate"
+    sensitive: false
+    example: 0.08
+  - name: latent_churn_effect
+    dtype: float
+    nullable: false
+    description: "Efeito aleatório individual de hazard de churn epsilon_churn ~ N(0, sigma)"
+    unit: "desvio_padrao"
+    source: "synthetic.generate"
+    sensitive: false
+    example: -0.05
+  - name: total_frictions_lifetime
+    dtype: int
+    nullable: false
+    description: "Contagem total de episódios de atrito vivenciados pelo cliente ao longo de toda a simulação"
+    unit: "contagem"
+    source: "synthetic.generate"
+    sensitive: false
+    example: 3
+checks:
+  unique: [customer_id]
+  non_null: [customer_id, latent_archetype, clv_real_12m, churn_observed_12m, latent_churn_event_12m, latent_base_hazard, latent_annual_frequency, latent_price_sensitivity, latent_redemption_propensity, latent_freq_effect, latent_spend_effect, latent_churn_effect, total_frictions_lifetime]
+  allowed_values:
+    latent_archetype:
+      - "executivo_recorrente"
+      - "lazer_premium"
+      - "maximizador_milhas"
+      - "regional_dependente"
+      - "eventual_promocional"
+    churn_observed_12m: [0, 1]
+    latent_churn_event_12m: [0, 1]

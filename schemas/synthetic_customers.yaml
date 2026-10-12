@@ -1,0 +1,114 @@
+table: synthetic_customers
+description: "Clientes sintéticos cadastrados no Azul Fidelidade (população da base sintética do Projeto Aura 2.0)"
+granularity: "um registro por cliente sintético"
+produced_by: "synthetic.generate"
+consumers: ["dbt: curated -> analytics", "ml.fairness", "synthetic.fidelity_report"]
+columns:
+  - name: customer_id
+    dtype: string
+    nullable: false
+    description: "Identificador único do cliente sintético"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "C000001"
+  - name: archetype
+    dtype: string
+    nullable: false
+    description: "Família latente de comportamento do cliente"
+    unit: null
+    source: "synthetic.generate (config/generator.yaml: archetypes)"
+    sensitive: false
+    example: "executivo_recorrente"
+  - name: faixa_etaria
+    dtype: string
+    nullable: true
+    description: "Faixa etária do cliente (apenas para auditoria de viés/LGPD - NUNCA usada como feature)"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: true
+    example: "35-44"
+  - name: genero
+    dtype: string
+    nullable: true
+    description: "Gênero declarado pelo cliente (apenas para auditoria de viés/LGPD - NUNCA usada como feature)"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: true
+    example: "M"
+  - name: regiao
+    dtype: string
+    nullable: false
+    description: "Região geográfica brasileira de residência (apenas para auditoria de viés/LGPD)"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: true
+    example: "Sudeste"
+  - name: home_airport
+    dtype: string
+    nullable: false
+    description: "Aeroporto base mais frequente (código IATA)"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "VCP"
+  - name: join_date
+    dtype: datetime
+    nullable: false
+    description: "Data de cadastro no programa Azul Fidelidade"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "2023-09-15 00:00:00"
+  - name: current_tier
+    dtype: string
+    nullable: false
+    description: "Nível vigente no encerramento da janela (azul, topazio, safira, diamante, diamante_unique)"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "azul"
+  - name: status
+    dtype: string
+    nullable: false
+    description: "Status cadastral do cliente ao fim da janela (ativo ou inativo)"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "ativo"
+checks:
+  unique: [customer_id]
+  non_null: [customer_id, archetype, regiao, home_airport, join_date, current_tier, status]
+  allowed_values:
+    archetype:
+      - "executivo_recorrente"
+      - "lazer_premium"
+      - "maximizador_milhas"
+      - "regional_dependente"
+      - "eventual_promocional"
+    faixa_etaria:
+      - "18-24"
+      - "25-34"
+      - "35-44"
+      - "45-59"
+      - "60+"
+    genero:
+      - "M"
+      - "F"
+      - "Outro"
+      - "Prefiro nao informar"
+    regiao:
+      - "Sudeste"
+      - "Sul"
+      - "Nordeste"
+      - "Centro-Oeste"
+      - "Norte"
+    current_tier:
+      - "azul"
+      - "topazio"
+      - "safira"
+      - "diamante"
+      - "diamante_unique"
+    status:
+      - "ativo"
+      - "inativo"

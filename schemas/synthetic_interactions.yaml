@@ -1,0 +1,101 @@
+table: synthetic_interactions
+description: "Interações de atendimento, pontos de contato nos canais e atritos vivenciados pelos clientes"
+granularity: "uma interação"
+produced_by: "synthetic.generate"
+consumers: ["dbt: curated -> analytics", "synthetic.fidelity_report", "ml.churn", "agent.pipeline"]
+columns:
+  - name: interaction_id
+    dtype: string
+    nullable: false
+    description: "Identificador único da interação"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "INT0000001"
+  - name: customer_id
+    dtype: string
+    nullable: false
+    description: "Identificador do cliente que interagiu"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "C000001"
+  - name: interaction_date
+    dtype: datetime
+    nullable: false
+    description: "Data e hora do contato ou ocorrência do atrito"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "2024-05-12 16:45:00"
+  - name: channel
+    dtype: string
+    nullable: false
+    description: "Canal da interação (app, web, call_center, aeroporto, whatsapp)"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "app"
+  - name: aspect
+    dtype: string
+    nullable: false
+    description: "Aspecto central abordado (atraso, bagagem, app_checkin, resgate_milhas, atendimento, preco, nenhum)"
+    unit: null
+    source: "synthetic.generate (config/generator.yaml: dominant_frictions)"
+    sensitive: false
+    example: "atraso"
+  - name: has_friction
+    dtype: int
+    nullable: false
+    description: "Indicador binário de experiência com atrito ou insatisfação"
+    unit: "binario"
+    source: "synthetic.generate"
+    sensitive: false
+    example: 1
+  - name: friction_intensity
+    dtype: float
+    nullable: false
+    description: "Intensidade contínua calculada do atrito (escala 0.0 a 1.0)"
+    unit: "escala_0_a_1"
+    source: "synthetic.generate"
+    sensitive: false
+    example: 0.75
+  - name: nps_rating
+    dtype: float
+    nullable: true
+    description: "Nota de satisfação declarada no NPS (0 a 10); missing MAR documentado (~58% nulo)"
+    unit: "nota_0_a_10"
+    source: "synthetic.generate (config/generator.yaml: missing_data)"
+    sensitive: false
+    example: 8.0
+  - name: resolution_status
+    dtype: string
+    nullable: false
+    description: "Status do caso (resolvido, nao_resolvido, pendente)"
+    unit: null
+    source: "synthetic.generate"
+    sensitive: false
+    example: "resolvido"
+checks:
+  unique: [interaction_id]
+  non_null: [interaction_id, customer_id, interaction_date, channel, aspect, has_friction, friction_intensity, resolution_status]
+  allowed_values:
+    channel:
+      - "app"
+      - "web"
+      - "call_center"
+      - "aeroporto"
+      - "whatsapp"
+    aspect:
+      - "atraso"
+      - "bagagem"
+      - "app_checkin"
+      - "resgate_milhas"
+      - "atendimento"
+      - "preco"
+      - "nenhum"
+    has_friction: [0, 1]
+    resolution_status:
+      - "resolvido"
+      - "nao_resolvido"
+      - "pendente"
