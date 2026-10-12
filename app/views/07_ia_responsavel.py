@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import streamlit as st
 
 from app.components import (
@@ -35,6 +36,7 @@ from app.theme import (
     TEXT_PRIMARY,
     TEXT_SECONDARY,
     WARNING,
+    format_int_br,
     format_percent,
 )
 
@@ -72,25 +74,28 @@ def render() -> None:
         st.warning("Métricas de fairness indisponíveis na base.")
         return
 
-    # Cálculos resumidos
-    total_grupos = len(df_fairness)
-    grupos_conformes = int(df_fairness["four_fifths_compliant"].sum())
-    taxa_conformidade = grupos_conformes / max(1, total_grupos)
+    # Cálculos resumidos: isolamento dos 14 grupos informados e 2 grupos "não informado" (fora de julgamento)
+    is_nao_inf_all = df_fairness["group_value"].str.lower().str.contains("informado", na=False) & ~df_fairness["group_value"].str.lower().str.contains("prefiro", na=False)
+    df_informados = df_fairness[~is_nao_inf_all]
+    total_informados = len(df_informados)
+    grupos_conformes = int(df_informados["four_fifths_compliant"].sum())
+    grupos_nao_conformes = total_informados - grupos_conformes
+    taxa_conformidade = grupos_conformes / max(1, total_informados)
 
     metric_row([
         {
             "title": "Conformidade Four-Fifths (4/5)",
-            "value": f"{grupos_conformes} / {total_grupos} grupos",
-            "subtitle": "Razão de seleção >= 0,80 vs grupo base",
-            "border_color": AZUL_ACTION,
+            "value": f"{grupos_conformes} / {total_informados} informados",
+            "subtitle": f"{grupos_nao_conformes} grupos não conformes (razão < 0,80)",
+            "border_color": AZUL_ACTION if taxa_conformidade >= 0.8 else MAGENTA_CTA,
             "delta": f"{taxa_conformidade*100:.1f}% em conformidade",
             "delta_positive": taxa_conformidade >= 0.8,
         },
         {
-            "title": "Limiar Regulatório de Disparidade",
-            "value": "0,80 (80%)",
-            "subtitle": "Diretriz Four-Fifths Rule / EEOC",
-            "border_color": AZUL_DEEP,
+            "title": "Grupos Não Conformes (5)",
+            "value": "18-24, Sul, Sudeste, CO, NE",
+            "subtitle": "18-24: 0,7950 · Sul: 0,5575 · Sudeste: 0,6422",
+            "border_color": MAGENTA_CTA,
         },
         {
             "title": "Atributos Sensíveis Auditados",
@@ -102,9 +107,11 @@ def render() -> None:
             "title": "Humano no Circuito (HITL)",
             "value": "Artigo 20 LGPD",
             "subtitle": "Revisão e edição de recomendações ativa",
-            "border_color": MAGENTA_CTA,
+            "border_color": AZUL_DEEP,
         },
     ])
+
+    st.caption("ℹ️ Nota: Os 2 grupos 'Não informado' (em Faixa Etária e Gênero) decorrem do direito de privacidade do titular (LGPD) e são formalmente classificados fora do julgamento da Regra dos 4/5.")
 
     st.markdown("<div style='margin-top: 24px;'></div>", unsafe_allow_html=True)
 
@@ -127,11 +134,25 @@ def render() -> None:
         fig, ax = plt.subplots(figsize=(6, 3.4), facecolor=CANVAS)
         ax.set_facecolor("#FFFFFF")
 
-        groups = sub_dim["group_value"].values
+        # Limpa rótulos de grupo e identifica "não informado"
+        cleaned_groups = [
+            "Não informado"
+            if ("informado" in str(g).lower() and "prefiro" not in str(g).lower())
+            else str(g)
+            for g in sub_dim["group_value"]
+        ]
         ratios = sub_dim["selection_ratio_vs_max"].values
-        x_pos = np.arange(len(groups))
+        x_pos = np.arange(len(cleaned_groups))
 
-        bar_colors = [AZUL_ACTION if r >= 0.80 else MAGENTA_CTA for r in ratios]
+        bar_colors = []
+        for g_clean, r in zip(cleaned_groups, ratios, strict=False):
+            if g_clean == "Não informado":
+                bar_colors.append("#94A3B8")  # Cinza neutro para privacidade fora de julgamento
+            elif r >= 0.80:
+                bar_colors.append(AZUL_ACTION)
+            else:
+                bar_colors.append(MAGENTA_CTA)
+
         bars = ax.bar(x_pos, ratios, color=bar_colors, width=0.45, edgecolor=BORDER_SUBTLE)
 
         # Linha de corte 0.80
@@ -141,16 +162,16 @@ def render() -> None:
             ax.text(
                 bar.get_x() + bar.get_width() / 2,
                 r + 0.02,
-                f"{r:.2f}",
+                f"{r:.4f}",
                 ha="center",
                 va="bottom",
-                fontsize=8.5,
+                fontsize=8.0,
                 fontweight="bold",
                 color=AZUL_NAVY,
             )
 
         ax.set_xticks(x_pos)
-        ax.set_xticklabels(groups, fontsize=8.5, fontweight="bold", color=TEXT_PRIMARY)
+        ax.set_xticklabels(cleaned_groups, fontsize=8.5, fontweight="bold", color=TEXT_PRIMARY)
         ax.set_ylabel("Razão de Seleção vs Grupo Máximo", fontsize=8.5, color=TEXT_PRIMARY)
         ax.set_ylim(0, 1.25)
         ax.tick_params(colors=TEXT_SECONDARY, labelsize=8)
@@ -165,11 +186,21 @@ def render() -> None:
         display_sub = sub_dim[[
             "group_value", "group_size", "selection_rate", "avg_predicted_churn", "selection_ratio_vs_max", "four_fifths_compliant"
         ]].copy()
+        display_sub["group_value"] = cleaned_groups
+
+        def _fmt_conforme(row: pd.Series) -> str:
+            if row["group_value"] == "Não informado":
+                return "⚪ Fora do Julgamento (LGPD)"
+            return "✅ Conforme" if row["four_fifths_compliant"] else "⚠️ Não Conforme"
+
+        display_sub["Conforme?"] = display_sub.apply(_fmt_conforme, axis=1)
+        display_sub["Taxa Alto Valor"] = display_sub["selection_rate"].apply(lambda v: format_percent(v))
+        display_sub["Churn Médio"] = display_sub["avg_predicted_churn"].apply(lambda v: format_percent(v))
+        display_sub["Razão vs Max"] = display_sub["selection_ratio_vs_max"].apply(lambda v: f"{v:.4f}")
+        display_sub["Amostra"] = display_sub["group_size"].apply(format_int_br)
+
+        display_sub = display_sub[["group_value", "Amostra", "Taxa Alto Valor", "Churn Médio", "Razão vs Max", "Conforme?"]]
         display_sub.columns = ["Grupo", "Amostra", "Taxa Alto Valor", "Churn Médio", "Razão vs Max", "Conforme?"]
-        display_sub["Taxa Alto Valor"] = display_sub["Taxa Alto Valor"].apply(lambda v: format_percent(v))
-        display_sub["Churn Médio"] = display_sub["Churn Médio"].apply(lambda v: format_percent(v))
-        display_sub["Razão vs Max"] = display_sub["Razão vs Max"].apply(lambda v: f"{v:.2f}")
-        display_sub["Conforme?"] = display_sub["Conforme?"].apply(lambda v: "✅ Sim" if v else "⚠️ Atenção")
         st.dataframe(display_sub, width="stretch", hide_index=True)
 
     st.markdown("<div style='margin-top: 24px;'></div>", unsafe_allow_html=True)

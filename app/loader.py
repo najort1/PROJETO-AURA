@@ -29,6 +29,11 @@ class DatasetLoadError(RuntimeError):
     pass
 
 
+def is_analytics_mode() -> bool:
+    """Verifica se a base analítica real (data/analytics/) está presente no ambiente."""
+    return (ANALYTICS_DIR / "customers_scores.parquet").exists()
+
+
 @st.cache_data(show_spinner="Carregando tabela analítica...")
 def _read_parquet_cached(file_path_str: str, mtime_ns: int) -> pd.DataFrame:
     """Lê parquet com cache nativo do Streamlit.
@@ -42,24 +47,39 @@ def _read_parquet_cached(file_path_str: str, mtime_ns: int) -> pd.DataFrame:
 
 
 def load_dataset(name: str) -> tuple[pd.DataFrame, bool]:
-    """Carrega uma tabela pelo nome lógico.
+    """Carrega uma tabela pelo nome lógico garantindo prioridade REAL-FIRST.
 
-    Retorna:
-        (df, is_fixture): tupla com DataFrame e booleano indicando se veio de fixture.
-
-    Lança:
-        DatasetLoadError com mensagem acionável se o arquivo não existir nem em analytics nem em fixtures.
+    Regra estrita de integridade (WS8b):
+    1. Se a base analítica real existir (is_analytics_mode()): carrega
+       OBRIGATORIAMENTE de `data/analytics/{name}.parquet`.
+       NUNCA mistura dados reais com fixtures silenciosamente.
+       Se faltar arquivo ou houver erro, FALHA ALTO (fail loud) com erro acionável.
+    2. Se a base analítica real NÃO existir: recorre a `app/fixtures/{name}.parquet`
+       marcando explicitamente `is_fixture=True`.
+    3. Se ambos falharem: FALHA ALTO com mensagem orientando `python tasks.py all`.
     """
     analytics_path = ANALYTICS_DIR / f"{name}.parquet"
     fixture_path = FIXTURES_DIR / f"{name}.parquet"
 
-    if analytics_path.exists():
-        try:
-            df = _read_parquet_cached(str(analytics_path), analytics_path.stat().st_mtime_ns)
-            return df, False
-        except Exception as e:
-            st.warning(f"Aviso ao ler {analytics_path}: {e}. Tentando fallback para fixture...")
+    if is_analytics_mode():
+        if analytics_path.exists():
+            try:
+                df = _read_parquet_cached(str(analytics_path), analytics_path.stat().st_mtime_ns)
+                return df, False
+            except Exception as e:
+                raise DatasetLoadError(
+                    f"Erro ao ler arquivo crítico real 'data/analytics/{name}.parquet': {e}\n\n"
+                    f"👉 AÇÃO NECESSÁRIA: Execute no terminal: python tasks.py all "
+                    f"(a base analítica está corrompida; nunca misturamos dados reais com fixtures)."
+                ) from e
+        else:
+            raise DatasetLoadError(
+                f"Base analítica real ativa, mas o arquivo crítico 'data/analytics/{name}.parquet' está ausente.\n\n"
+                f"👉 AÇÃO NECESSÁRIA: Execute no terminal: python tasks.py all "
+                f"(para gerar o artefato analítico ausente; nunca misturamos dados reais com fixtures)."
+            )
 
+    # Modo Fixtures (apenas quando não há base analítica gerada)
     if fixture_path.exists():
         df = _read_parquet_cached(str(fixture_path), fixture_path.stat().st_mtime_ns)
         return df, True
@@ -85,8 +105,14 @@ def load_personas_data() -> tuple[pd.DataFrame, bool]:
 
 
 def load_timeline_data(customer_id: str | None = None) -> tuple[pd.DataFrame, bool]:
-    """Carrega linha do tempo de eventos (voos, atritos, resgates, upgrades)."""
+    """Carrega linha do tempo de eventos (voos, atritos, resgates, upgrades).
+
+    Aplica guardrail estrito contra vazamento temporal pós-cutoff (max 2025-08-31).
+    """
     df, is_fixture = load_dataset("customer_timeline")
+    if not df.empty and "data" in df.columns:
+        # Guardrail anti-vazamento temporal: estritamente <= 2025-08-31
+        df = df[df["data"].astype(str) <= "2025-08-31"].copy()
     if customer_id and not df.empty:
         df = df[df["customer_id"] == customer_id].copy()
     return df, is_fixture
@@ -95,6 +121,14 @@ def load_timeline_data(customer_id: str | None = None) -> tuple[pd.DataFrame, bo
 def load_recommendations_data() -> tuple[pd.DataFrame, bool]:
     """Carrega recomendações, mensagens e justificativas do agente."""
     return load_dataset("agent_recommendations")
+
+
+def load_clv_shap_data(customer_id: str | None = None) -> tuple[pd.DataFrame, bool]:
+    """Carrega fatores de explicabilidade SHAP para CLV."""
+    df, is_fixture = load_dataset("clv_shap")
+    if customer_id and not df.empty:
+        df = df[df["customer_id"] == customer_id].copy()
+    return df, is_fixture
 
 
 def load_friction_data() -> tuple[pd.DataFrame, bool]:

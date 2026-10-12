@@ -59,20 +59,32 @@ def render() -> None:
         st.warning("Recomendações indisponíveis na base.")
         return
 
-    # Seletor do cliente
-    cids_with_recs = sorted(df_recs["customer_id"].unique())
+    # Seletor do cliente com filtro de ações elegíveis
+    col_filter, col_sel = st.columns([1, 2])
+    with col_filter:
+        action_filter = st.radio(
+            "Filtro de Recomendações:",
+            options=["Ações Proativas Elegíveis", "Todos os Clientes (50k)"],
+            horizontal=True,
+        )
 
-    # Verifica se há cliente já ativo no session_state
-    current_cid = st.session_state.get("selected_customer_id", cids_with_recs[0])
-    if current_cid not in cids_with_recs:
-        current_cid = cids_with_recs[0]
+    if action_filter == "Ações Proativas Elegíveis":
+        eligible_cids = df_recs[df_recs["action_id"] != "ACT-NO-ACTION"]["customer_id"].tolist()
+        cids_pool = sorted(eligible_cids) if eligible_cids else sorted(df_recs["customer_id"].unique())
+    else:
+        cids_pool = sorted(df_recs["customer_id"].unique())
 
-    selected_cid = st.selectbox(
-        "Selecione o Cliente para avaliar recomendação:",
-        options=cids_with_recs,
-        index=cids_with_recs.index(current_cid),
-        help="Alterne entre clientes para verificar as diferentes ações e justificativas do agente.",
-    )
+    current_cid = st.session_state.get("selected_customer_id", cids_pool[0])
+    if current_cid not in cids_pool:
+        cids_pool = sorted([current_cid] + cids_pool)
+
+    with col_sel:
+        selected_cid = st.selectbox(
+            "Selecione o Cliente para avaliar recomendação:",
+            options=cids_pool,
+            index=cids_pool.index(current_cid),
+            help="Alterne entre clientes para verificar as diferentes ações e justificativas do agente.",
+        )
     st.session_state["selected_customer_id"] = selected_cid
 
     # Dados do cliente e recomendação

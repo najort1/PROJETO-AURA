@@ -30,15 +30,31 @@ from app.theme import (
 )
 
 
-def render_synthetic_banner() -> None:
-    """Banner obrigatório e permanente em todas as telas informando dados sintéticos."""
-    html_code = """
+def render_synthetic_banner(is_fixture: bool | None = None) -> None:
+    """Banner obrigatório e permanente em todas as telas informando dados sintéticos.
+
+    Exibe 'DADOS SINTÉTICOS · BASE ANALÍTICA v3' quando a base analítica real está ativa.
+    """
+    if is_fixture is None:
+        try:
+            from app.loader import is_analytics_mode
+
+            is_real = is_analytics_mode()
+        except Exception:
+            is_real = False
+    else:
+        is_real = not is_fixture
+
+    title = "DADOS SINTÉTICOS · BASE ANALÍTICA v3" if is_real else "DADOS SINTÉTICOS — DEMONSTRAÇÃO"
+    tag = "Base Analítica v3 · 50k Clientes" if is_real else "Ambiente Seguro / LGPD"
+
+    html_code = f"""
     <div class="aura-synthetic-banner" role="alert" aria-label="Aviso de base sintética">
         <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 14px;">⚠️</span>
-            <span><strong>DADOS SINTÉTICOS — DEMONSTRAÇÃO</strong> · Pipeline reproduzível Aura 2.0 (Azul Fidelidade)</span>
+            <span><strong>{title}</strong> · Pipeline reproduzível Aura 2.0 (Azul Fidelidade)</span>
         </div>
-        <span class="tag-pill">Ambiente Seguro / LGPD</span>
+        <span class="tag-pill">{tag}</span>
     </div>
     """
     st.markdown(html_code, unsafe_allow_html=True)

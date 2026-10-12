@@ -15,6 +15,7 @@ import json
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import streamlit as st
 
 from app.components import (
@@ -24,7 +25,7 @@ from app.components import (
     section_title,
     tier_badge,
 )
-from app.loader import load_customers_data, load_timeline_data
+from app.loader import load_customers_data, load_dataset, load_timeline_data
 from app.theme import (
     AZUL_ACTION,
     AZUL_DEEP,
@@ -89,11 +90,12 @@ def render() -> None:
         if tier_filter != "Todas":
             df_sorted = df_sorted[df_sorted["tier"] == tier_filter]
 
-    # Lista de IDs para seleção
-    cust_options = [
-        f"{row['customer_id']} · {row['tier'].upper()} · VaR {format_currency_brl(row['valor_em_risco'])} · Churn {format_percent(row['churn_prob'])}"
-        for _, row in df_sorted.iterrows()
-    ]
+    # Vetorização de alta performance para os 50k clientes reais (0.1s)
+    f_var = df_sorted["valor_em_risco"].map(format_currency_brl)
+    f_churn = df_sorted["churn_prob"].map(format_percent)
+    cust_options = (
+        df_sorted["customer_id"] + " · " + df_sorted["tier"].str.upper() + " · VaR " + f_var + " · Churn " + f_churn
+    ).tolist()
 
     # Recupera cliente selecionado do session_state se existir
     default_idx = 0
@@ -201,7 +203,7 @@ def render() -> None:
     col_shap, col_timeline = st.columns([1.1, 0.9])
 
     with col_shap:
-        section_title("Explicabilidade Local SHAP", "Contribuição dos principais fatores para o risco previsto de churn")
+        section_title("Explicabilidade Local SHAP (CLV)", "Contribuição dos principais fatores para o valor de vida previsto")
 
         shap_raw = customer.get("shap_top3")
         shap_factors: list[dict] = []
@@ -211,11 +213,41 @@ def render() -> None:
         elif isinstance(shap_raw, list):
             shap_factors = shap_raw
 
+        # Fallback para clv_shap caso não esteja na linha do cliente
+        if not shap_factors:
+            with contextlib.suppress(Exception):
+                df_c_shap, _ = load_dataset("clv_shap")
+                c_rows = df_c_shap[df_c_shap["customer_id"] == selected_cid]
+                if not c_rows.empty:
+                    c_row = c_rows.iloc[0]
+                    for k in [1, 2, 3]:
+                        f_name = c_row.get(f"top{k}_feature")
+                        f_val = c_row.get(f"top{k}_shap", 0.0)
+                        if pd.notna(f_name) and f_name:
+                            shap_factors.append({"factor": str(f_name), "shap_value": float(f_val)})
+
         if shap_factors:
             factors_names = []
             shap_vals = []
-            # Labels amigáveis em português
+            # Labels amigáveis em português alinhados ao modelo de CLV e histórico
             label_map = {
+                "tier_encoded": "Nível / Categoria (Tier)",
+                "avg_advance_booking_days": "Antecedência de Compra (Dias)",
+                "recency_days": "Recência (Dias sem Voo)",
+                "monetary_12m": "Gasto Acumulado 12M",
+                "ticket_medio_12m": "Ticket Médio por Voo",
+                "frequency_trend": "Tendência de Frequência de Voos",
+                "pontos_qualificaveis_12m": "Pontos Qualificáveis 12M",
+                "share_rotas_troncais": "Proporção de Rotas Troncais",
+                "frequency_3m": "Frequência de Voos (Últimos 3M)",
+                "frequency_6m": "Frequência de Voos (Últimos 6M)",
+                "frequency_12m": "Frequência de Voos (12M)",
+                "pontos_expirando_30d": "Pontos a Expirar em 30d",
+                "days_since_last_interaction": "Dias sem Interação",
+                "total_atritos_12m": "Total de Atritos (12M)",
+                "atritos_atraso_12m": "Atritos por Atraso (12M)",
+                "share_resgate": "Proporção de Resgate",
+                "meta_proximo_nivel_pct": "Progresso Meta Próximo Tier",
                 "queda_frequencia_voos": "Queda na Frequência de Voos",
                 "atrito_recente_resgate": "Atrito em Resgate de Milhas",
                 "recencia_inatividade": "Inatividade Prolongada (Recência)",
@@ -230,28 +262,37 @@ def render() -> None:
                 factors_names.append(label_map.get(fac, fac.replace("_", " ").title()))
                 shap_vals.append(val)
 
-            # Plota barras horizontais de impacto SHAP
+            # Plota barras horizontais de impacto SHAP (suporta valores positivos e negativos)
             fig, ax = plt.subplots(figsize=(6, 3.2), facecolor=CANVAS)
             ax.set_facecolor("#FFFFFF")
             y_pos = np.arange(len(factors_names))
 
-            bars = ax.barh(y_pos, shap_vals, color=MAGENTA_CTA, height=0.5, edgecolor=BORDER_SUBTLE)
+            bar_colors = [AZUL_ACTION if v >= 0 else MAGENTA_CTA for v in shap_vals]
+            bars = ax.barh(y_pos, shap_vals, color=bar_colors, height=0.5, edgecolor=BORDER_SUBTLE)
             for bar, val in zip(bars, shap_vals, strict=False):
+                txt = f"+R$ {val:,.2f}" if val >= 0 else f"-R$ {abs(val):,.2f}"
+                offset = (max(shap_vals) - min(shap_vals) + 1.0) * 0.03
                 ax.text(
-                    val + 0.005,
+                    val + (offset if val >= 0 else -offset),
                     bar.get_y() + bar.get_height() / 2,
-                    f"+{val:.3f} SHAP",
+                    txt,
                     va="center",
-                    ha="left",
+                    ha="left" if val >= 0 else "right",
                     fontsize=8,
                     fontweight="bold",
-                    color=AZUL_NAVY,
+                    color=AZUL_NAVY if val >= 0 else MAGENTA_CTA,
                 )
 
             ax.set_yticks(y_pos)
             ax.set_yticklabels(factors_names, fontsize=8.5, fontweight="bold", color=TEXT_PRIMARY)
-            ax.set_xlabel("Contribuição Marginal para P(Churn)", fontsize=8.5, color=TEXT_PRIMARY, fontweight="bold")
-            ax.set_xlim(0, max(shap_vals) * 1.35)
+            ax.set_xlabel("Contribuição Marginal no CLV 12M Previsto (R$)", fontsize=8.5, color=TEXT_PRIMARY, fontweight="bold")
+            max_abs = max([abs(v) for v in shap_vals] + [10.0])
+            margin = max_abs * 0.45
+            min_lim = min(min(shap_vals) - margin, -margin) if any(v < 0 for v in shap_vals) else 0.0
+            max_lim = max(shap_vals) + margin
+            ax.set_xlim(min_lim, max_lim)
+            if min_lim < 0:
+                ax.axvline(0, color=BORDER_SUBTLE, linestyle="--", linewidth=1.2)
             ax.tick_params(colors=TEXT_SECONDARY, labelsize=8)
             for spine in ax.spines.values():
                 spine.set_color(BORDER_SUBTLE)
@@ -259,7 +300,7 @@ def render() -> None:
             st.pyplot(fig)
             plt.close(fig)
 
-            st.caption("Valores SHAP positivos indicam variáveis que elevaram a propensão de evasão estimada do cliente.")
+            st.caption("Explicabilidade SHAP do modelo de CLV: barras em azul elevam a projeção financeira; barras em magenta reduzem a estimativa.")
         else:
             st.info("Fatores SHAP indisponíveis para este registro.")
 

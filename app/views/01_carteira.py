@@ -54,7 +54,8 @@ def render() -> None:
     # Cálculos derivados dos dados carregados (nunca hardcode)
     n_clientes = len(df_customers)
     clv_total = float(df_customers["clv_12m_previsto"].sum())
-    valor_em_risco_total = float(df_customers["valor_em_risco"].sum())
+    # Valor em Risco total = Σ(clv_12m_previsto × churn_prob) sobre a carteira real
+    valor_em_risco_total = float((df_customers["clv_12m_previsto"] * df_customers["churn_prob"]).sum())
     pct_alto_valor = float(df_customers["alto_valor"].mean())
     custo_medio_acao = 45.0  # PREMISSA (não derivada dos dados): custo médio por ação de
     # retenção do playbook (média ponderada de gestos/contatos/ofertas). Premissa de negócio

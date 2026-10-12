@@ -196,6 +196,31 @@ def render() -> None:
 
     st.markdown("<div style='margin-top: 24px;'></div>", unsafe_allow_html=True)
 
+    # Tabela de Pesos dos Aspectos (friction_map.parquet - 49 linhas: 7 aspectos x 7 semestres)
+    section_title("Pesos dos Aspectos no Modelo de Atrito", "Importância calibrada de cada aspecto no índice de insatisfação do cliente")
+
+    df_weights = (
+        df_friction.groupby("aspect")
+        .agg(
+            aspect_weight=("aspect_weight", "first"),
+            total_mencoes=("mention_count", "sum"),
+            taxa_neg_media=("negative_rate", "mean"),
+        )
+        .reset_index()
+        .sort_values("aspect_weight", ascending=False)
+    )
+
+    df_weights["aspect_label"] = df_weights["aspect"].map(aspect_label_map).fillna(df_weights["aspect"])
+    display_weights = df_weights[["aspect_label", "aspect_weight", "total_mencoes", "taxa_neg_media"]].copy()
+    display_weights.columns = ["Aspecto de Experiência", "Peso no Modelo", "Menções Acumuladas", "Taxa Negativa Média"]
+    display_weights["Peso no Modelo"] = display_weights["Peso no Modelo"].apply(lambda v: f"{v:.4f} ({v*100:.2f}%)")
+    display_weights["Menções Acumuladas"] = display_weights["Menções Acumuladas"].apply(format_int_br)
+    display_weights["Taxa Negativa Média"] = display_weights["Taxa Negativa Média"].apply(format_percent)
+
+    st.dataframe(display_weights, width="stretch", hide_index=True)
+
+    st.markdown("<div style='margin-top: 24px;'></div>", unsafe_allow_html=True)
+
     # Exemplos Sintéticos do Corpus
     section_title("Exemplos do Corpus Sintético Rotulado", "Amostra qualitativa dos atritos identificados e classificados por aspecto")
 
