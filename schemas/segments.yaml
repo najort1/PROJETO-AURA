@@ -1,0 +1,49 @@
+table: segments
+description: "Atribuição de clusters não-supervisionados (KMeans, GMM) e mapeamento em segmentos"
+granularity: "um registro por cliente na coorte de análise"
+produced_by: "ml.segmentation.cluster"
+consumers: ["ml.segmentation.personas", "agent.pipeline", "app"]
+columns:
+  - name: customer_id
+    dtype: string
+    nullable: false
+    description: "Identificador único do cliente"
+    unit: null
+    source: "data/analytics/features_customer.parquet"
+    sensitive: false
+    example: "C000001"
+  - name: cluster_kmeans
+    dtype: int
+    nullable: false
+    description: "Identificador do cluster atribuído pelo algoritmo KMeans"
+    unit: "id"
+    source: "ml/segmentation/cluster.py"
+    sensitive: false
+    example: 0
+  - name: cluster_gmm
+    dtype: int
+    nullable: false
+    description: "Identificador do componente gaussiano atribuído pelo GMM"
+    unit: "id"
+    source: "ml/segmentation/cluster.py"
+    sensitive: false
+    example: 0
+  - name: segment_id
+    dtype: int
+    nullable: false
+    description: "Identificador do segmento consolidado"
+    unit: "id"
+    source: "ml/segmentation/cluster.py"
+    sensitive: false
+    example: 0
+  - name: segment_name
+    dtype: string
+    nullable: false
+    description: "Nome semântico do segmento / persona correspondente"
+    unit: null
+    source: "ml/segmentation/cluster.py"
+    sensitive: false
+    example: "executivo_recorrente"
+checks:
+  unique: [customer_id]
+  non_null: [customer_id, cluster_kmeans, cluster_gmm, segment_id, segment_name]

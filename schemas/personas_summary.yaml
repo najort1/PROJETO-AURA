@@ -1,0 +1,107 @@
+table: personas_summary
+description: "Resumo quantitativo, atributos comportamentais e recomendações do playbook por persona"
+granularity: "uma linha por persona catalogada"
+produced_by: "ml.segmentation.personas"
+consumers: ["app.views.01_carteira", "app.views.02_personas"]
+columns:
+  - name: persona
+    dtype: string
+    nullable: false
+    description: "Identificador canônico da persona"
+    unit: null
+    source: "ml/segmentation/personas.py"
+    sensitive: false
+    example: "executivo_recorrente"
+  - name: nome_display
+    dtype: string
+    nullable: false
+    description: "Nome de exibição amigável para a interface"
+    unit: null
+    source: "ml/segmentation/personas.py"
+    sensitive: false
+    example: "Executivo Recorrente"
+  - name: cor
+    dtype: string
+    nullable: false
+    description: "Cor hexadecimal temática da persona no design system"
+    unit: null
+    source: "ml/segmentation/personas.py"
+    sensitive: false
+    example: "#033774"
+  - name: clientes_count
+    dtype: int
+    nullable: false
+    description: "Total de membros atribuídos a esta persona"
+    unit: "clientes"
+    source: "ml/segmentation/personas.py"
+    sensitive: false
+    example: 8500
+  - name: share_pct
+    dtype: float
+    nullable: false
+    description: "Fração percentual da carteira representada pela persona (0.0 a 1.0)"
+    unit: "ratio"
+    source: "ml/segmentation/personas.py"
+    sensitive: false
+    example: 0.17
+  - name: clv_medio
+    dtype: float
+    nullable: false
+    description: "CLV 12m médio dos membros da persona (BRL)"
+    unit: "BRL"
+    source: "ml/segmentation/personas.py"
+    sensitive: false
+    example: 8500.0
+  - name: churn_medio
+    dtype: float
+    nullable: false
+    description: "Probabilidade média de churn predita dos membros da persona"
+    unit: "probabilidade"
+    source: "ml/segmentation/personas.py"
+    sensitive: false
+    example: 0.38
+  - name: valor_em_risco_total
+    dtype: float
+    nullable: false
+    description: "Soma do valor em risco (CLV × P(churn)) para a persona (BRL)"
+    unit: "BRL"
+    source: "ml/segmentation/personas.py"
+    sensitive: false
+    example: 27500000.0
+  - name: atritos_dominantes
+    dtype: string
+    nullable: false
+    description: "Atritos mais frequentes reportados pelos clientes da persona"
+    unit: null
+    source: "ml/segmentation/personas.py"
+    sensitive: false
+    example: "atraso, atendimento"
+  - name: acao_recomendada
+    dtype: string
+    nullable: false
+    description: "Ação de retenção principal recomendada do playbook"
+    unit: null
+    source: "ml/segmentation/personas.py"
+    sensitive: false
+    example: "Contato Proativo de Relacionamento (ACT-CONTATO)"
+  - name: descricao
+    dtype: string
+    nullable: false
+    description: "Descrição qualitativa do perfil comportamental da persona"
+    unit: null
+    source: "ml/segmentation/personas.py"
+    sensitive: false
+    example: "Alta frequência corporativa em rotas troncais..."
+  - name: ticket_medio
+    dtype: float
+    nullable: false
+    description: "Gasto médio estimado por viagem dos clientes da persona (BRL)"
+    unit: "BRL"
+    source: "ml/segmentation/personas.py"
+    sensitive: false
+    example: 650.0
+checks:
+  unique: [persona]
+  non_null: [persona, nome_display, cor, clientes_count, share_pct, clv_medio, churn_medio, valor_em_risco_total, atritos_dominantes, acao_recomendada, descricao, ticket_medio]
+  allowed_values:
+    persona: [executivo_recorrente, lazer_premium, maximizador_milhas, regional_dependente, eventual_ascendente, eventual_promocional]

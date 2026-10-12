@@ -1,0 +1,74 @@
+table: fairness_metrics
+description: "Métricas de disparidade de seleção e taxas de risco por atributo demográfico sensível (Auditoria Four-Fifths)"
+granularity: "um registro por grupo demográfico em cada dimensão sensível"
+produced_by: "ml.fairness.audit"
+consumers: ["app.views.07_ia_responsavel", "docs.responsible_ai"]
+columns:
+  - name: sensitive_attribute
+    dtype: string
+    nullable: false
+    description: "Atributo demográfico protegido auditado (faixa_etaria, genero, regiao)"
+    unit: null
+    source: "data/curated/synthetic/customers.parquet"
+    sensitive: true
+    example: "faixa_etaria"
+  - name: group_value
+    dtype: string
+    nullable: false
+    description: "Valor do segmento/subgrupo demográfico"
+    unit: null
+    source: "data/curated/synthetic/customers.parquet"
+    sensitive: true
+    example: "18-29"
+  - name: group_size
+    dtype: int
+    nullable: false
+    description: "Contagem de indivíduos pertencentes a este subgrupo"
+    unit: "clientes"
+    source: "ml/fairness/audit.py"
+    sensitive: false
+    example: 9000
+  - name: alto_valor_count
+    dtype: int
+    nullable: false
+    description: "Quantidade de membros do subgrupo classificados como Alto Valor"
+    unit: "clientes"
+    source: "ml/fairness/audit.py"
+    sensitive: false
+    example: 450
+  - name: selection_rate
+    dtype: float
+    nullable: false
+    description: "Taxa de seleção como Alto Valor no subgrupo (alto_valor_count / group_size)"
+    unit: "ratio"
+    source: "ml/fairness/audit.py"
+    sensitive: false
+    example: 0.05
+  - name: avg_predicted_churn
+    dtype: float
+    nullable: false
+    description: "Média da probabilidade prevista de evasão (churn) no subgrupo"
+    unit: "probabilidade"
+    source: "ml/fairness/audit.py"
+    sensitive: false
+    example: 0.42
+  - name: selection_ratio_vs_max
+    dtype: float
+    nullable: false
+    description: "Razão entre a taxa de seleção do grupo e a taxa máxima observada na dimensão (Disparate Impact Ratio)"
+    unit: "ratio"
+    source: "ml/fairness/audit.py"
+    sensitive: false
+    example: 0.41
+  - name: four_fifths_compliant
+    dtype: bool
+    nullable: false
+    description: "Indicador de conformidade com a regra dos quatro quintos (selection_ratio_vs_max >= 0.80)"
+    unit: null
+    source: "ml/fairness/audit.py"
+    sensitive: false
+    example: false
+checks:
+  non_null: [sensitive_attribute, group_value, group_size, alto_valor_count, selection_rate, avg_predicted_churn, selection_ratio_vs_max, four_fifths_compliant]
+  allowed_values:
+    sensitive_attribute: [faixa_etaria, genero, regiao]

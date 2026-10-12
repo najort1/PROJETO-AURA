@@ -1,0 +1,58 @@
+table: customer_timeline
+description: "Linha do tempo de eventos de relacionamento (voos, atritos, resgates, mudanças de categoria)"
+granularity: "um evento por cliente"
+produced_by: "ml.segmentation.score_av"
+consumers: ["app.views.03_cliente_360"]
+columns:
+  - name: customer_id
+    dtype: string
+    nullable: false
+    description: "Identificador único do cliente"
+    unit: null
+    source: "data/analytics/features_customer.parquet"
+    sensitive: false
+    example: "C000001"
+  - name: data
+    dtype: string
+    nullable: false
+    description: "Data do evento no formato ISO (YYYY-MM-DD)"
+    unit: null
+    source: "data/curated/synthetic/"
+    sensitive: false
+    example: "2025-08-15"
+  - name: tipo
+    dtype: string
+    nullable: false
+    description: "Tipo do evento de relacionamento"
+    unit: null
+    source: "data/curated/synthetic/"
+    sensitive: false
+    example: "voo"
+  - name: titulo
+    dtype: string
+    nullable: false
+    description: "Título resumido do evento para exibição no card da timeline"
+    unit: null
+    source: "ml/segmentation/timeline.py"
+    sensitive: false
+    example: "Voo VCP-SDU"
+  - name: detalhe
+    dtype: string
+    nullable: false
+    description: "Descrição detalhada do evento ocorrido"
+    unit: null
+    source: "ml/segmentation/timeline.py"
+    sensitive: false
+    example: "Trecho operado pontualmente em classe Executiva"
+  - name: impacto
+    dtype: string
+    nullable: false
+    description: "Impacto percebido na experiência do cliente (positivo, negativo, neutro)"
+    unit: null
+    source: "ml/segmentation/timeline.py"
+    sensitive: false
+    example: "positivo"
+checks:
+  non_null: [customer_id, data, tipo, titulo, detalhe, impacto]
+  allowed_values:
+    impacto: [positivo, negativo, neutro]

@@ -1,0 +1,69 @@
+table: score_av
+description: "Score de Alto Valor canônico composto (CLV 60%, RFM 20%, Potencial 20%)"
+granularity: "um registro por cliente na coorte de análise"
+produced_by: "ml.segmentation.score_av"
+consumers: ["ml.segmentation", "agent.pipeline", "app"]
+columns:
+  - name: customer_id
+    dtype: string
+    nullable: false
+    description: "Identificador único do cliente"
+    unit: null
+    source: "data/analytics/features_customer.parquet"
+    sensitive: false
+    example: "C000001"
+  - name: pct_clv
+    dtype: float
+    nullable: false
+    description: "Posto percentilar da predição de CLV 12m (0.0 a 1.0)"
+    unit: "percentil"
+    source: "ml/segmentation/score_av.py"
+    sensitive: false
+    example: 0.85
+  - name: pct_rfm
+    dtype: float
+    nullable: false
+    description: "Posto percentilar do escore composto RFM padronizado (0.0 a 1.0)"
+    unit: "percentil"
+    source: "ml/segmentation/score_av.py"
+    sensitive: false
+    example: 0.72
+  - name: pct_potential
+    dtype: float
+    nullable: false
+    description: "Posto percentilar do indicador de potencial/headroom de crescimento (0.0 a 1.0)"
+    unit: "percentil"
+    source: "ml/segmentation/score_av.py"
+    sensitive: false
+    example: 0.68
+  - name: score_av
+    dtype: float
+    nullable: false
+    description: "Score de Alto Valor consolidado (0.60*pct_clv + 0.20*pct_rfm + 0.20*pct_potential)"
+    unit: "score"
+    source: "ml/segmentation/score_av.py"
+    sensitive: false
+    example: 0.79
+  - name: alto_valor
+    dtype: bool
+    nullable: false
+    description: "Indicador booleano de cliente pertencente ao segmento de alto valor"
+    unit: null
+    source: "ml/segmentation/score_av.py"
+    sensitive: false
+    example: true
+  - name: percentile_rank
+    dtype: float
+    nullable: false
+    description: "Rank percentilar final do score_av na base"
+    unit: "percentil"
+    source: "ml/segmentation/score_av.py"
+    sensitive: false
+    example: 0.92
+checks:
+  unique: [customer_id]
+  non_null: [customer_id, pct_clv, pct_rfm, pct_potential, score_av, alto_valor, percentile_rank]
+  custom:
+    - name: score_av_bounds
+      expr: "MIN(score_av) >= 0.0 AND MAX(score_av) <= 1.0"
+      message: "ScoreAV deve estar delimitado no intervalo [0, 1]"
