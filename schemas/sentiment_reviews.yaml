@@ -1,0 +1,218 @@
+table: sentiment_reviews
+description: "Corpus sintético rotulado de avaliações em PT-BR por aspecto e polaridade (100% sintético para validação do pipeline de WS6 do Projeto Aura 2.0)"
+granularity: "uma avaliação"
+produced_by: "ml.sentiment.corpus"
+consumers: ["ml.sentiment.approaches", "ml.sentiment.friction_map", "ml.sentiment.pipeline"]
+columns:
+  - name: review_id
+    dtype: string
+    nullable: false
+    description: "Identificador único da avaliação sintética"
+    unit: null
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: "REV-000001"
+  - name: review_date
+    dtype: datetime
+    nullable: false
+    description: "Data e hora simuladas da avaliação (janela 2023-09-01 a 2026-08-31)"
+    unit: null
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: "2024-05-10 14:30:00"
+  - name: channel
+    dtype: string
+    nullable: false
+    description: "Canal genérico de origem da avaliação (sem uso de marcas reais)"
+    unit: null
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: "portal_reclamacoes"
+  - name: text
+    dtype: string
+    nullable: false
+    description: "Texto em português brasileiro da avaliação, com ruído, gírias ou ironia"
+    unit: null
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: "Voo atrasou mais de 2 horas e o atendimento no balcão foi péssimo."
+  - name: aspects_mentioned
+    dtype: string
+    nullable: false
+    description: "Lista de aspectos mencionados no texto, separados por vírgula"
+    unit: null
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: "atraso,atendimento"
+  - name: overall_sentiment
+    dtype: string
+    nullable: false
+    description: "Sentimento geral consolidado da avaliação"
+    unit: null
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: "negativo"
+  - name: has_atraso
+    dtype: int
+    nullable: false
+    description: "Indicador binário de menção ao aspecto atraso de voo"
+    unit: binario
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: 1
+  - name: has_bagagem
+    dtype: int
+    nullable: false
+    description: "Indicador binário de menção ao aspecto bagagem / extravio / danos"
+    unit: binario
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: 0
+  - name: has_atendimento
+    dtype: int
+    nullable: false
+    description: "Indicador binário de menção ao aspecto atendimento (bordo, solo, SAC)"
+    unit: binario
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: 1
+  - name: has_app_checkin
+    dtype: int
+    nullable: false
+    description: "Indicador binário de menção ao aspecto app móvel / check-in digital"
+    unit: binario
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: 0
+  - name: has_resgate_milhas
+    dtype: int
+    nullable: false
+    description: "Indicador binário de menção ao aspecto resgate de pontos e milhas"
+    unit: binario
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: 0
+  - name: has_preco
+    dtype: int
+    nullable: false
+    description: "Indicador binário de menção ao aspecto preço de passagens e taxas"
+    unit: binario
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: 0
+  - name: has_conforto
+    dtype: int
+    nullable: false
+    description: "Indicador binário de menção ao aspecto conforto a bordo e poltronas"
+    unit: binario
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: 0
+  - name: polarity_atraso
+    dtype: string
+    nullable: false
+    description: "Polaridade atribuída ao aspecto atraso"
+    unit: null
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: "negativo"
+  - name: polarity_bagagem
+    dtype: string
+    nullable: false
+    description: "Polaridade atribuída ao aspecto bagagem"
+    unit: null
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: "ausente"
+  - name: polarity_atendimento
+    dtype: string
+    nullable: false
+    description: "Polaridade atribuída ao aspecto atendimento"
+    unit: null
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: "negativo"
+  - name: polarity_app_checkin
+    dtype: string
+    nullable: false
+    description: "Polaridade atribuída ao aspecto app / check-in"
+    unit: null
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: "ausente"
+  - name: polarity_resgate_milhas
+    dtype: string
+    nullable: false
+    description: "Polaridade atribuída ao aspecto resgate de milhas"
+    unit: null
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: "ausente"
+  - name: polarity_preco
+    dtype: string
+    nullable: false
+    description: "Polaridade atribuída ao aspecto preço"
+    unit: null
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: "ausente"
+  - name: polarity_conforto
+    dtype: string
+    nullable: false
+    description: "Polaridade atribuída ao aspecto conforto"
+    unit: null
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: "ausente"
+  - name: is_ironic
+    dtype: bool
+    nullable: false
+    description: "Indica se o texto contém ironia ou sarcasmo deliberado"
+    unit: booleano
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: false
+  - name: noise_level
+    dtype: string
+    nullable: false
+    description: "Grau de ruído textual (baixo, medio, alto) decorrente de gírias e pontuação"
+    unit: null
+    source: "ml/sentiment/corpus.py"
+    sensitive: false
+    example: "baixo"
+checks:
+  unique: [review_id]
+  non_null:
+    - review_id
+    - review_date
+    - channel
+    - text
+    - aspects_mentioned
+    - overall_sentiment
+    - has_atraso
+    - has_bagagem
+    - has_atendimento
+    - has_app_checkin
+    - has_resgate_milhas
+    - has_preco
+    - has_conforto
+    - polarity_atraso
+    - polarity_bagagem
+    - polarity_atendimento
+    - polarity_app_checkin
+    - polarity_resgate_milhas
+    - polarity_preco
+    - polarity_conforto
+    - is_ironic
+    - noise_level
+  allowed_values:
+    channel: [app, portal_reclamacoes, redes_sociais, pesquisa_nps]
+    overall_sentiment: [positivo, neutro, negativo]
+    noise_level: [baixo, medio, alto]
+  custom:
+    - name: min_corpus_size
+      expr: "COUNT(*) >= 1000"
+      message: "O corpus deve conter pelo menos 1.000 avaliações sintéticas rotuladas"
+    - name: date_within_synthetic_window
+      expr: "MIN(review_date) >= TIMESTAMP '2023-09-01' AND MAX(review_date) <= TIMESTAMP '2026-08-31 23:59:59'"
+      message: "Avaliações com datas fora da janela sintética de 36 meses (2023-09-01 a 2026-08-31)"
