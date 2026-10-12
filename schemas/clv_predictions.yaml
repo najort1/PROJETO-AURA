@@ -1,0 +1,71 @@
+table: clv_predictions
+description: "Predições individuais de Customer Lifetime Value (CLV 12m) comparando Baseline BG/NBD+GG vs LightGBM"
+granularity: "um cliente na coorte de teste/avaliação"
+produced_by: "ml.clv.train"
+consumers: ["ml.segmentation", "agent.pipeline", "app", "docs.model_cards"]
+columns:
+  - name: customer_id
+    dtype: string
+    nullable: false
+    description: "Identificador único do cliente"
+    unit: null
+    source: "data/analytics/features_customer.parquet"
+    sensitive: false
+    example: "C000001"
+  - name: clv_baseline_12m
+    dtype: float
+    nullable: false
+    description: "Valor monetário previsto em 12 meses pelo modelo probabilístico Baseline BG/NBD + Gamma-Gamma (BRL)"
+    unit: "BRL"
+    source: "ml/clv/train.py"
+    sensitive: false
+    example: 4120.50
+  - name: clv_predicted_12m
+    dtype: float
+    nullable: false
+    description: "Valor monetário previsto em 12 meses pelo modelo Gradient Boosting LightGBM (BRL)"
+    unit: "BRL"
+    source: "ml/clv/train.py"
+    sensitive: false
+    example: 4680.00
+  - name: target_clv_12m
+    dtype: float
+    nullable: false
+    description: "Valor realizado de receita no horizonte futuro de 12 meses (target legítimo da coorte)"
+    unit: "BRL"
+    source: "data/analytics/features_customer.parquet"
+    sensitive: false
+    example: 4950.00
+  - name: error_baseline
+    dtype: float
+    nullable: false
+    description: "Erro absoluto do baseline (|target - baseline|)"
+    unit: "BRL"
+    source: "ml/clv/train.py"
+    sensitive: false
+    example: 829.50
+  - name: error_model
+    dtype: float
+    nullable: false
+    description: "Erro absoluto do modelo final LightGBM (|target - model|)"
+    unit: "BRL"
+    source: "ml/clv/train.py"
+    sensitive: false
+    example: 270.00
+  - name: decile_model
+    dtype: int
+    nullable: false
+    description: "Decil de classificação preditiva do modelo final (1 = top 10% maior valor previsto)"
+    unit: "decil"
+    source: "ml/clv/train.py"
+    sensitive: false
+    example: 1
+checks:
+  unique: [customer_id]
+  non_null: [customer_id, clv_baseline_12m, clv_predicted_12m, target_clv_12m, decile_model]
+  allowed_values:
+    decile_model: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+  custom:
+    - name: non_negative_clv
+      expr: "MIN(clv_predicted_12m) >= 0.0"
+      message: "Predição de CLV não pode conter valores negativos"

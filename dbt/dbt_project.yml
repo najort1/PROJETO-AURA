@@ -1,0 +1,31 @@
+name: "aura_analytics"
+version: "2.0.0"
+config-version: 2
+
+profile: "aura"
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+vars:
+  cutoff: "2025-08-31"
+  target_start: "2025-09-01"
+  target_end: "2026-08-31"
+  val_cutoff: "2025-02-28"
+  val_target_start: "2025-03-01"
+  val_target_end: "2026-02-28"
+
+models:
+  aura_analytics:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table

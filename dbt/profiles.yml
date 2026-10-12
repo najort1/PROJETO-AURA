@@ -1,0 +1,7 @@
+aura:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "data/analytics/aura_analytics.duckdb"
+      threads: 4

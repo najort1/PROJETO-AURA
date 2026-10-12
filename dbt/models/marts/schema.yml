@@ -1,0 +1,76 @@
+version: 2
+
+models:
+  - name: features_customer
+    description: "Tabela mart analítica de features por cliente na coorte principal (cutoff 2025-08-31)"
+    columns:
+      - name: customer_id
+        description: "Identificador único do cliente"
+        tests:
+          - unique
+          - not_null
+
+      - name: tier
+        description: "Nível atual no programa de fidelidade"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['azul', 'topazio', 'safira', 'diamante', 'diamante_unique']
+
+      - name: recency_days
+        description: "Dias desde a última transação até o cutoff"
+        tests:
+          - not_null
+
+      - name: frequency_12m
+        description: "Frequência de voos/transações nos 12 meses anteriores ao cutoff"
+        tests:
+          - not_null
+
+      - name: monetary_12m
+        description: "Gasto monetário nos 12 meses anteriores ao cutoff"
+        tests:
+          - not_null
+
+      - name: last_activity_date
+        description: "Data do último evento/atividade anterior ao cutoff"
+        tests:
+          - no_future_leakage:
+              cutoff_var: cutoff
+
+  - name: features_customer_val
+    description: "Tabela mart analítica de features por cliente na coorte de validação temporal (cutoff 2025-02-28)"
+    columns:
+      - name: customer_id
+        description: "Identificador único do cliente"
+        tests:
+          - unique
+          - not_null
+
+      - name: tier
+        description: "Nível atual no programa de fidelidade"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['azul', 'topazio', 'safira', 'diamante', 'diamante_unique']
+
+      - name: recency_days
+        description: "Dias desde a última transação até o cutoff de validação"
+        tests:
+          - not_null
+
+      - name: frequency_12m
+        description: "Frequência de voos/transações nos 12 meses anteriores ao cutoff de validação"
+        tests:
+          - not_null
+
+      - name: monetary_12m
+        description: "Gasto monetário nos 12 meses anteriores ao cutoff de validação"
+        tests:
+          - not_null
+
+      - name: last_activity_date
+        description: "Data do último evento/atividade anterior ao cutoff de validação"
+        tests:
+          - no_future_leakage:
+              cutoff_var: val_cutoff

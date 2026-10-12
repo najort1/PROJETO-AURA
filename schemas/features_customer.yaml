@@ -1,0 +1,272 @@
+table: features_customer
+description: "Features agregadas por cliente na coorte de análise com corte estrito anti-vazamento"
+granularity: "um cliente"
+produced_by: "dbt: marts.features_customer"
+consumers: ["ml.clv", "ml.churn", "ml.segmentation", "agent.input", "app"]
+columns:
+  - name: customer_id
+    dtype: string
+    nullable: false
+    description: "Identificador único do cliente"
+    unit: null
+    source: "data/curated/synthetic/customers.parquet"
+    sensitive: false
+    example: "C000001"
+  - name: tier
+    dtype: string
+    nullable: false
+    description: "Nível atual no programa de fidelidade (azul, topazio, safira, diamante, diamante_unique)"
+    unit: null
+    source: "dbt: features_customer"
+    sensitive: false
+    example: "safira"
+  - name: recency_days
+    dtype: int
+    nullable: false
+    description: "Dias decorridos entre a última transação/atividade e o corte temporal (2025-08-31)"
+    unit: "dias"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 45
+  - name: frequency_3m
+    dtype: int
+    nullable: false
+    description: "Número de transações aéreas nos últimos 3 meses antes do cutoff"
+    unit: "transacoes"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 3
+  - name: frequency_6m
+    dtype: int
+    nullable: false
+    description: "Número de transações aéreas nos últimos 6 meses antes do cutoff"
+    unit: "transacoes"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 6
+  - name: frequency_12m
+    dtype: int
+    nullable: false
+    description: "Número de transações aéreas nos últimos 12 meses antes do cutoff"
+    unit: "transacoes"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 12
+  - name: trechos_12m
+    dtype: int
+    nullable: false
+    description: "Trechos aéreos voados nos últimos 12 meses antes do cutoff"
+    unit: "trechos"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 12
+  - name: monetary_12m
+    dtype: float
+    nullable: false
+    description: "Receita total gerada nos últimos 12 meses anteriores ao cutoff (BRL)"
+    unit: "BRL"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 4850.50
+  - name: gastos_12m_brl
+    dtype: float
+    nullable: false
+    description: "Gastos aéreos elegíveis em passagens e adicionais nos últimos 12 meses (BRL)"
+    unit: "BRL"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 4850.50
+  - name: ticket_medio_12m
+    dtype: float
+    nullable: false
+    description: "Gasto médio por transação/trecho nos 12 meses anteriores ao cutoff (BRL)"
+    unit: "BRL"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 404.21
+  - name: frequency_trend
+    dtype: float
+    nullable: false
+    description: "Tendência de aceleração/desaceleração da frequência (recente vs histórico anual)"
+    unit: "ratio"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 0.9231
+  - name: frequency_volatility
+    dtype: float
+    nullable: false
+    description: "Volatilidade/irregularidade calculada da frequência de compras nos períodos"
+    unit: "coeficiente"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 0.1428
+  - name: share_rotas_troncais
+    dtype: float
+    nullable: false
+    description: "Proporção de voos realizados em rotas troncais de alta densidade"
+    unit: "ratio"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 0.75
+  - name: share_resgate
+    dtype: float
+    nullable: false
+    description: "Participação de resgates de passagens sobre o total de viagens realizadas"
+    unit: "ratio"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 0.1428
+  - name: avg_advance_booking_days
+    dtype: float
+    nullable: false
+    description: "Média de dias de antecedência entre compra da passagem e data de embarque"
+    unit: "dias"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 18.5
+  - name: rota_favorita
+    dtype: string
+    nullable: false
+    description: "Par de aeroportos de rota mais frequente no histórico de 12m"
+    unit: null
+    source: "dbt: features_customer"
+    sensitive: false
+    example: "VCP-SDU"
+  - name: pontos_qualificaveis_12m
+    dtype: int
+    nullable: false
+    description: "Total de pontos qualificáveis creditados nos 12 meses anteriores ao corte"
+    unit: "pontos"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 8500
+  - name: saldo_pontos
+    dtype: int
+    nullable: false
+    description: "Saldo consolidado de pontos disponíveis para resgate até o cutoff"
+    unit: "pontos"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 45000
+  - name: pontos_expirando_30d
+    dtype: int
+    nullable: false
+    description: "Estimativa de pontos acumulados sujeitos a expiração nos próximos 30 dias"
+    unit: "pontos"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 3600
+  - name: meta_proximo_nivel_pct
+    dtype: float
+    nullable: false
+    description: "Percentual atingido da meta de qualificação para o próximo nível vigente"
+    unit: "ratio"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 0.7083
+  - name: beneficio_nao_utilizado
+    dtype: string
+    nullable: false
+    description: "Benefício contratual elegível não exercido pelo cliente no ano"
+    unit: null
+    source: "dbt: features_customer"
+    sensitive: false
+    example: "espaco_azul"
+  - name: days_since_last_interaction
+    dtype: int
+    nullable: false
+    description: "Dias decorridos desde o último contato ou interação de atendimento"
+    unit: "dias"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 21
+  - name: atritos_atraso_12m
+    dtype: int
+    nullable: false
+    description: "Número de ocorrências de atrito por atraso de voo nos últimos 12m"
+    unit: "ocorrencias"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 1
+  - name: atritos_bagagem_12m
+    dtype: int
+    nullable: false
+    description: "Número de ocorrências de atrito por extravio ou dano de bagagem nos últimos 12m"
+    unit: "ocorrencias"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 0
+  - name: atritos_app_checkin_12m
+    dtype: int
+    nullable: false
+    description: "Número de ocorrências de atrito no canal app/check-in digital nos últimos 12m"
+    unit: "ocorrencias"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 0
+  - name: atritos_resgate_milhas_12m
+    dtype: int
+    nullable: false
+    description: "Número de ocorrências de atrito ao tentar resgatar milhas/passagens nos últimos 12m"
+    unit: "ocorrencias"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 0
+  - name: atritos_atendimento_12m
+    dtype: int
+    nullable: false
+    description: "Número de ocorrências de insatisfação com atendimento nos últimos 12m"
+    unit: "ocorrencias"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 0
+  - name: atritos_preco_12m
+    dtype: int
+    nullable: false
+    description: "Número de reclamações ou atritos relacionados a preço e tarifas nos últimos 12m"
+    unit: "ocorrencias"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 0
+  - name: total_atritos_12m
+    dtype: int
+    nullable: false
+    description: "Total acumulado de eventos de atrito vivenciados nos últimos 12 meses"
+    unit: "ocorrencias"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 1
+  - name: last_activity_date
+    dtype: date
+    nullable: true
+    description: "Data da última transação ou voo anterior ao marco temporal"
+    unit: null
+    source: "dbt: features_customer"
+    sensitive: false
+    example: "2025-07-15"
+  - name: target_clv_12m
+    dtype: float
+    nullable: false
+    description: "Alvo legítimo: receita realizada no horizonte futuro de 12 meses (2025-09-01 a 2026-08-31)"
+    unit: "BRL"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 5200.00
+  - name: target_churn_12m
+    dtype: int
+    nullable: false
+    description: "Alvo legítimo: inatividade superior a 2x o intervalo típico e >= 180 dias sem compras"
+    unit: "binario"
+    source: "dbt: features_customer"
+    sensitive: false
+    example: 0
+checks:
+  unique: [customer_id]
+  non_null: [customer_id, tier, recency_days, frequency_12m, monetary_12m, target_clv_12m, target_churn_12m]
+  allowed_values:
+    tier: ["azul", "topazio", "safira", "diamante", "diamante_unique"]
+    target_churn_12m: [0, 1]
+  custom:
+    - name: no_future_information
+      expr: "MAX(last_activity_date) <= DATE '2025-08-31'"
+      message: "Feature contém informação posterior ao cutoff temporal (vazamento)"

@@ -1,0 +1,23 @@
+version: 2
+
+sources:
+  - name: curated_synthetic
+    description: "Tabelas da camada tratada sintética gerada em data/curated/synthetic/"
+    schema: main
+    tables:
+      - name: customers
+        description: "População de clientes sintéticos do Azul Fidelidade"
+        meta:
+          external_location: "read_parquet('data/curated/synthetic/*customer*.parquet')"
+      - name: flights
+        description: "Histórico de voos operados na malha"
+        meta:
+          external_location: "read_parquet('data/curated/synthetic/*flight*.parquet')"
+      - name: transactions
+        description: "Transações de compras de passagens, ancillaries e fidelidade"
+        meta:
+          external_location: "read_parquet('data/curated/synthetic/*transaction*.parquet')"
+      - name: interactions
+        description: "Contatos de atendimento e atritos registrados"
+        meta:
+          external_location: "read_parquet('data/curated/synthetic/*interaction*.parquet')"
