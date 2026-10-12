@@ -43,14 +43,21 @@ Onde:
 
 ## 3. Justificativa Empírica do Corte de Alto Valor (Curva de Pareto)
 
-A seleção dos clientes prioritários baseia-se na concentração da receita prevista de 12 meses ($\sum \widehat{\text{CLV}} = \text{R\$}~25.412.398,82$):
+A seleção dos clientes prioritários baseia-se na concentração da receita prevista de 12 meses ($\sum \widehat{\text{CLV}} = \text{R\$}~39.554.463,12$ sobre os 50.000 clientes):
 
 | Corte Superior | Clientes ($N$) | Receita Capturada (R$) | % da Receita Total | ScoreAV Mínimo | Comentário Operacional |
 |:---|:---:|:---:|:---:|:---:|:---|
-| **Top 5%** | 2.500 | R$ 7.747.886,81 | 30,49% | 0,9336 | Hiper-foco em super-executivos e alta renda; deixa de fora parcela relevante em progressão |
-| **Top 10% (Eleito)** | **5.000** | **R$ 11.936.438,70** | **46,97%** | **0,8840** | **Ponto ótimo de equilíbrio: captura quase metade da receita com cobertura operacional viável** |
-| **Top 15%** | 7.500 | R$ 14.584.972,70 | 57,39% | 0,8369 | Ganho marginal decrescente; eleva custo total das campanhas proativas |
-| **Top 20%** | 10.000 | R$ 16.486.877,65 | 64,88% | 0,7924 | Diluição do foco do time de relacionamento; abrange clientes de média frequência |
+| **Top 5%** | 2.500 | R$ 12.061.692,86 | 30,49% | 0,9336 | Hiper-foco em super-executivos e alta renda; deixa de fora parcela relevante em progressão |
+| **Top 10% (Eleito)** | **5.000** | **R$ 18.577.090,30** | **46,97%** | **0,8840** | **Ponto ótimo de equilíbrio: captura quase metade da receita com cobertura operacional viável** |
+| **Top 15%** | 7.500 | R$ 22.701.826,22 | 57,39% | 0,8369 | Ganho marginal decrescente; eleva custo total das campanhas proativas |
+| **Top 20%** | 10.000 | R$ 25.663.633,91 | 64,88% | 0,7924 | Diluição do foco do time de relacionamento; abrange clientes de média frequência |
+
+> **Correção (Lead, 12/10/2026):** a versão inicial citava valores nominais incorretos
+> (R$ 11.936.438,70 / R$ 25.412.398,82). As frações percentuais estavam corretas;
+> os nominais acima foram recalculados por dois verificadores independentes
+> (revisão WS5-A) e batem com `data/analytics/customers_scores.parquet`.
+> O corte real marca 5.005 clientes como `alto_valor` (10,01%): 5.000 por ranking
+> + 5 empates exatos no limiar 0,8840 (4.997 acima + 8 no limiar).
 
 **Conclusão Técnica:** O corte em **Top 10%** (ScoreAV $\ge 0,8840$) maximiza a densidade de valor sob orçamento de retenção finito ($\le \text{R\$}~400/\text{cliente}$), alinhando-se com a diretriz de negócio de `config/settings.yaml` e as fixtures da aplicação.
 
