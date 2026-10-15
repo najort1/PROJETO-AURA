@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import json
+import os
 from pathlib import Path
 from typing import Any
 
@@ -232,7 +233,7 @@ class RetentionAgentPipeline:
         raw_rec = compose_recommendation(best_action, sanitized_client)
 
         # Se houver LLM configurado com chave real no ambiente:
-        if self.llm_client.is_available():
+        if self.llm_client.is_available() and os.getenv("AURA_LLM_API_KEY"):
             try:
                 # Tenta LLM mantendo as restrições estritas
                 system_prompt = (
