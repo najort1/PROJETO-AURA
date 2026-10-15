@@ -1,0 +1,377 @@
+{
+  "file_size_bytes": 20539187,
+  "file_size_mb": 19.59,
+  "total_rows": 23171,
+  "total_cols": 20,
+  "content_duplicates": 120,
+  "columns": [
+    {
+      "column": "Unnamed: 0",
+      "dtype": "int64",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "n_unique": 23171,
+      "sample_values": [
+        0,
+        1,
+        2
+      ]
+    },
+    {
+      "column": "Airline Name",
+      "dtype": "str",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "n_unique": 497,
+      "sample_values": [
+        "AB Aviation",
+        "AB Aviation",
+        "AB Aviation"
+      ]
+    },
+    {
+      "column": "Overall_Rating",
+      "dtype": "str",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "n_unique": 10,
+      "sample_values": [
+        "9",
+        "1",
+        "1"
+      ]
+    },
+    {
+      "column": "Review_Title",
+      "dtype": "str",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "n_unique": 17219,
+      "sample_values": [
+        "\"pretty decent airline\"",
+        "\"Not a good airline\"",
+        "\"flight was fortunately short\""
+      ]
+    },
+    {
+      "column": "Review Date",
+      "dtype": "str",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "n_unique": 4557,
+      "sample_values": [
+        "11th November 2019",
+        "25th June 2019",
+        "25th June 2019"
+      ]
+    },
+    {
+      "column": "Verified",
+      "dtype": "bool",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "n_unique": 2,
+      "sample_values": [
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "column": "Review",
+      "dtype": "str",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "n_unique": 23046,
+      "sample_values": [
+        "  Moroni to Moheli. Turned out to be a pretty decent airline. Online booking worked well, checkin and boarding was fine and the plane looked well maintained. Its a very short flight - just 20 minutes or so so i didn't expect much but they still managed to hand our a bottle of water and some biscuits which i though was very nice. Both flights on time.",
+        " Moroni to Anjouan. It is a very small airline. My ticket advised me to turn up at 0800hrs which I did. There was confusion at this small airport. I was then directed to the office of AB Aviation which was still closed. It opened at 0900hrs and I was told that the flight had been put back to 1300hrs and that they had tried to contact me. This could not be true as they did not have my phone number. I was with a local guide and he had not been informed either. I presume that I was bumped off. The later flight did operate but as usual, there was confusion at check-in. The flight was only 30mins and there were no further problems. Not a good airline but it is the only one for Comoros.",
+        "  Anjouan to Dzaoudzi. A very small airline and the only airline based in Comoros. Check-in was disorganised because of locals with big packages and disinterested staff. The flight was fortunately short (30 mins). Took off on time and landed on time. With a short flight like there was of course no in-flight entertainment nor cabin service except for biscuits and a bottle of water, which was quite nice!"
+      ]
+    },
+    {
+      "column": "Aircraft",
+      "dtype": "str",
+      "null_count": 16042,
+      "null_pct": 69.23,
+      "n_unique": 1048,
+      "sample_values": [
+        "E120",
+        "Embraer E120 ",
+        "CR 900"
+      ]
+    },
+    {
+      "column": "Type Of Traveller",
+      "dtype": "str",
+      "null_count": 3738,
+      "null_pct": 16.13,
+      "n_unique": 4,
+      "sample_values": [
+        "Solo Leisure",
+        "Solo Leisure",
+        "Solo Leisure"
+      ]
+    },
+    {
+      "column": "Seat Type",
+      "dtype": "str",
+      "null_count": 1096,
+      "null_pct": 4.73,
+      "n_unique": 4,
+      "sample_values": [
+        "Economy Class",
+        "Economy Class",
+        "Economy Class"
+      ]
+    },
+    {
+      "column": "Route",
+      "dtype": "str",
+      "null_count": 3828,
+      "null_pct": 16.52,
+      "n_unique": 13607,
+      "sample_values": [
+        "Moroni to Moheli",
+        "Moroni to Anjouan",
+        "Anjouan to Dzaoudzi"
+      ]
+    },
+    {
+      "column": "Date Flown",
+      "dtype": "str",
+      "null_count": 3754,
+      "null_pct": 16.2,
+      "n_unique": 109,
+      "sample_values": [
+        "November 2019",
+        "June 2019",
+        "June 2019"
+      ]
+    },
+    {
+      "column": "Seat Comfort",
+      "dtype": "float64",
+      "null_count": 4155,
+      "null_pct": 17.93,
+      "n_unique": 6,
+      "sample_values": [
+        4.0,
+        2.0,
+        2.0
+      ]
+    },
+    {
+      "column": "Cabin Staff Service",
+      "dtype": "float64",
+      "null_count": 4260,
+      "null_pct": 18.39,
+      "n_unique": 6,
+      "sample_values": [
+        5.0,
+        2.0,
+        1.0
+      ]
+    },
+    {
+      "column": "Food & Beverages",
+      "dtype": "float64",
+      "null_count": 8671,
+      "null_pct": 37.42,
+      "n_unique": 6,
+      "sample_values": [
+        4.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "column": "Ground Service",
+      "dtype": "float64",
+      "null_count": 4793,
+      "null_pct": 20.69,
+      "n_unique": 5,
+      "sample_values": [
+        4.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "column": "Inflight Entertainment",
+      "dtype": "float64",
+      "null_count": 12342,
+      "null_pct": 53.26,
+      "n_unique": 6,
+      "sample_values": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "column": "Wifi & Connectivity",
+      "dtype": "float64",
+      "null_count": 17251,
+      "null_pct": 74.45,
+      "n_unique": 6,
+      "sample_values": [
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "column": "Value For Money",
+      "dtype": "float64",
+      "null_count": 1066,
+      "null_pct": 4.6,
+      "n_unique": 6,
+      "sample_values": [
+        3.0,
+        2.0,
+        2.0
+      ]
+    },
+    {
+      "column": "Recommended",
+      "dtype": "str",
+      "null_count": 0,
+      "null_pct": 0.0,
+      "n_unique": 2,
+      "sample_values": [
+        "yes",
+        "no",
+        "no"
+      ]
+    }
+  ],
+  "overall_rating_stats": {
+    "count": 22329.0,
+    "mean": 3.14,
+    "std": 2.88,
+    "min": 1.0,
+    "25%": 1.0,
+    "50%": 1.0,
+    "75%": 5.0,
+    "max": 9.0
+  },
+  "overall_rating_dist": {
+    "1.0": 11595,
+    "2.0": 2296,
+    "3.0": 1356,
+    "4.0": 859,
+    "5.0": 830,
+    "6.0": 675,
+    "7.0": 1193,
+    "8.0": 1757,
+    "9.0": 1768
+  },
+  "recommended_dist": {
+    "no": 15364,
+    "yes": 7807
+  },
+  "recommended_pct": {
+    "no": 66.31,
+    "yes": 33.69
+  },
+  "n_unique_airlines": 497,
+  "top_airlines": {
+    "Aegean Airlines": 100,
+    "Aer Lingus": 100,
+    "Aeroflot Russian Airlines": 100,
+    "Aerolineas Argentinas": 100,
+    "Aeromexico": 100,
+    "Air Arabia": 100,
+    "Air Astana": 100,
+    "Air Berlin": 100,
+    "Air Canada": 100,
+    "Air Canada rouge": 100,
+    "Air China": 100,
+    "Air Europa": 100,
+    "Air France": 100,
+    "Air India": 100,
+    "Air Malta": 100,
+    "Air Mauritius": 100,
+    "Air New Zealand": 100,
+    "Air Serbia": 100,
+    "Air Tahiti Nui": 100,
+    "Air Transat": 100
+  },
+  "brazilian_airlines_found": {
+    "tam": [
+      "TAM Airlines"
+    ],
+    "latam": [
+      "LATAM Airlines"
+    ]
+  },
+  "brazilian_route_mentions": {
+    "sao paulo": 46,
+    "são paulo": 29,
+    "rio de janeiro": 26,
+    "gru": 27,
+    "gig": 14,
+    "bsb": 1,
+    "porto alegre": 1,
+    "recife": 3,
+    "salvador": 30,
+    "fortaleza": 1,
+    "curitiba": 2,
+    "florianopolis": 1
+  },
+  "reviews_mentioning_azul": 1,
+  "sub_rating_summary": {
+    "Seat Comfort": {
+      "mean": 2.62,
+      "median": 3.0,
+      "missing_pct": 17.93,
+      "pct_rating_1": 33.32
+    },
+    "Cabin Staff Service": {
+      "mean": 2.87,
+      "median": 3.0,
+      "missing_pct": 18.39,
+      "pct_rating_1": 31.57
+    },
+    "Food & Beverages": {
+      "mean": 2.55,
+      "median": 2.0,
+      "missing_pct": 37.42,
+      "pct_rating_1": 36.43
+    },
+    "Ground Service": {
+      "mean": 2.35,
+      "median": 1.0,
+      "missing_pct": 20.69,
+      "pct_rating_1": 51.55
+    },
+    "Inflight Entertainment": {
+      "mean": 2.18,
+      "median": 2.0,
+      "missing_pct": 53.26,
+      "pct_rating_1": 44.74
+    },
+    "Wifi & Connectivity": {
+      "mean": 1.78,
+      "median": 1.0,
+      "missing_pct": 74.45,
+      "pct_rating_1": 68.6
+    },
+    "Value For Money": {
+      "mean": 2.45,
+      "median": 2.0,
+      "missing_pct": 4.6,
+      "pct_rating_1": 45.85
+    }
+  },
+  "correlations_with_overall": {
+    "Seat Comfort": 0.471,
+    "Cabin Staff Service": 0.506,
+    "Food & Beverages": 0.422,
+    "Ground Service": 0.558,
+    "Inflight Entertainment": 0.298,
+    "Wifi & Connectivity": 0.353,
+    "Value For Money": 0.602
+  }
+}

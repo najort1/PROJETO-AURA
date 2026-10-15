@@ -18,11 +18,14 @@ venv/
 
 # Dados regeneráveis pelo pipeline (NÃO versionar):
 # - os microdados ANAC (3,2 GB) vivem em data/raw/anac/ (fornecidos fora do git)
+# - bases externas de benchmarks (~72 MB CSVs) vivem em data/raw/ (manifesto em data/manifests/benchmarks.json)
 # - o staging original na raiz (ANAC/) também fica fora do git
 # - saídas geradas por `python tasks.py all` vivem em data/curated e data/analytics
 ANAC/
 data/raw/anac/
 data/raw/_manual/
+data/raw/*.csv
+data/raw/**/*.csv
 data/curated/
 data/analytics/
 logs/

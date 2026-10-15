@@ -1,0 +1,45 @@
+{
+  "_meta": {
+    "source": "Fontes públicas e abertas de benchmarks de aviação (Loyalty, Satisfação e Reviews)",
+    "license": "Open Data / Academic Research Use",
+    "total_files": 4,
+    "total_bytes": 47118092,
+    "generated_at": "2026-10-14T17:02:33.256090+00:00",
+    "method": "manual",
+    "description": "Manifesto formal de integridade SHA-256 das bases de benchmarks brutos do Projeto Aura 2.0"
+  },
+  "files": [
+    {
+      "path": "data/raw/Customer Loyalty History.csv",
+      "sha256": "406ef06ee46fb13a4952a1f9c0f55cc0941ddb1d25b51e0789b4893d63f18cbd",
+      "size_bytes": 1733749,
+      "description": "Histórico de clientes e adesão ao programa de fidelidade da aviação (16.737 membros)",
+      "source": "Kaggle / Repositórios abertos de fidelidade aérea",
+      "license": "Open Data / Academic Research Use"
+    },
+    {
+      "path": "data/raw/Customer Flight Activity.csv",
+      "sha256": "d211ef0cfa722be7bdf7c3369cf3366c751009f4fea046ba892383ba0ca26db8",
+      "size_bytes": 13167724,
+      "description": "Atividade mensal de voos, acúmulo e resgate de pontos dos passageiros (janela 2017-2018)",
+      "source": "Kaggle / Repositórios abertos de fidelidade aérea",
+      "license": "Open Data / Academic Research Use"
+    },
+    {
+      "path": "data/raw/data.csv",
+      "sha256": "2ad76465f6115f93d16121891a6b1235acb8007a4ab065cae0dc46b60ad116e3",
+      "size_bytes": 11677432,
+      "description": "Pesquisa de satisfação de passageiros aéreos com notas de aspectos de voo e atrasos (129.880 avaliações)",
+      "source": "Kaggle / US Airline Passenger Satisfaction Dataset",
+      "license": "Open Data / Academic Research Use"
+    },
+    {
+      "path": "data/raw/Airline_review.csv",
+      "sha256": "d9753262d99eecb5d7b05eb7e48432ebbb25332cb926f144c1e5fee8aac5b6c4",
+      "size_bytes": 20539187,
+      "description": "Avaliações globais de companhias aéreas coletadas da plataforma Skytrax (23.171 avaliações)",
+      "source": "Kaggle / Skytrax Airline Reviews Dataset",
+      "license": "Open Data / Academic Research Use"
+    }
+  ]
+}

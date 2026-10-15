@@ -1,0 +1,76 @@
+{
+  "tam_count": 100,
+  "latam_count": 100,
+  "brazil_routes_count": 175,
+  "review_years": {
+    "2002": 14,
+    "2003": 45,
+    "2004": 101,
+    "2005": 136,
+    "2006": 141,
+    "2007": 168,
+    "2008": 281,
+    "2009": 287,
+    "2010": 332,
+    "2011": 461,
+    "2012": 403,
+    "2013": 494,
+    "2014": 593,
+    "2015": 1070,
+    "2016": 1210,
+    "2017": 1148,
+    "2018": 1675,
+    "2019": 2869,
+    "2020": 1483,
+    "2021": 1016,
+    "2022": 3826,
+    "2023": 5418
+  },
+  "friction_stats": {
+    "delay_cancellation": {
+      "negative_pct": 52.11,
+      "positive_pct": 27.55,
+      "gap": 24.55
+    },
+    "baggage_lost": {
+      "negative_pct": 29.19,
+      "positive_pct": 23.99,
+      "gap": 5.2
+    },
+    "refund_cost": {
+      "negative_pct": 47.14,
+      "positive_pct": 27.68,
+      "gap": 19.46
+    },
+    "customer_service_rude": {
+      "negative_pct": 15.89,
+      "positive_pct": 2.59,
+      "gap": 13.3
+    },
+    "boarding_checkin_queue": {
+      "negative_pct": 75.49,
+      "positive_pct": 66.32,
+      "gap": 9.17
+    },
+    "seat_comfort_space": {
+      "negative_pct": 29.64,
+      "positive_pct": 54.07,
+      "gap": -24.43
+    },
+    "food_beverage": {
+      "negative_pct": 29.36,
+      "positive_pct": 66.45,
+      "gap": -37.09
+    },
+    "communication_information": {
+      "negative_pct": 12.51,
+      "positive_pct": 6.4,
+      "gap": 6.11
+    },
+    "connection_missed": {
+      "negative_pct": 9.19,
+      "positive_pct": 7.44,
+      "gap": 1.75
+    }
+  }
+}
