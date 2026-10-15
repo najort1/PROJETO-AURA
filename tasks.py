@@ -74,8 +74,17 @@ TARGETS: dict[str, list[list[str]]] = {
     "dictionary": [
         ["{py}", "-m", "schemas.build_dictionary"],
     ],
+    "benchmarks": [
+        ["{py}", "-m", "ingestion.benchmarks"],
+    ],
     "app": [
         ["{py}", "-m", "streamlit", "run", "app/main.py"],
+    ],
+    "dashboard": [
+        ["pnpm", "--dir", "dashboard", "dev"],
+    ],
+    "dashboard-build": [
+        ["pnpm", "--dir", "dashboard", "build"],
     ],
     "test": [
         ["{py}", "-m", "pytest"],
@@ -102,7 +111,10 @@ DESCRIPTIONS = {
     "fairness": "Auditoria de vies por faixa etaria, genero e regiao",
     "impact": "Simulacao de impacto (cenarios conservador/base/otimista + sensibilidade)",
     "dictionary": "Gera dicionario de dados em docs/data_dictionary a partir dos schemas",
-    "app": "Abre o painel Streamlit (port 8501)",
+    "benchmarks": "Curadoria e agregacao dos benchmarks (loyalty, satisfacao e reviews)",
+    "app": "Abre o protótipo Streamlit legado (port 8501)",
+    "dashboard": "Inicia o cockpit oficial de produção em Next.js 15 (port 3000)",
+    "dashboard-build": "Gera build de produção do dashboard Next.js 15",
     "test": "pytest (unit + integracao)",
     "lint": "ruff check",
     "fmt": "ruff format",
@@ -111,6 +123,7 @@ DESCRIPTIONS = {
 # Pipeline "do zero ao painel" (o app roda separado, e interativo).
 PIPELINE = [
     "ingest",
+    "benchmarks",
     "synth",
     "features",
     "train",
