@@ -1,0 +1,107 @@
+@import "tailwindcss";
+
+@theme {
+  /* Paleta Corporativa Azul Fidelidade */
+  --color-azul-action: #0874B5;
+  --color-azul-primary: #008BC4;
+  --color-azul-sky: #2DA6D4;
+  --color-azul-deep: #033774;
+  --color-azul-navy: #0B3558;
+  --color-magenta-cta: #E832A5;
+  --color-lime-campaign: #D8ED00;
+
+  /* Superfícies e Canvas */
+  --color-canvas: #F8F9FA;
+  --color-surface: #FFFFFF;
+  --color-border-subtle: #E2E6E9;
+  --color-border-dark: #D7DEE2;
+
+  /* Tipografia */
+  --color-text-primary: #1E2A30;
+  --color-text-secondary: #5E6F7A;
+  --color-text-muted: #8A99A2;
+
+  /* Tiers Oficiais Azul */
+  --color-tier-azul-bg: #9AE0E8;
+  --color-tier-azul-text: #0B4760;
+  --color-tier-azul-border: #78D8F3;
+  --color-tier-topazio-bg: #39B4DB;
+  --color-tier-topazio-text: #073C62;
+  --color-tier-topazio-border: #2DA6D4;
+  --color-tier-safira-bg: #147FB8;
+  --color-tier-safira-text: #FFFFFF;
+  --color-tier-safira-border: #08648F;
+  --color-tier-diamante-bg: #064C82;
+  --color-tier-diamante-text: #FFFFFF;
+  --color-tier-diamante-border: #083E5B;
+  --color-tier-unique-bg: #062B52;
+  --color-tier-unique-text: #FFFFFF;
+  --color-tier-unique-border: #032943;
+
+  /* Personas Comportamentais */
+  --color-persona-executivo: #033774;
+  --color-persona-lazer: #E832A5;
+  --color-persona-maximizador: #0874B5;
+  --color-persona-regional: #0B3558;
+  --color-persona-ascendente: #008BC4;
+  --color-persona-promocional: #657681;
+
+  /* Arredondamento */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 9999px;
+
+  /* Shadcn Semantic Mapping */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
+:root {
+  --background: #F8F9FA;
+  --foreground: #1E2A30;
+  --card: #FFFFFF;
+  --card-foreground: #1E2A30;
+  --popover: #FFFFFF;
+  --popover-foreground: #1E2A30;
+  --primary: #0874B5;
+  --primary-foreground: #FFFFFF;
+  --secondary: #E2E6E9;
+  --secondary-foreground: #0B3558;
+  --muted: #F1F4F6;
+  --muted-foreground: #5E6F7A;
+  --accent: #EBF4FA;
+  --accent-foreground: #0874B5;
+  --destructive: #E832A5;
+  --destructive-foreground: #FFFFFF;
+  --border: #E2E6E9;
+  --input: #D7DEE2;
+  --ring: #0874B5;
+  --radius: 8px;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+}

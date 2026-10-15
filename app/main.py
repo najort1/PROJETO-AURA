@@ -32,6 +32,13 @@ st.set_page_config(
 # Injeta tokens CSS globais
 st.markdown(get_global_css(), unsafe_allow_html=True)
 
+# Banner de Depreciação / Migração para Next.js 15
+st.warning(
+    "⚠️ **PROTÓTIPO LEGADO:** O Streamlit foi descontinuado como interface primária. "
+    "A versão oficial de produção do **PROJETO AURA 2.0** agora roda em **Next.js 15 + React 19** "
+    "no diretório `dashboard/` (`pnpm dev` em http://localhost:3000)."
+)
+
 # Definição das 7 páginas via caminhos de arquivo (padrão nativo do st.Page).
 # Nota de robustez: o st.Page do Streamlit (>=1.30) resolve caminhos relativos
 # contra o DIRETÓRIO DO SCRIPT DE ENTRADA (main_script_parent), não contra o

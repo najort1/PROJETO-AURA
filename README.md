@@ -38,7 +38,10 @@ pip install -e ".[dev]"
 # 3) pipeline completo, do zero aos artefatos analíticos + testes
 python tasks.py all        # equivalente a: make all
 
-# 4) painel
+# 4) cockpit de produção Next.js 15 (Oficial)
+cd dashboard && pnpm dev    # abre em http://localhost:3000
+
+# 5) protótipo legado Streamlit (Arquivado)
 python tasks.py app        # abre o Streamlit em http://localhost:8501
 ```
 
@@ -58,7 +61,8 @@ python tasks.py app        # abre o Streamlit em http://localhost:8501
 | `fairness` | Auditoria de viés (faixa etária, gênero, região) |
 | `impact` | Simulação de impacto (cenários + sensibilidade) |
 | `dictionary` | Gera `docs/data_dictionary/` a partir dos contratos em `schemas/` |
-| `app` | Painel Streamlit |
+| `app` | Painel Streamlit legado (http://localhost:8501) |
+| `dashboard` | Cockpit oficial de produção em Next.js 15 (http://localhost:3000) |
 | `test` / `lint` | pytest / ruff |
 
 ## Estrutura
