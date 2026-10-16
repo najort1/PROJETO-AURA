@@ -142,7 +142,8 @@ ALL = PIPELINE + ["test"]
 def run_step(step: list[str]) -> None:
     cmd = [PY if arg == "{py}" else arg for arg in step]
     print(f"\n$ {' '.join(cmd)}", flush=True)
-    subprocess.run(cmd, cwd=ROOT, check=True)
+    is_win = sys.platform == "win32"
+    subprocess.run(cmd, cwd=ROOT, check=True, shell=is_win)
 
 
 def run_target(name: str) -> None:

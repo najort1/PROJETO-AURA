@@ -1,0 +1,56 @@
+# =============================================================================
+# PROJETO AURA 2.0 - Docker Ignore
+# =============================================================================
+
+# Controle de versão e metadados
+.git/
+.gitignore
+.gitattributes
+.serena/
+.tmp/
+
+# Python / Ambientes virtuais / Caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+
+# Dados brutos volumosos e intermediários (não versionados)
+ANAC/
+data/raw/
+data/curated/
+*.duckdb
+*.duckdb.wal
+logs/
+*.log
+
+# Dashboard / Node / Next.js
+dashboard/node_modules/
+dashboard/.next/
+dashboard/out/
+dashboard/.pnpm-store/
+.pnpm-store/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Segredos e variáveis locais (preserva apenas .env.example)
+.env
+.env.*
+.env*.local
+!.env.example
+.streamlit/secrets.toml
+
+# OS / IDEs
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
