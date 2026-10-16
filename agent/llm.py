@@ -20,7 +20,7 @@ import os
 import time
 import urllib.error
 import urllib.request
-from typing import Any, Optional
+from typing import Any
 
 from aura_core.config import settings
 from aura_core.log import get_logger
@@ -64,10 +64,10 @@ class LLMClient:
     def chat_completion_with_tools(
         self,
         messages: list[dict[str, Any]],
-        tools: Optional[list[dict[str, Any]]] = None,
+        tools: list[dict[str, Any]] | None = None,
         tool_choice: str = "auto",
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
         max_retries: int = 2,
     ) -> dict[str, Any]:
         """Executa chamada ao modelo com suporte a Function Calling / Tools nativo OpenAI.
@@ -135,7 +135,11 @@ class LLMClient:
                     time.sleep(1.5 * (attempt + 1))
             except json.JSONDecodeError as exc:
                 last_error = exc
-                logger.error("Erro ao decodificar JSON do LLM: %s | Corpo: %s", exc, resp_raw[:200] if 'resp_raw' in locals() else "")
+                logger.error(
+                    "Erro ao decodificar JSON do LLM: %s | Corpo: %s",
+                    exc,
+                    resp_raw[:200] if "resp_raw" in locals() else "",
+                )
                 break
             except Exception as exc:
                 last_error = exc

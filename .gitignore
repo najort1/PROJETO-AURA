@@ -12,6 +12,7 @@ dist/
 venv/
 .env
 .env.*
+!.env.example
 
 # Streamlit / segredos
 .streamlit/secrets.toml
