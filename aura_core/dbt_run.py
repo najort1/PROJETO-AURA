@@ -3,6 +3,7 @@
 Uso: python -m aura_core.dbt_run
 Falha alto (exit != 0 + mensagem clara) se o projeto dbt não existir.
 """
+
 from __future__ import annotations
 
 import sys

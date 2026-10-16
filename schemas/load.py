@@ -7,6 +7,7 @@ Uso:
 `validate_table` retorna lista de violações (vazia = conforme contrato).
 Checks custom são expressões SQL booleanas avaliadas via DuckDB sobre a tabela.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -80,7 +81,9 @@ def validate_table(contract: dict, table_path: str | Path) -> list[str]:
             continue
         s = df[name]
         if not _dtype_ok(col.get("dtype", ""), s):
-            errors.append(f"[{tname}] dtype de {name}: declarado {col.get('dtype')}, encontrado {s.dtype}")
+            errors.append(
+                f"[{tname}] dtype de {name}: declarado {col.get('dtype')}, encontrado {s.dtype}"
+            )
         if not col.get("nullable", True) and s.isna().any():
             errors.append(f"[{tname}] {name} contém nulos (nullable: false)")
 

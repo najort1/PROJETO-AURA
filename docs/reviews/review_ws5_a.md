@@ -54,8 +54,12 @@ Inspecionou-se `ml/segmentation/score_av.py` (linhas 29–123) e `config/setting
 - Em `compute_score_av(check_sensitive=True)`, há asserções ativas:
   ```python
   for col in SENSITIVE_FORBIDDEN_COLUMNS:
-      assert col not in features_df.columns, f"VIOLAÇÃO DE ÉTICA/LGPD: Atributo sensível '{col}' encontrado nas features de entrada."
-      assert col not in clv_preds_df.columns, f"VIOLAÇÃO DE ÉTICA/LGPD: Atributo sensível '{col}' encontrado em clv_predictions."
+      assert col not in features_df.columns, (
+          f"VIOLAÇÃO DE ÉTICA/LGPD: Atributo sensível '{col}' encontrado nas features de entrada."
+      )
+      assert col not in clv_preds_df.columns, (
+          f"VIOLAÇÃO DE ÉTICA/LGPD: Atributo sensível '{col}' encontrado em clv_predictions."
+      )
   ```
 - A seleção de colunas para cálculo restringe-se estritamente a:
   `["customer_id", "recency_days", "frequency_12m", "monetary_12m", "frequency_trend", "meta_proximo_nivel_pct"]` + `clv_predicted_12m`.

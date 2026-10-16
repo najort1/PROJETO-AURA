@@ -130,11 +130,15 @@ def analyze_pareto_concentration(
     cutoffs: tuple[float, ...] = (0.05, 0.10, 0.15, 0.20),
 ) -> list[dict[str, Any]]:
     """Calcula a concentração de receita prevista segundo os quantis superiores de ScoreAV."""
-    df = score_av_df.merge(
-        clv_preds_df[["customer_id", "clv_predicted_12m"]],
-        on="customer_id",
-        how="inner",
-    ).sort_values("score_av", ascending=False).reset_index(drop=True)
+    df = (
+        score_av_df.merge(
+            clv_preds_df[["customer_id", "clv_predicted_12m"]],
+            on="customer_id",
+            how="inner",
+        )
+        .sort_values("score_av", ascending=False)
+        .reset_index(drop=True)
+    )
 
     total_clv = float(df["clv_predicted_12m"].sum())
     results: list[dict[str, Any]] = []
@@ -175,7 +179,9 @@ def run_sensitivity_analysis(
     if base_weights is None:
         base_weights = {"clv": 0.60, "rfm": 0.20, "potential": 0.20}
 
-    base_res = compute_score_av(features_df, clv_preds_df, weights=base_weights, check_sensitive=False)
+    base_res = compute_score_av(
+        features_df, clv_preds_df, weights=base_weights, check_sensitive=False
+    )
     base_score = base_res["score_av"].values
     n_total = len(base_res)
 
@@ -212,7 +218,7 @@ def run_sensitivity_analysis(
             intersection = len(idx_base & idx_alt)
             union = len(idx_base | idx_alt)
             j_val = float(intersection / union) if union > 0 else 1.0
-            jaccards[f"jaccard_{int(round(c*100))}pct"] = round(j_val, 4)
+            jaccards[f"jaccard_{int(round(c * 100))}pct"] = round(j_val, 4)
 
         record = {
             "description": desc,
@@ -268,7 +274,17 @@ def build_customers_scores(
         how="left",
     )
     df = df.merge(
-        clv_shap_df[["customer_id", "top1_feature", "top1_shap", "top2_feature", "top2_shap", "top3_feature", "top3_shap"]],
+        clv_shap_df[
+            [
+                "customer_id",
+                "top1_feature",
+                "top1_shap",
+                "top2_feature",
+                "top2_shap",
+                "top3_feature",
+                "top3_shap",
+            ]
+        ],
         on="customer_id",
         how="left",
     )
@@ -328,15 +344,26 @@ def build_customers_scores(
 
     # Benefício não utilizado (trata 'nenhum' como None)
     ben_raw = df["beneficio_nao_utilizado"]
-    ben_cleaned = ben_raw.apply(lambda b: None if (pd.isna(b) or str(b).strip() in {"", "nenhum", "None"}) else str(b))
+    ben_cleaned = ben_raw.apply(
+        lambda b: None if (pd.isna(b) or str(b).strip() in {"", "nenhum", "None"}) else str(b)
+    )
 
     # SHAP top3 formatado como JSON list de dicts para a interface
     shap_top3_list = []
     for _, row in df.iterrows():
         factors = [
-            {"factor": str(row.get("top1_feature", "frequencia")), "shap_value": round(float(row.get("top1_shap", 0.0)), 4)},
-            {"factor": str(row.get("top2_feature", "monetario")), "shap_value": round(float(row.get("top2_shap", 0.0)), 4)},
-            {"factor": str(row.get("top3_feature", "recencia")), "shap_value": round(float(row.get("top3_shap", 0.0)), 4)},
+            {
+                "factor": str(row.get("top1_feature", "frequencia")),
+                "shap_value": round(float(row.get("top1_shap", 0.0)), 4),
+            },
+            {
+                "factor": str(row.get("top2_feature", "monetario")),
+                "shap_value": round(float(row.get("top2_shap", 0.0)), 4),
+            },
+            {
+                "factor": str(row.get("top3_feature", "recencia")),
+                "shap_value": round(float(row.get("top3_shap", 0.0)), 4),
+            },
         ]
         shap_top3_list.append(json.dumps(factors))
 
@@ -360,7 +387,10 @@ def build_customers_scores(
             "saldo_pontos": df["saldo_pontos"].fillna(0).astype("int64"),
             "pontos_expirando_30d": df["pontos_expirando_30d"].fillna(0).astype("int64"),
             "pontos_qualificaveis_12m": df["pontos_qualificaveis_12m"].fillna(0).astype("int64"),
-            "meta_proximo_nivel_pct": df["meta_proximo_nivel_pct"].fillna(0.0).round(4).astype("float64"),
+            "meta_proximo_nivel_pct": df["meta_proximo_nivel_pct"]
+            .fillna(0.0)
+            .round(4)
+            .astype("float64"),
             # Rótulo honesto para dados NÃO informados (LGPD): null ≠ valor factual.
             # Imputar "Sudeste"/"VCP-SDU"/"30-49" fabricaria identidade demográfica.
             "faixa_etaria": df["faixa_etaria"].fillna("não informado").astype(str),
@@ -408,7 +438,12 @@ def run_score_pipeline(
     clv_shap_path = data_dir / "clv_shap.parquet"
     cust_path = curated_dir / "customers.parquet"
 
-    if segments_path.exists() and churn_path.exists() and clv_shap_path.exists() and cust_path.exists():
+    if (
+        segments_path.exists()
+        and churn_path.exists()
+        and clv_shap_path.exists()
+        and cust_path.exists()
+    ):
         churn_df = pd.read_parquet(churn_path)
         clv_shap_df = pd.read_parquet(clv_shap_path)
         segments_df = pd.read_parquet(segments_path)
@@ -420,7 +455,9 @@ def run_score_pipeline(
         cs_out_path = out_dir / "customers_scores.parquet"
         cs_df.to_parquet(cs_out_path, index=False)
         validate_or_raise(load_contract("customers_scores"), cs_out_path)
-        print(f"customers_scores gerado com sucesso: {len(cs_df)} registros gravados em {cs_out_path}")
+        print(
+            f"customers_scores gerado com sucesso: {len(cs_df)} registros gravados em {cs_out_path}"
+        )
 
     print(f"ScoreAV gerado com sucesso: {len(score_av_df)} registros gravados em {score_out_path}")
     return score_av_df, pareto_results, sensitivity_results

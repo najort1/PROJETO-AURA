@@ -75,9 +75,7 @@ UPGRADE_TRIGGERS: dict[str, dict[str, str]] = {
 DOWNGRADE_TRIGGER = "qualification_cycle_expired"
 
 
-def _extract_threshold(
-    tier_cfg: dict[str, Any], field: str, default: int | None
-) -> int | None:
+def _extract_threshold(tier_cfg: dict[str, Any], field: str, default: int | None) -> int | None:
     """Extrai um threshold do YAML aplicando a política null_semantics (fail-safe).
 
     Valor null no YAML = regra NÃO confirmada = inelegível (None).
@@ -125,9 +123,12 @@ def evaluate_tier(
     du_qp = _extract_threshold(du_cfg, "qualifying_points", 26000)
     du_seg = _extract_threshold(du_cfg, "segments", 26)
     du_alt = _extract_threshold(du_cfg, "alternative_spend_brl", 50000)
-    if (du_qp is not None and qualifying_points >= du_qp and du_seg is not None and segments >= du_seg) or (
-        du_alt is not None and spend_brl >= du_alt
-    ):
+    if (
+        du_qp is not None
+        and qualifying_points >= du_qp
+        and du_seg is not None
+        and segments >= du_seg
+    ) or (du_alt is not None and spend_brl >= du_alt):
         return "diamante_unique"
 
     # 2. Diamante (ordem 4)
@@ -135,9 +136,12 @@ def evaluate_tier(
     dia_qp = _extract_threshold(dia_cfg, "qualifying_points", 12000)
     dia_seg = _extract_threshold(dia_cfg, "segments", 12)
     dia_alt = _extract_threshold(dia_cfg, "alternative_spend_brl", 25000)
-    if (dia_qp is not None and qualifying_points >= dia_qp and dia_seg is not None and segments >= dia_seg) or (
-        dia_alt is not None and spend_brl >= dia_alt
-    ):
+    if (
+        dia_qp is not None
+        and qualifying_points >= dia_qp
+        and dia_seg is not None
+        and segments >= dia_seg
+    ) or (dia_alt is not None and spend_brl >= dia_alt):
         return "diamante"
 
     # 3. Safira (ordem 3)

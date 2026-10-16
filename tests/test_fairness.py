@@ -21,20 +21,49 @@ def test_four_fifths_exact_calculation_on_controlled_fixture() -> None:
     rows = []
     # Grupo A
     for i in range(100):
-        rows.append({"customer_id": f"A{i}", "alto_valor": True, "churn_prob": 0.30, "faixa_etaria": "A", "genero": "M", "regiao": "Sudeste"})
+        rows.append(
+            {
+                "customer_id": f"A{i}",
+                "alto_valor": True,
+                "churn_prob": 0.30,
+                "faixa_etaria": "A",
+                "genero": "M",
+                "regiao": "Sudeste",
+            }
+        )
     # Grupo B
     for i in range(100):
         sel = i < 70
-        rows.append({"customer_id": f"B{i}", "alto_valor": sel, "churn_prob": 0.40, "faixa_etaria": "B", "genero": "M", "regiao": "Sudeste"})
+        rows.append(
+            {
+                "customer_id": f"B{i}",
+                "alto_valor": sel,
+                "churn_prob": 0.40,
+                "faixa_etaria": "B",
+                "genero": "M",
+                "regiao": "Sudeste",
+            }
+        )
     # Grupo C
     for i in range(100):
         sel = i < 85
-        rows.append({"customer_id": f"C{i}", "alto_valor": sel, "churn_prob": 0.35, "faixa_etaria": "C", "genero": "M", "regiao": "Sudeste"})
+        rows.append(
+            {
+                "customer_id": f"C{i}",
+                "alto_valor": sel,
+                "churn_prob": 0.35,
+                "faixa_etaria": "C",
+                "genero": "M",
+                "regiao": "Sudeste",
+            }
+        )
 
     df_test = pd.DataFrame(rows)
     metrics_df = compute_fairness_metrics(df_test, threshold_ratio=0.80)
 
-    age_metrics = metrics_df[metrics_df["sensitive_attribute"] == "faixa_etaria"].set_index("group_value")
+    age_metrics = metrics_df[metrics_df["sensitive_attribute"] == "faixa_etaria"].set_index(
+        "group_value"
+    )
 
     # Grupo A (máximo)
     assert age_metrics.loc["A", "selection_rate"] == 1.00

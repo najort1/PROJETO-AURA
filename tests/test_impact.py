@@ -98,23 +98,43 @@ def test_scenarios_monotonicity_and_bootstrap_ci() -> None:
     sc_otim = scenarios["otimista"]["metricas"]
 
     # Monotonicidade de receita bruta e delta receita
-    assert sc_otim["receita_bruta_salva_brl"] > sc_base["receita_bruta_salva_brl"] > sc_cons["receita_bruta_salva_brl"]
-    assert sc_otim["delta_receita_brl"] > sc_base["delta_receita_brl"] > sc_cons["delta_receita_brl"]
+    assert (
+        sc_otim["receita_bruta_salva_brl"]
+        > sc_base["receita_bruta_salva_brl"]
+        > sc_cons["receita_bruta_salva_brl"]
+    )
+    assert (
+        sc_otim["delta_receita_brl"] > sc_base["delta_receita_brl"] > sc_cons["delta_receita_brl"]
+    )
     assert sc_otim["evasoes_evitadas"] > sc_base["evasoes_evitadas"] > sc_cons["evasoes_evitadas"]
 
     # Custo total das ações é invariante entre cenários E coincide com a soma
     # independente recalculada do público alvo (cross-check, não constante mágica)
-    assert sc_cons["custo_total_acoes_brl"] == sc_base["custo_total_acoes_brl"] == sc_otim["custo_total_acoes_brl"]
-    assert sc_base["custo_total_acoes_brl"] == pytest.approx(float(target_df["action_cost"].sum()), rel=1e-9)
+    assert (
+        sc_cons["custo_total_acoes_brl"]
+        == sc_base["custo_total_acoes_brl"]
+        == sc_otim["custo_total_acoes_brl"]
+    )
+    assert sc_base["custo_total_acoes_brl"] == pytest.approx(
+        float(target_df["action_cost"].sum()), rel=1e-9
+    )
 
     # Estimativa pontual deve estar contida dentro do IC95% bootstrap para todos os cenários
     for sc_name in ["conservador", "base", "otimista"]:
         m = scenarios[sc_name]["metricas"]
         ic_delta = m["ic95_delta_receita"]
-        assert ic_delta["limite_inferior"] <= ic_delta["estimativa_pontual"] <= ic_delta["limite_superior"]
+        assert (
+            ic_delta["limite_inferior"]
+            <= ic_delta["estimativa_pontual"]
+            <= ic_delta["limite_superior"]
+        )
 
         ic_bruta = m["ic95_receita_bruta"]
-        assert ic_bruta["limite_inferior"] <= ic_bruta["estimativa_pontual"] <= ic_bruta["limite_superior"]
+        assert (
+            ic_bruta["limite_inferior"]
+            <= ic_bruta["estimativa_pontual"]
+            <= ic_bruta["limite_superior"]
+        )
 
 
 def test_determinism_with_fixed_seed(tmp_path: Path) -> None:
@@ -124,7 +144,10 @@ def test_determinism_with_fixed_seed(tmp_path: Path) -> None:
     res1 = simulate_scenarios(target_df, n_bootstraps=150, seed=42)
     res2 = simulate_scenarios(target_df, n_bootstraps=150, seed=42)
 
-    assert res1["base"]["metricas"]["ic95_delta_receita"] == res2["base"]["metricas"]["ic95_delta_receita"]
+    assert (
+        res1["base"]["metricas"]["ic95_delta_receita"]
+        == res2["base"]["metricas"]["ic95_delta_receita"]
+    )
 
     # Validação ponta a ponta gerando JSON
     p1 = tmp_path / "sim1.json"
@@ -211,7 +234,9 @@ def test_pilot_design_high_value_at_risk() -> None:
     assert pilot["populacao_alto_valor_total"] == len(av)
     assert pilot["tamanho_publico_elegivel_amostra_50k"] == len(avr)
     assert 2_450 <= len(avr) <= 2_550, f"alto valor em risco fora de faixa: {len(avr)}"
-    assert pilot["churn_prob_mediana_alto_valor"] == pytest.approx(float(av["churn_prob"].median()), abs=1e-6)
+    assert pilot["churn_prob_mediana_alto_valor"] == pytest.approx(
+        float(av["churn_prob"].median()), abs=1e-6
+    )
 
     # Baseline real de retenção ~85,4% (churn ~14,6%)
     assert 0.14 <= pilot["baseline_churn_prob_real"] <= 0.16
@@ -219,7 +244,9 @@ def test_pilot_design_high_value_at_risk() -> None:
 
     # MDE +2pp: n por braço dentro da faixa da fórmula de Fleiss para o baseline atual
     mde_2pp = pilot["dimensionamento_primario_mde_2pp"]
-    assert 4_500 <= mde_2pp["n_por_braco"] <= 4_750, f"n por braço fora de faixa: {mde_2pp['n_por_braco']}"
+    assert 4_500 <= mde_2pp["n_por_braco"] <= 4_750, (
+        f"n por braço fora de faixa: {mde_2pp['n_por_braco']}"
+    )
     assert mde_2pp["n_total"] == 2 * mde_2pp["n_por_braco"]
     # Verificação analítica fechada da fórmula de Fleiss no baseline real
     from ml.impact.simulate import calculate_sample_size_proportions

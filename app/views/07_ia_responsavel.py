@@ -8,6 +8,7 @@ Conteúdo:
 - Transparência de citações e rastreabilidade do regulamento versionado
 - Seção de conformidade com a LGPD e mecanismo Humano no Circuito (Art. 20)
 """
+
 from __future__ import annotations
 
 import matplotlib.pyplot as plt
@@ -75,55 +76,68 @@ def render() -> None:
         return
 
     # Cálculos resumidos: isolamento dos 14 grupos informados e 2 grupos "não informado" (fora de julgamento)
-    is_nao_inf_all = df_fairness["group_value"].str.lower().str.contains("informado", na=False) & ~df_fairness["group_value"].str.lower().str.contains("prefiro", na=False)
+    is_nao_inf_all = df_fairness["group_value"].str.lower().str.contains(
+        "informado", na=False
+    ) & ~df_fairness["group_value"].str.lower().str.contains("prefiro", na=False)
     df_informados = df_fairness[~is_nao_inf_all]
     total_informados = len(df_informados)
     grupos_conformes = int(df_informados["four_fifths_compliant"].sum())
     grupos_nao_conformes = total_informados - grupos_conformes
     taxa_conformidade = grupos_conformes / max(1, total_informados)
 
-    metric_row([
-        {
-            "title": "Conformidade Four-Fifths (4/5)",
-            "value": f"{grupos_conformes} / {total_informados} informados",
-            "subtitle": f"{grupos_nao_conformes} grupos não conformes (razão < 0,80)",
-            "border_color": AZUL_ACTION if taxa_conformidade >= 0.8 else MAGENTA_CTA,
-            "delta": f"{taxa_conformidade*100:.1f}% em conformidade",
-            "delta_positive": taxa_conformidade >= 0.8,
-        },
-        {
-            "title": "Grupos Não Conformes (5)",
-            "value": "18-24, Sul, Sudeste, CO, NE",
-            "subtitle": "18-24: 0,7950 · Sul: 0,5575 · Sudeste: 0,6422",
-            "border_color": MAGENTA_CTA,
-        },
-        {
-            "title": "Atributos Sensíveis Auditados",
-            "value": "3 dimensões",
-            "subtitle": "Faixa Etária, Gênero e Região Geográfica",
-            "border_color": AZUL_PRIMARY,
-        },
-        {
-            "title": "Humano no Circuito (HITL)",
-            "value": "Artigo 20 LGPD",
-            "subtitle": "Revisão e edição de recomendações ativa",
-            "border_color": AZUL_DEEP,
-        },
-    ])
+    metric_row(
+        [
+            {
+                "title": "Conformidade Four-Fifths (4/5)",
+                "value": f"{grupos_conformes} / {total_informados} informados",
+                "subtitle": f"{grupos_nao_conformes} grupos não conformes (razão < 0,80)",
+                "border_color": AZUL_ACTION if taxa_conformidade >= 0.8 else MAGENTA_CTA,
+                "delta": f"{taxa_conformidade * 100:.1f}% em conformidade",
+                "delta_positive": taxa_conformidade >= 0.8,
+            },
+            {
+                "title": "Grupos Não Conformes (5)",
+                "value": "18-24, Sul, Sudeste, CO, NE",
+                "subtitle": "18-24: 0,7950 · Sul: 0,5575 · Sudeste: 0,6422",
+                "border_color": MAGENTA_CTA,
+            },
+            {
+                "title": "Atributos Sensíveis Auditados",
+                "value": "3 dimensões",
+                "subtitle": "Faixa Etária, Gênero e Região Geográfica",
+                "border_color": AZUL_PRIMARY,
+            },
+            {
+                "title": "Humano no Circuito (HITL)",
+                "value": "Artigo 20 LGPD",
+                "subtitle": "Revisão e edição de recomendações ativa",
+                "border_color": AZUL_DEEP,
+            },
+        ]
+    )
 
-    st.caption("ℹ️ Nota: Os 2 grupos 'Não informado' (em Faixa Etária e Gênero) decorrem do direito de privacidade do titular (LGPD) e são formalmente classificados fora do julgamento da Regra dos 4/5.")
+    st.caption(
+        "ℹ️ Nota: Os 2 grupos 'Não informado' (em Faixa Etária e Gênero) decorrem do direito de privacidade do titular (LGPD) e são formalmente classificados fora do julgamento da Regra dos 4/5."
+    )
 
     st.markdown("<div style='margin-top: 24px;'></div>", unsafe_allow_html=True)
 
     # 2. AUDITORIA DE VIÉS POR ATRIBUTO SENSÍVEL
-    section_title("Métricas de Disparidade por Grupo Protegido", "Auditoria de taxa de seleção de Alto Valor e risco de churn predito")
+    section_title(
+        "Métricas de Disparidade por Grupo Protegido",
+        "Auditoria de taxa de seleção de Alto Valor e risco de churn predito",
+    )
 
     col_filter_dim, _ = st.columns([1.5, 2.5])
     with col_filter_dim:
         selected_dim = st.selectbox(
             "Selecionar dimensão demográfica para inspeção:",
             options=["faixa_etaria", "genero", "regiao"],
-            format_func=lambda d: {"faixa_etaria": "Faixa Etária", "genero": "Gênero", "regiao": "Região Geográfica"}.get(d, d),
+            format_func=lambda d: {
+                "faixa_etaria": "Faixa Etária",
+                "genero": "Gênero",
+                "regiao": "Região Geográfica",
+            }.get(d, d),
         )
 
     sub_dim = df_fairness[df_fairness["sensitive_attribute"] == selected_dim].copy()
@@ -156,7 +170,9 @@ def render() -> None:
         bars = ax.bar(x_pos, ratios, color=bar_colors, width=0.45, edgecolor=BORDER_SUBTLE)
 
         # Linha de corte 0.80
-        ax.axhline(0.80, color=WARNING, linestyle="--", linewidth=1.5, label="Limiar Four-Fifths (0,80)")
+        ax.axhline(
+            0.80, color=WARNING, linestyle="--", linewidth=1.5, label="Limiar Four-Fifths (0,80)"
+        )
 
         for bar, r in zip(bars, ratios, strict=False):
             ax.text(
@@ -175,7 +191,13 @@ def render() -> None:
         ax.set_ylabel("Razão de Seleção vs Grupo Máximo", fontsize=8.5, color=TEXT_PRIMARY)
         ax.set_ylim(0, 1.25)
         ax.tick_params(colors=TEXT_SECONDARY, labelsize=8)
-        ax.legend(loc="upper right", frameon=True, facecolor="#FFFFFF", edgecolor=BORDER_SUBTLE, fontsize=8)
+        ax.legend(
+            loc="upper right",
+            frameon=True,
+            facecolor="#FFFFFF",
+            edgecolor=BORDER_SUBTLE,
+            fontsize=8,
+        )
         for spine in ax.spines.values():
             spine.set_color(BORDER_SUBTLE)
         fig.tight_layout()
@@ -183,9 +205,16 @@ def render() -> None:
         plt.close(fig)
 
     with col_table_fair:
-        display_sub = sub_dim[[
-            "group_value", "group_size", "selection_rate", "avg_predicted_churn", "selection_ratio_vs_max", "four_fifths_compliant"
-        ]].copy()
+        display_sub = sub_dim[
+            [
+                "group_value",
+                "group_size",
+                "selection_rate",
+                "avg_predicted_churn",
+                "selection_ratio_vs_max",
+                "four_fifths_compliant",
+            ]
+        ].copy()
         display_sub["group_value"] = cleaned_groups
 
         def _fmt_conforme(row: pd.Series) -> str:
@@ -194,19 +223,44 @@ def render() -> None:
             return "✅ Conforme" if row["four_fifths_compliant"] else "⚠️ Não Conforme"
 
         display_sub["Conforme?"] = display_sub.apply(_fmt_conforme, axis=1)
-        display_sub["Taxa Alto Valor"] = display_sub["selection_rate"].apply(lambda v: format_percent(v))
-        display_sub["Churn Médio"] = display_sub["avg_predicted_churn"].apply(lambda v: format_percent(v))
-        display_sub["Razão vs Max"] = display_sub["selection_ratio_vs_max"].apply(lambda v: f"{v:.4f}")
+        display_sub["Taxa Alto Valor"] = display_sub["selection_rate"].apply(
+            lambda v: format_percent(v)
+        )
+        display_sub["Churn Médio"] = display_sub["avg_predicted_churn"].apply(
+            lambda v: format_percent(v)
+        )
+        display_sub["Razão vs Max"] = display_sub["selection_ratio_vs_max"].apply(
+            lambda v: f"{v:.4f}"
+        )
         display_sub["Amostra"] = display_sub["group_size"].apply(format_int_br)
 
-        display_sub = display_sub[["group_value", "Amostra", "Taxa Alto Valor", "Churn Médio", "Razão vs Max", "Conforme?"]]
-        display_sub.columns = ["Grupo", "Amostra", "Taxa Alto Valor", "Churn Médio", "Razão vs Max", "Conforme?"]
+        display_sub = display_sub[
+            [
+                "group_value",
+                "Amostra",
+                "Taxa Alto Valor",
+                "Churn Médio",
+                "Razão vs Max",
+                "Conforme?",
+            ]
+        ]
+        display_sub.columns = [
+            "Grupo",
+            "Amostra",
+            "Taxa Alto Valor",
+            "Churn Médio",
+            "Razão vs Max",
+            "Conforme?",
+        ]
         st.dataframe(display_sub, width="stretch", hide_index=True)
 
     st.markdown("<div style='margin-top: 24px;'></div>", unsafe_allow_html=True)
 
     # 3. TRANSPARÊNCIA DE CITAÇÕES E RAG VERSIONADO
-    section_title("Transparência Regulatória e RAG Versionado", "Base de conhecimento oficial e verificabilidade de cada promessa do agente")
+    section_title(
+        "Transparência Regulatória e RAG Versionado",
+        "Base de conhecimento oficial e verificabilidade de cada promessa do agente",
+    )
 
     st.markdown(
         f"""
@@ -239,7 +293,10 @@ def render() -> None:
     st.markdown("<div style='margin-top: 24px;'></div>", unsafe_allow_html=True)
 
     # 4. SALVAGUARDAS LGPD E HUMANO NO CIRCUITO (ARTIGO 20)
-    section_title("Mecanismo Humano no Circuito (Art. 20 LGPD)", "Salvaguarda contra decisões e comunicações automatizadas sem intervenção humana")
+    section_title(
+        "Mecanismo Humano no Circuito (Art. 20 LGPD)",
+        "Salvaguarda contra decisões e comunicações automatizadas sem intervenção humana",
+    )
 
     st.markdown(
         f"""

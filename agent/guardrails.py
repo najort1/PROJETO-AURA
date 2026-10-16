@@ -149,9 +149,7 @@ _DURABILIDADE_STRONG = (
     r"etern[oa]s?|nunca\s+expira|expira[m]?\s+nunca|para\s+sempre|m[áa]xima|todas?\s+filas?|por\s+vida"
 )
 # Benefícios JAMAIS gratuitos: gratuidade próxima (free OU strong) = fabricação.
-_NUNCA_FREE = (
-    r"upgrade|status|milhas?|miles?|lounge|prioridade|preferenc(ia|ial)|cashback|dobro|duplo|validez|validade"
-)
+_NUNCA_FREE = r"upgrade|status|milhas?|miles?|lounge|prioridade|preferenc(ia|ial)|cashback|dobro|duplo|validez|validade"
 # Todos os benefícios: só disparam com vocabulário de durabilidade (strong).
 _TODO_BENEFICIO = (
     r"upgrade|passagens?|voos?|lounge|status|milhas?|miles?|pontos?|categoria|bagagens?|bagagem|malas?|"

@@ -6,6 +6,7 @@ Conteúdo:
 - Curva de Pareto / Lorenz da receita com coeficiente de Gini
 - Valor em Risco por persona / segmento (gráfico de barras)
 """
+
 from __future__ import annotations
 
 import matplotlib.pyplot as plt
@@ -55,7 +56,9 @@ def render() -> None:
     n_clientes = len(df_customers)
     clv_total = float(df_customers["clv_12m_previsto"].sum())
     # Valor em Risco total = Σ(clv_12m_previsto × churn_prob) sobre a carteira real
-    valor_em_risco_total = float((df_customers["clv_12m_previsto"] * df_customers["churn_prob"]).sum())
+    valor_em_risco_total = float(
+        (df_customers["clv_12m_previsto"] * df_customers["churn_prob"]).sum()
+    )
     pct_alto_valor = float(df_customers["alto_valor"].mean())
     custo_medio_acao = 45.0  # PREMISSA (não derivada dos dados): custo médio por ação de
     # retenção do playbook (média ponderada de gestos/contatos/ofertas). Premissa de negócio
@@ -63,40 +66,42 @@ def render() -> None:
     # custo real unitário por ação homologado. Nunca apresentar como valor observado.
 
     # Linha de KPIs
-    metric_row([
-        {
-            "title": "Valor em Risco Total",
-            "value": format_currency_brl(valor_em_risco_total),
-            "subtitle": "Σ (CLV × P_churn) em risco de perda",
-            "border_color": MAGENTA_CTA,
-            "delta": f"{format_percent(valor_em_risco_total / max(1.0, clv_total))} do CLV",
-            "delta_positive": False,
-        },
-        {
-            "title": "CLV 12M Total Previsto",
-            "value": format_currency_brl(clv_total),
-            "subtitle": f"Média: {format_currency_brl(clv_total / n_clientes)}/cliente",
-            "border_color": AZUL_ACTION,
-        },
-        {
-            "title": "Tamanho da Carteira",
-            "value": format_int_br(n_clientes),
-            "subtitle": "Clientes na coorte de análise",
-            "border_color": AZUL_DEEP,
-        },
-        {
-            "title": "Segmento Alto Valor",
-            "value": format_percent(pct_alto_valor),
-            "subtitle": f"{format_int_br(df_customers['alto_valor'].sum())} clientes prioritários",
-            "border_color": AZUL_PRIMARY,
-        },
-        {
-            "title": "Custo Médio da Ação",
-            "value": format_currency_brl(custo_medio_acao),
-            "subtitle": "Playbook de retenção ponderado",
-            "border_color": AZUL_NAVY,
-        },
-    ])
+    metric_row(
+        [
+            {
+                "title": "Valor em Risco Total",
+                "value": format_currency_brl(valor_em_risco_total),
+                "subtitle": "Σ (CLV × P_churn) em risco de perda",
+                "border_color": MAGENTA_CTA,
+                "delta": f"{format_percent(valor_em_risco_total / max(1.0, clv_total))} do CLV",
+                "delta_positive": False,
+            },
+            {
+                "title": "CLV 12M Total Previsto",
+                "value": format_currency_brl(clv_total),
+                "subtitle": f"Média: {format_currency_brl(clv_total / n_clientes)}/cliente",
+                "border_color": AZUL_ACTION,
+            },
+            {
+                "title": "Tamanho da Carteira",
+                "value": format_int_br(n_clientes),
+                "subtitle": "Clientes na coorte de análise",
+                "border_color": AZUL_DEEP,
+            },
+            {
+                "title": "Segmento Alto Valor",
+                "value": format_percent(pct_alto_valor),
+                "subtitle": f"{format_int_br(df_customers['alto_valor'].sum())} clientes prioritários",
+                "border_color": AZUL_PRIMARY,
+            },
+            {
+                "title": "Custo Médio da Ação",
+                "value": format_currency_brl(custo_medio_acao),
+                "subtitle": "Playbook de retenção ponderado",
+                "border_color": AZUL_NAVY,
+            },
+        ]
+    )
 
     st.markdown("<div style='margin-top: 24px;'></div>", unsafe_allow_html=True)
 
@@ -104,7 +109,9 @@ def render() -> None:
     col_left, col_right = st.columns(2)
 
     with col_left:
-        section_title("Distribuição do CLV 12M Previsto", "Densidade de valor futuro dos membros do programa")
+        section_title(
+            "Distribuição do CLV 12M Previsto", "Densidade de valor futuro dos membros do programa"
+        )
         fig, ax = plt.subplots(figsize=(6, 3.8), facecolor=CANVAS)
         ax.set_facecolor("#FFFFFF")
         clv_vals = df_customers["clv_12m_previsto"].values
@@ -122,8 +129,20 @@ def render() -> None:
             if b >= p95:
                 patch.set_facecolor(MAGENTA_CTA)
 
-        ax.axvline(float(np.mean(clv_vals)), color=AZUL_DEEP, linestyle="--", linewidth=1.5, label=f"Média: {format_currency_brl(np.mean(clv_vals))}")
-        ax.axvline(float(np.median(clv_vals)), color=AZUL_ACTION, linestyle=":", linewidth=1.5, label=f"Mediana: {format_currency_brl(np.median(clv_vals))}")
+        ax.axvline(
+            float(np.mean(clv_vals)),
+            color=AZUL_DEEP,
+            linestyle="--",
+            linewidth=1.5,
+            label=f"Média: {format_currency_brl(np.mean(clv_vals))}",
+        )
+        ax.axvline(
+            float(np.median(clv_vals)),
+            color=AZUL_ACTION,
+            linestyle=":",
+            linewidth=1.5,
+            label=f"Mediana: {format_currency_brl(np.median(clv_vals))}",
+        )
 
         ax.set_xlabel("CLV 12M Previsto (R$)", fontsize=9, color=TEXT_PRIMARY, fontweight="bold")
         ax.set_ylabel("Frequência de Clientes", fontsize=9, color=TEXT_PRIMARY)
@@ -136,7 +155,10 @@ def render() -> None:
         plt.close(fig)
 
     with col_right:
-        section_title("Curva de Concentração (Lorenz / Pareto)", "Distribuição acumulada de receita vs clientes (Gini)")
+        section_title(
+            "Curva de Concentração (Lorenz / Pareto)",
+            "Distribuição acumulada de receita vs clientes (Gini)",
+        )
         # Curva de Lorenz
         sorted_clv = np.sort(clv_vals)
         cum_clv = np.cumsum(sorted_clv) / np.sum(sorted_clv)
@@ -148,28 +170,47 @@ def render() -> None:
 
         fig, ax = plt.subplots(figsize=(6, 3.8), facecolor=CANVAS)
         ax.set_facecolor("#FFFFFF")
-        ax.plot(cum_pop, cum_clv, color=AZUL_ACTION, linewidth=2.5, label=f"Curva de Lorenz (Gini = {gini:.2f})")
-        ax.plot([0, 1], [0, 1], color=TEXT_SECONDARY, linestyle="--", linewidth=1.2, label="Distribuição Igualitária")
+        ax.plot(
+            cum_pop,
+            cum_clv,
+            color=AZUL_ACTION,
+            linewidth=2.5,
+            label=f"Curva de Lorenz (Gini = {gini:.2f})",
+        )
+        ax.plot(
+            [0, 1],
+            [0, 1],
+            color=TEXT_SECONDARY,
+            linestyle="--",
+            linewidth=1.2,
+            label="Distribuição Igualitária",
+        )
 
         # Ponto 80/20
         idx_80 = int(len(sorted_clv) * 0.8)
         top_20_share = 1.0 - cum_clv[idx_80]
         ax.scatter([0.8], [cum_clv[idx_80]], color=MAGENTA_CTA, s=60, zorder=5)
         ax.annotate(
-            f"Top 20% detém {top_20_share*100:.1f}% do CLV",
+            f"Top 20% detém {top_20_share * 100:.1f}% do CLV",
             xy=(0.8, cum_clv[idx_80]),
             xytext=(0.35, 0.55),
-            arrowprops=dict(facecolor=MAGENTA_CTA, edgecolor=MAGENTA_CTA, shrink=0.08, width=1, headwidth=6),
+            arrowprops=dict(
+                facecolor=MAGENTA_CTA, edgecolor=MAGENTA_CTA, shrink=0.08, width=1, headwidth=6
+            ),
             fontsize=8,
             fontweight="bold",
             color=AZUL_NAVY,
             bbox=dict(boxstyle="round,pad=0.3", facecolor="#FFFFFF", edgecolor=BORDER_SUBTLE),
         )
 
-        ax.set_xlabel("Fração Acumulada da População", fontsize=9, color=TEXT_PRIMARY, fontweight="bold")
+        ax.set_xlabel(
+            "Fração Acumulada da População", fontsize=9, color=TEXT_PRIMARY, fontweight="bold"
+        )
         ax.set_ylabel("Fração Acumulada do CLV", fontsize=9, color=TEXT_PRIMARY)
         ax.tick_params(colors=TEXT_SECONDARY, labelsize=8)
-        ax.legend(loc="upper left", frameon=True, facecolor="#FFFFFF", edgecolor=BORDER_SUBTLE, fontsize=8)
+        ax.legend(
+            loc="upper left", frameon=True, facecolor="#FFFFFF", edgecolor=BORDER_SUBTLE, fontsize=8
+        )
         for spine in ax.spines.values():
             spine.set_color(BORDER_SUBTLE)
         fig.tight_layout()
@@ -179,7 +220,9 @@ def render() -> None:
     st.markdown("<div style='margin-top: 16px;'></div>", unsafe_allow_html=True)
 
     # Gráfico inferior: Valor em Risco por Persona / Segmento
-    section_title("Valor em Risco e CLV por Persona", "Exposição financeira agrupada por arquétipo de cliente")
+    section_title(
+        "Valor em Risco e CLV por Persona", "Exposição financeira agrupada por arquétipo de cliente"
+    )
 
     var_by_persona = (
         df_customers.groupby("persona")
@@ -202,13 +245,21 @@ def render() -> None:
         "eventual_ascendente": "Eventual Ascendente",
         "eventual_promocional": "Eventual Promocional",
     }
-    var_by_persona["persona_label"] = var_by_persona["persona"].map(persona_names_map).fillna(var_by_persona["persona"])
+    var_by_persona["persona_label"] = (
+        var_by_persona["persona"].map(persona_names_map).fillna(var_by_persona["persona"])
+    )
 
     fig, ax = plt.subplots(figsize=(10, 3.8), facecolor=CANVAS)
     ax.set_facecolor("#FFFFFF")
 
     y_pos = np.arange(len(var_by_persona))
-    bars = ax.barh(y_pos, var_by_persona["valor_em_risco"], color=AZUL_ACTION, height=0.6, edgecolor=BORDER_SUBTLE)
+    bars = ax.barh(
+        y_pos,
+        var_by_persona["valor_em_risco"],
+        color=AZUL_ACTION,
+        height=0.6,
+        edgecolor=BORDER_SUBTLE,
+    )
 
     # Destaca maior risco em magenta
     max_idx = int(np.argmax(var_by_persona["valor_em_risco"].values))
@@ -221,7 +272,7 @@ def render() -> None:
         ax.text(
             w + (var_by_persona["valor_em_risco"].max() * 0.01),
             bar.get_y() + bar.get_height() / 2,
-            f"{format_currency_brl(w)} ({cnt} clientes · P_churn {ch*100:.1f}%)",
+            f"{format_currency_brl(w)} ({cnt} clientes · P_churn {ch * 100:.1f}%)",
             va="center",
             ha="left",
             fontsize=8,
@@ -230,7 +281,9 @@ def render() -> None:
         )
 
     ax.set_yticks(y_pos)
-    ax.set_yticklabels(var_by_persona["persona_label"], fontsize=9, fontweight="bold", color=TEXT_PRIMARY)
+    ax.set_yticklabels(
+        var_by_persona["persona_label"], fontsize=9, fontweight="bold", color=TEXT_PRIMARY
+    )
     ax.set_xlabel("Valor em Risco Total (R$)", fontsize=9, color=TEXT_PRIMARY, fontweight="bold")
     ax.set_xlim(0, var_by_persona["valor_em_risco"].max() * 1.35)
     ax.tick_params(colors=TEXT_SECONDARY, labelsize=8)

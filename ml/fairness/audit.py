@@ -45,7 +45,9 @@ def compute_fairness_metrics(
     rows: list[dict[str, Any]] = []
 
     for dim in SENSITIVE_DIMENSIONS:
-        assert dim in customers_scores_df.columns, f"Dimensão demográfica '{dim}' ausente em customers_scores."
+        assert dim in customers_scores_df.columns, (
+            f"Dimensão demográfica '{dim}' ausente em customers_scores."
+        )
 
         informed = customers_scores_df[customers_scores_df[dim] != NA_LABEL]
         group_rates = informed.groupby(dim)["alto_valor"].mean()
@@ -123,12 +125,16 @@ def run_fairness_audit(
         ].to_dict(orient="records"),
     }
 
-    print(f"Auditoria de Fairness concluída: {compliant_groups}/{total_groups} grupos conformes (4/5).")
+    print(
+        f"Auditoria de Fairness concluída: {compliant_groups}/{total_groups} grupos conformes (4/5)."
+    )
     print(f"Artefato gravado em: {out_file}")
     if not failing_groups.empty:
         print("Grupos abaixo do limiar 0,80 (Four-Fifths):")
         for _, r in failing_groups.iterrows():
-            print(f"  - [{r['sensitive_attribute']}] {r['group_value']}: razão {r['selection_ratio_vs_max']:.4f} (taxa: {r['selection_rate']:.4f})")
+            print(
+                f"  - [{r['sensitive_attribute']}] {r['group_value']}: razão {r['selection_ratio_vs_max']:.4f} (taxa: {r['selection_rate']:.4f})"
+            )
 
     return metrics_df, summary
 

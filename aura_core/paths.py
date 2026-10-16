@@ -1,4 +1,5 @@
 """Resolução de caminhos do repositório (sempre relativos à raiz do projeto)."""
+
 from __future__ import annotations
 
 from pathlib import Path

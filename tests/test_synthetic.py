@@ -239,8 +239,8 @@ def test_no_future_transaction_leakage_in_qualification() -> None:
 
     cutoff_365 = purchase_dt - dt.timedelta(days=365)
     qual_history = [
-        (past_flight_tx, 5000, 1, 5000.0),     # voo passado: 5000 QP, 1 trecho
-        (future_card_tx, 2000, 0, 0.0),        # cartão FUTURO: 2000 QP
+        (past_flight_tx, 5000, 1, 5000.0),  # voo passado: 5000 QP, 1 trecho
+        (future_card_tx, 2000, 0, 0.0),  # cartão FUTURO: 2000 QP
     ]
 
     # ANTES do fix: recent_act incluía future_card_tx (sem teto temporal)
@@ -376,12 +376,12 @@ def test_transactions_ordered_by_date(tmp_path: Path) -> None:
     for i in range(1, len(dates)):
         if dates[i] < dates[i - 1]:
             raise AssertionError(
-                f"transactions fora de ordem: idx={i-1} date={dates[i-1]} -> idx={i} date={dates[i]}"
+                f"transactions fora de ordem: idx={i - 1} date={dates[i - 1]} -> idx={i} date={dates[i]}"
             )
         if dates[i] == dates[i - 1] and cust_ids[i] < cust_ids[i - 1]:
             raise AssertionError(
                 f"transactions empate de data mas customer_id fora de ordem: "
-                f"idx={i-1} cid={cust_ids[i-1]} -> idx={i} cid={cust_ids[i]}"
+                f"idx={i - 1} cid={cust_ids[i - 1]} -> idx={i} cid={cust_ids[i]}"
             )
 
     # Também verificar flights, interactions, loyalty_events
@@ -396,13 +396,11 @@ def test_transactions_ordered_by_date(tmp_path: Path) -> None:
         for i in range(1, len(dates)):
             if dates[i] < dates[i - 1]:
                 raise AssertionError(
-                    f"{table_name} fora de ordem temporal: idx={i-1} {date_col}={dates[i-1]} -> "
+                    f"{table_name} fora de ordem temporal: idx={i - 1} {date_col}={dates[i - 1]} -> "
                     f"idx={i} {date_col}={dates[i]}"
                 )
             if dates[i] == dates[i - 1] and ids[i] < ids[i - 1]:
-                raise AssertionError(
-                    f"{table_name} empate de data mas {id_col} fora de ordem"
-                )
+                raise AssertionError(f"{table_name} empate de data mas {id_col} fora de ordem")
 
 
 def test_null_safety_in_loyalty_evaluate_tier() -> None:
@@ -416,31 +414,43 @@ def test_null_safety_in_loyalty_evaluate_tier() -> None:
         "tiers": [
             {"key": "topazio", "qualification": {"qualifying_points": None, "segments": 6}},
             {"key": "safira", "qualification": {"qualifying_points": 10000, "segments": None}},
-            {"key": "diamante", "qualification": {
-                "qualifying_points": 12000,
-                "segments": 12,
-                "alternative_spend_brl": None,
-            }},
-            {"key": "diamante_unique", "qualification": {
-                "qualifying_points": 26000,
-                "segments": 26,
-                "alternative_spend_brl": 50000,
-            }},
+            {
+                "key": "diamante",
+                "qualification": {
+                    "qualifying_points": 12000,
+                    "segments": 12,
+                    "alternative_spend_brl": None,
+                },
+            },
+            {
+                "key": "diamante_unique",
+                "qualification": {
+                    "qualifying_points": 26000,
+                    "segments": 26,
+                    "alternative_spend_brl": 50000,
+                },
+            },
         ]
     }
 
     # Não deve lançar TypeError
-    tier = evaluate_tier(qualifying_points=6000, segments=6, spend_brl=1000.0, rules=rules_with_nulls)
+    tier = evaluate_tier(
+        qualifying_points=6000, segments=6, spend_brl=1000.0, rules=rules_with_nulls
+    )
     # topazio tem QP null -> inelegível por QP, mas segments=6 -> qualifica
     assert tier == "topazio"
 
     # Diamante tem alternative_spend_brl: null -> inelegível por gasto
     # Deve qualificar apenas se tiver QP E segments
-    tier = evaluate_tier(qualifying_points=12000, segments=12, spend_brl=0.0, rules=rules_with_nulls)
+    tier = evaluate_tier(
+        qualifying_points=12000, segments=12, spend_brl=0.0, rules=rules_with_nulls
+    )
     assert tier == "diamante"
 
     # Sem QP E segments, com alt_spend null -> não qualifica Diamante
-    tier = evaluate_tier(qualifying_points=8000, segments=8, spend_brl=30000.0, rules=rules_with_nulls)
+    tier = evaluate_tier(
+        qualifying_points=8000, segments=8, spend_brl=30000.0, rules=rules_with_nulls
+    )
     # alt_spend é null -> inelegível; 8000 QP < 10000, 8 seg < 10 -> Safira não qualifica; Topázio 8000 >= 6000
     assert tier == "topazio"
 

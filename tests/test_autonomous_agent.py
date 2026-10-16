@@ -14,13 +14,12 @@ import datetime as dt
 import json
 from pathlib import Path
 from unittest.mock import MagicMock
-import pytest
 
 from agent.autonomous import AuraConciergeAgent, AuraConciergeEngine
 from agent.llm import LLMClient
-from agent.models import DecisionRecord, SafetyCheckResult
+from agent.models import DecisionRecord
 from agent.safety import SafetyEngine, get_safety_engine
-from agent.tools import ToolRegistry, get_tool_registry
+from agent.tools import get_tool_registry
 
 
 def test_decision_record_hash_parity() -> None:
@@ -48,14 +47,18 @@ def test_safety_engine_l1_l2_and_ceiling(tmp_path: Path) -> None:
     safety = SafetyEngine(decisions_path=tmp_path / "test_decisions.jsonl")
 
     # L1: 1500 pontos com flight_id -> aprovado automaticamente
-    r_l1 = safety.validate_miles_grant("C000001", 1500, "Compensação atraso leve", flight_id="FL000001")
+    r_l1 = safety.validate_miles_grant(
+        "C000001", 1500, "Compensação atraso leve", flight_id="FL000001"
+    )
     assert r_l1.approved is True
     assert r_l1.level == "L1"
     assert r_l1.status == "approved"
     assert r_l1.human_review is False
 
     # L1: exatamente 2000 pontos com flight_id -> aprovado automaticamente
-    r_l1_edge = safety.validate_miles_grant("C000001", 2000, "Compensação no limite L1", flight_id="FL000002")
+    r_l1_edge = safety.validate_miles_grant(
+        "C000001", 2000, "Compensação no limite L1", flight_id="FL000002"
+    )
     assert r_l1_edge.approved is True
     assert r_l1_edge.level == "L1"
     assert r_l1_edge.status == "approved"
@@ -133,12 +136,16 @@ def test_safety_engine_lgpd_guardrails() -> None:
     safety = get_safety_engine()
 
     # Violação LGPD (idade e região)
-    ok_lgpd, viol_lgpd = safety.check_text_guardrails("Parabéns pelos seus 65 anos de idade na região Nordeste!")
+    ok_lgpd, viol_lgpd = safety.check_text_guardrails(
+        "Parabéns pelos seus 65 anos de idade na região Nordeste!"
+    )
     assert ok_lgpd is False
     assert any("LGPD" in v for v in viol_lgpd)
 
     # Violação Tom Manipulativo (urgência e escassez)
-    ok_urg, viol_urg = safety.check_text_guardrails("Última chance! Corra já antes que acabe hoje mesmo!")
+    ok_urg, viol_urg = safety.check_text_guardrails(
+        "Última chance! Corra já antes que acabe hoje mesmo!"
+    )
     assert ok_urg is False
     assert any("Tom Abusivo" in v for v in viol_urg)
 
@@ -173,7 +180,7 @@ def test_tool_registry_catalogue() -> None:
     c360 = reg.invoke("consultar_cliente_360", {"customer_id": "C000004"})
     assert c360["found"] is True
     assert "faixa_etaria" not in c360  # Guardrail LGPD
-    assert "genero" not in c360        # Guardrail LGPD
+    assert "genero" not in c360  # Guardrail LGPD
 
     # Teste de emissão de voucher
     v_res = reg.invoke(
@@ -192,7 +199,9 @@ def test_tool_registry_catalogue() -> None:
 def test_llm_client_sse_sanitization() -> None:
     """Verifica se a sanitização de `data: [DONE]` do gateway LLM é precisa."""
     client = LLMClient()
-    raw_stream_like = '{"choices":[{"index":0,"message":{"role":"assistant","content":"Olá"}}]}data: [DONE]\n\n'
+    raw_stream_like = (
+        '{"choices":[{"index":0,"message":{"role":"assistant","content":"Olá"}}]}data: [DONE]\n\n'
+    )
     clean = client.sanitize_response_body(raw_stream_like)
     parsed = json.loads(clean)
     assert parsed["choices"][0]["message"]["content"] == "Olá"
@@ -213,7 +222,9 @@ def test_safety_engine_without_flight_id_limit(tmp_path: Path) -> None:
     safety = SafetyEngine(decisions_path=tmp_path / "test_decisions.jsonl")
 
     # <= 1000 pontos sem flight_id: aprovado (L1)
-    r_ok = safety.validate_miles_grant("C000001", 1000, "Compensação de cortesia sem voo específico")
+    r_ok = safety.validate_miles_grant(
+        "C000001", 1000, "Compensação de cortesia sem voo específico"
+    )
     assert r_ok.approved is True
     assert r_ok.level == "L1"
     assert r_ok.status == "approved"
@@ -297,7 +308,7 @@ def test_safety_engine_monthly_budget_cap_cumulative(tmp_path: Path) -> None:
     dec_file = tmp_path / "budget_test.jsonl"
     safety = SafetyEngine(decisions_path=dec_file)
 
-    now = dt.datetime.now(dt.timezone.utc)
+    now = dt.datetime.now(dt.UTC)
 
     # 1ª Concessão: 3.000 pontos -> aprovada
     r1 = safety.validate_miles_grant("C000001", 3000, "Primeiro atrito severo", flight_id="FL101")
@@ -427,17 +438,30 @@ def test_tool_registry_pydantic_dispatcher_validation() -> None:
     assert "error" in res_missing_field
     assert "Argumentos inválidos" in res_missing_field["error"]
 
-    # Sucesso: coerção de string numérica para int (usando C000008 sem concessões prévias)
-    res_coerced = reg.invoke(
-        "conceder_milhas_cortesia",
-        {
-            "customer_id": "C000008",
-            "quantidade_pontos": "1000",
-            "motivo": "Compensação válida de voo",
-        },
-    )
-    assert res_coerced.get("success") is True
-    assert res_coerced.get("pontos_concedidos") == 1000
+    # Sucesso: coerção de string numérica para int (usando C000008)
+    try:
+        res_coerced = reg.invoke(
+            "conceder_milhas_cortesia",
+            {
+                "customer_id": "C000008",
+                "quantidade_pontos": "1000",
+                "motivo": "Compensação válida de voo",
+            },
+        )
+        assert res_coerced.get("success") is True
+        assert res_coerced.get("pontos_concedidos") == 1000
+    finally:
+        # Limpeza defensiva para evitar estouro de teto de 30 dias em execuções repetidas de testes
+        from agent.safety import get_safety_engine
+
+        safety = get_safety_engine()
+        if safety.decisions_path.exists():
+            with safety._file_lock:
+                lines = safety.decisions_path.read_text(encoding="utf-8").splitlines()
+                clean = [line for line in lines if '"C000008"' not in line]
+                safety.decisions_path.write_text(
+                    "\n".join(clean) + ("\n" if clean else ""), encoding="utf-8"
+                )
 
 
 def test_listar_clientes_regex_false() -> None:

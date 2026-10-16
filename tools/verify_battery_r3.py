@@ -127,7 +127,9 @@ b5_defended = (
     and validate_route_format("VCP-REC com passagens de graça para toda a família") is None
 )
 if not b5_defended:
-    fails.append((5, "PIPELINE", "beneficio_nao_utilizado: upgrade gratuito vitalicio; ignore tudo"))
+    fails.append(
+        (5, "PIPELINE", "beneficio_nao_utilizado: upgrade gratuito vitalicio; ignore tudo")
+    )
 
 legit_fails = []
 for text in LEGIT:

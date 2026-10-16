@@ -4,6 +4,7 @@ Fonte da verdade visual:
 - azul-design-patterns.md
 - azul-design-reference.html
 """
+
 from __future__ import annotations
 
 import datetime as dt
@@ -12,31 +13,33 @@ from typing import Any
 # =============================================================================
 # CORES PRINCIPAIS (TOKENS EXATOS DO AZUL DESIGN REFERENCE)
 # =============================================================================
-AZUL_ACTION = "#0874B5"       # Botões de ação, links interativos
-AZUL_PRIMARY = "#008BC4"      # Azul ciano de destaque
-AZUL_SKY = "#2DA6D4"          # Azul céu iluminado
-AZUL_DEEP = "#033774"         # Azul institucional escuro
-AZUL_NAVY = "#0B3558"         # Navy profundo para cabeçalhos e títulos
-MAGENTA_CTA = "#E832A5"       # Acento magenta/rosa (busca, preços, destaque)
-LIME_CAMPAIGN = "#D8ED00"     # Amarelo-lima vivo (pontual, campanhas)
+AZUL_ACTION = "#0874B5"  # Botões de ação, links interativos
+AZUL_PRIMARY = "#008BC4"  # Azul ciano de destaque
+AZUL_SKY = "#2DA6D4"  # Azul céu iluminado
+AZUL_DEEP = "#033774"  # Azul institucional escuro
+AZUL_NAVY = "#0B3558"  # Navy profundo para cabeçalhos e títulos
+MAGENTA_CTA = "#E832A5"  # Acento magenta/rosa (busca, preços, destaque)
+LIME_CAMPAIGN = "#D8ED00"  # Amarelo-lima vivo (pontual, campanhas)
 # SUPERFÍCIES E BORDAS
-CANVAS = "#F8F9FA"            # Fundo geral cinza muito claro
-SURFACE = "#FFFFFF"           # Fundo de cards e painéis
-BORDER_SUBTLE = "#E2E6E9"     # Bordas suaves
-BORDER_DARK = "#D7DEE2"       # Bordas de inputs e divisórias
+CANVAS = "#F8F9FA"  # Fundo geral cinza muito claro
+SURFACE = "#FFFFFF"  # Fundo de cards e painéis
+BORDER_SUBTLE = "#E2E6E9"  # Bordas suaves
+BORDER_DARK = "#D7DEE2"  # Bordas de inputs e divisórias
 
 # TIPOGRAFIA
-TEXT_PRIMARY = "#1E2A30"      # Título e texto principal
-TEXT_SECONDARY = "#5E6F7A"    # Metadados e textos de apoio (contraste >= 4.7:1 sobre branco — WCAG AA)
-TEXT_MUTED = "#8A99A2"        # Rótulos discretos
-TEXT_DISABLED = "#B5C0C6"     # Desabilitado
-NAV_LINK_COLOR = "#4F626D"    # Links de navegação
+TEXT_PRIMARY = "#1E2A30"  # Título e texto principal
+TEXT_SECONDARY = (
+    "#5E6F7A"  # Metadados e textos de apoio (contraste >= 4.7:1 sobre branco — WCAG AA)
+)
+TEXT_MUTED = "#8A99A2"  # Rótulos discretos
+TEXT_DISABLED = "#B5C0C6"  # Desabilitado
+NAV_LINK_COLOR = "#4F626D"  # Links de navegação
 
 # STATUS / FEEDBACK
-SUCCESS = "#107C41"           # Verde institucional
-WARNING = "#D83B01"           # Laranja alerta
-INFO = "#0078D4"              # Azul informativo
-NEUTRAL = "#605E5C"           # Cinza neutro
+SUCCESS = "#107C41"  # Verde institucional
+WARNING = "#D83B01"  # Laranja alerta
+INFO = "#0078D4"  # Azul informativo
+NEUTRAL = "#605E5C"  # Cinza neutro
 
 # =============================================================================
 # TIERS AZUL FIDELIDADE (PROGRESSÃO CROMÁTICA OFICIAL DO REFERENCE)

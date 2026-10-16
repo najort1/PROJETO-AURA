@@ -62,8 +62,14 @@ def prepare_clustering_features(
             assert col not in features_df.columns, (
                 f"VIOLAÇÃO DE ÉTICA/LGPD: Atributo sensível '{col}' presente na matriz de clusterização."
             )
-        assert "target_clv_12m" not in features_df.columns or "target_clv_12m" not in CLUSTER_FEATURE_COLS
-        assert "target_churn_12m" not in features_df.columns or "target_churn_12m" not in CLUSTER_FEATURE_COLS
+        assert (
+            "target_clv_12m" not in features_df.columns
+            or "target_clv_12m" not in CLUSTER_FEATURE_COLS
+        )
+        assert (
+            "target_churn_12m" not in features_df.columns
+            or "target_churn_12m" not in CLUSTER_FEATURE_COLS
+        )
 
     X_df = features_df[CLUSTER_FEATURE_COLS].copy()
     X_df["tier_encoded"] = features_df["tier"].map(TIER_ORDINAL_MAP).fillna(0).astype(float)
@@ -122,7 +128,9 @@ def evaluate_bootstrap_stability(
             continue
 
         km_a = KMeans(n_clusters=k, random_state=random_seed + i, n_init=3).fit(X_scaled[idx_a])
-        km_b = KMeans(n_clusters=k, random_state=random_seed + i + 100, n_init=3).fit(X_scaled[idx_b])
+        km_b = KMeans(n_clusters=k, random_state=random_seed + i + 100, n_init=3).fit(
+            X_scaled[idx_b]
+        )
 
         preds_a = km_a.predict(X_scaled[common])
         preds_b = km_b.predict(X_scaled[common])
@@ -211,7 +219,9 @@ def run_clustering_pipeline(
 
     # 4. Modelos finais KMeans e GMM
     km = KMeans(n_clusters=k, random_state=random_seed, n_init=10).fit(X_scaled)
-    gmm = GaussianMixture(n_components=k, random_state=random_seed, covariance_type="diag").fit(X_scaled)
+    gmm = GaussianMixture(n_components=k, random_state=random_seed, covariance_type="diag").fit(
+        X_scaled
+    )
 
     km_labels = km.labels_
     gmm_labels = gmm.predict(X_scaled)
@@ -235,10 +245,16 @@ def run_clustering_pipeline(
     if ground_truth_df is not None:
         # Merge estrito por customer_id para garantir alinhamento exato
         eval_df = pd.DataFrame(
-            {"customer_id": features_df["customer_id"], "cluster": km_labels, "persona": persona_names}
+            {
+                "customer_id": features_df["customer_id"],
+                "cluster": km_labels,
+                "persona": persona_names,
+            }
         ).merge(ground_truth_df[["customer_id", "latent_archetype"]], on="customer_id", how="inner")
 
-        ari_vs_ground_truth = float(adjusted_rand_score(eval_df["latent_archetype"], eval_df["cluster"]))
+        ari_vs_ground_truth = float(
+            adjusted_rand_score(eval_df["latent_archetype"], eval_df["cluster"])
+        )
         ct = pd.crosstab(eval_df["latent_archetype"], eval_df["persona"])
         gt_crosstab_dict = ct.to_dict()
 
@@ -262,9 +278,16 @@ def run_clustering_pipeline(
         "k_selection_silhouette": k_eval,
         "bootstrap_stability": stability,
         "ari_kmeans_vs_gmm": round(ari_km_gmm, 4),
-        "ari_vs_ground_truth": round(ari_vs_ground_truth, 4) if ari_vs_ground_truth is not None else None,
-        "cluster_sizes": {str(k_id): int(v) for k_id, v in pd.Series(km_labels).value_counts().to_dict().items()},
-        "persona_sizes": {p_name: int(v) for p_name, v in pd.Series(persona_names).value_counts().to_dict().items()},
+        "ari_vs_ground_truth": round(ari_vs_ground_truth, 4)
+        if ari_vs_ground_truth is not None
+        else None,
+        "cluster_sizes": {
+            str(k_id): int(v) for k_id, v in pd.Series(km_labels).value_counts().to_dict().items()
+        },
+        "persona_sizes": {
+            p_name: int(v)
+            for p_name, v in pd.Series(persona_names).value_counts().to_dict().items()
+        },
         "ground_truth_crosstab": gt_crosstab_dict,
     }
 

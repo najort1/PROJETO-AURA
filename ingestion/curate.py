@@ -398,7 +398,9 @@ def compute_seasonality_indices(
     return market_seasonality, route_seasonality
 
 
-def compute_vb_integrity_stats(con: duckdb.DuckDBPyConnection, vb_files: list[str]) -> dict[str, int]:
+def compute_vb_integrity_stats(
+    con: duckdb.DuckDBPyConnection, vb_files: list[str]
+) -> dict[str, int]:
     """Estatísticas de integridade de voos_basica usadas nas notas de limitação.
 
     Computa (dinamicamente, nunca hardcoded):

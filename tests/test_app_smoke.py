@@ -255,7 +255,9 @@ def test_real_analytics_dataset_metrics() -> None:
     col_var_total = float(df_customers["valor_em_risco"].sum())
     # A fórmula (sem arredondar) e a coluna pré-computada (round2 por linha) devem
     # coincidir na 3ª casa decimal (diferença < R$ 1.000 por arredondamento de 50k linhas)
-    assert abs(var_total - col_var_total) < 1000, f"VaR fórmula {var_total} vs coluna {col_var_total}"
+    assert abs(var_total - col_var_total) < 1000, (
+        f"VaR fórmula {var_total} vs coluna {col_var_total}"
+    )
     assert 8_000_000 < var_total < 8_700_000, f"VaR total fora de faixa: {var_total}"
 
     av_count = int(df_customers["alto_valor"].sum())
@@ -300,7 +302,9 @@ def test_real_analytics_dataset_metrics() -> None:
     # Cruzamento 07: IA Responsável (14 informados, 9 conformes, 5 não conformes)
     df_fairness, _ = load_fairness_data()
     assert len(df_fairness) == 16
-    is_nao_inf = df_fairness["group_value"].str.lower().str.contains("informado", na=False) & ~df_fairness["group_value"].str.lower().str.contains("prefiro", na=False)
+    is_nao_inf = df_fairness["group_value"].str.lower().str.contains(
+        "informado", na=False
+    ) & ~df_fairness["group_value"].str.lower().str.contains("prefiro", na=False)
     assert is_nao_inf.sum() == 2
     df_inf = df_fairness[~is_nao_inf]
     assert len(df_inf) == 14
@@ -327,6 +331,8 @@ def test_main_py_builds_all_pages_without_error() -> None:
     at.run()
 
     exceptions = list(at.exception)
-    assert exceptions == [], f"main.py levantou excecoes: {[str(e.message)[:200] for e in exceptions]}"
+    assert exceptions == [], (
+        f"main.py levantou excecoes: {[str(e.message)[:200] for e in exceptions]}"
+    )
     # A tela default (01 - Carteira) renderizou conteudo (CSS global e o primeiro markdown injetado)
     assert len(at.markdown) > 0

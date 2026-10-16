@@ -27,7 +27,9 @@ CURATED = ROOT / "data" / "curated"
 def _read(name: str, base: Path = ANALYTICS) -> pd.DataFrame:
     path = base / f"{name}.parquet"
     if not path.exists():
-        pytest.fail(f"Artefato ausente: {path} — rode `python tasks.py all` antes dos testes de integração.")
+        pytest.fail(
+            f"Artefato ausente: {path} — rode `python tasks.py all` antes dos testes de integração."
+        )
     return pd.read_parquet(path)
 
 
@@ -57,7 +59,10 @@ def agent_input() -> pd.DataFrame:
 
 
 def test_ids_de_cliente_identicos_em_todos_os_artefatos(
-    customers_scores: pd.DataFrame, score_av: pd.DataFrame, segments: pd.DataFrame, agent_input: pd.DataFrame
+    customers_scores: pd.DataFrame,
+    score_av: pd.DataFrame,
+    segments: pd.DataFrame,
+    agent_input: pd.DataFrame,
 ) -> None:
     """customers_scores, score_av, segments e agent_input cobrem EXATAMENTE a mesma carteira."""
     for df, name in [(score_av, "score_av"), (segments, "segments"), (agent_input, "agent_input")]:
@@ -79,7 +84,9 @@ def test_base_sintetica_cobre_a_carteira(customers_scores: pd.DataFrame) -> None
 # ---------------------------------------------------------------------------
 
 
-def test_score_av_e_alto_valor_coerentes(customers_scores: pd.DataFrame, score_av: pd.DataFrame) -> None:
+def test_score_av_e_alto_valor_coerentes(
+    customers_scores: pd.DataFrame, score_av: pd.DataFrame
+) -> None:
     merged = customers_scores.merge(score_av, on="customer_id", suffixes=("_cs", "_sa"))
     assert (merged["score_av_cs"] - merged["score_av_sa"]).abs().max() < 1e-9
     assert (merged["alto_valor_cs"] == merged["alto_valor_sa"]).all()
@@ -131,12 +138,22 @@ def test_clusters_alinhados_com_segments(segments: pd.DataFrame) -> None:
 def test_timeline_sem_eventos_pos_cutoff() -> None:
     timeline = _read("customer_timeline")
     max_data = pd.to_datetime(timeline["data"]).max()
-    assert max_data <= pd.Timestamp("2025-08-31"), f"vazamento temporal: max(data)={max_data.date()}"
+    assert max_data <= pd.Timestamp("2025-08-31"), (
+        f"vazamento temporal: max(data)={max_data.date()}"
+    )
 
 
 def test_atributos_sensiveis_ausentes_das_features() -> None:
     features = _read("features_customer")
-    banned = {"faixa_etaria", "genero", "regiao", "arquetipo", "clv_real_12m", "hazard_latente", "churn_latente"}
+    banned = {
+        "faixa_etaria",
+        "genero",
+        "regiao",
+        "arquetipo",
+        "clv_real_12m",
+        "hazard_latente",
+        "churn_latente",
+    }
     vazou = banned & {c.lower() for c in features.columns}
     assert not vazou, f"atributos proibidos nas features: {vazou}"
 
@@ -151,10 +168,16 @@ def test_fairness_reproduzivel(customers_scores: pd.DataFrame) -> None:
     informed = fm[fm["group_value"] != "não informado"]
     assert len(fm) == 16 and len(informed) == 14
     for dim in ("faixa_etaria", "genero", "regiao"):
-        rates = customers_scores[customers_scores[dim] != "não informado"].groupby(dim)["alto_valor"].mean()
+        rates = (
+            customers_scores[customers_scores[dim] != "não informado"]
+            .groupby(dim)["alto_valor"]
+            .mean()
+        )
         base = rates.max()
         for g_val, rate in rates.items():
-            row = informed[(informed["sensitive_attribute"] == dim) & (informed["group_value"] == g_val)]
+            row = informed[
+                (informed["sensitive_attribute"] == dim) & (informed["group_value"] == g_val)
+            ]
             assert len(row) == 1
             assert abs(row["selection_rate"].iloc[0] - round(rate, 4)) < 1e-6
             assert abs(row["selection_ratio_vs_max"].iloc[0] - round(rate / base, 4)) < 1e-4
@@ -212,14 +235,20 @@ def test_recomendacoes_somente_do_inventario_e_offline(recommendations: pd.DataF
     assert (recommendations["snapshot_version"] == "research-2026-10-12").all()
 
 
-def test_recomendacoes_fail_safe_no_action_exige_revisao_humana(recommendations: pd.DataFrame) -> None:
+def test_recomendacoes_fail_safe_no_action_exige_revisao_humana(
+    recommendations: pd.DataFrame,
+) -> None:
     """ACH-01: todo silêncio responsável (ACT-NO-ACTION) aciona revisão humana."""
     no_action = recommendations[recommendations["action_id"] == "ACT-NO-ACTION"]
-    assert no_action["human_review"].all(), "existe ACT-NO-ACTION sem revisão humana (fail-safe violado)"
+    assert no_action["human_review"].all(), (
+        "existe ACT-NO-ACTION sem revisão humana (fail-safe violado)"
+    )
     com_cit = recommendations[recommendations["citations_json"].astype(str).str.len() > 4]
     for row in com_cit.head(200).itertuples():
         cit = json.loads(row.citations_json)
-        assert isinstance(cit, list) and cit, "citations_json deve ser lista não vazia quando presente"
+        assert isinstance(cit, list) and cit, (
+            "citations_json deve ser lista não vazia quando presente"
+        )
 
 
 def test_scores_consomem_exatamente_as_predicoes_publicadas(customers_scores: pd.DataFrame) -> None:
@@ -231,9 +260,15 @@ def test_scores_consomem_exatamente_as_predicoes_publicadas(customers_scores: pd
     """
     clv = _read("clv_predictions")[["customer_id", "clv_predicted_12m"]]
     churn = _read("churn_predictions")[["customer_id", "churn_prob_model"]]
-    m = customers_scores[["customer_id", "clv_12m_previsto", "churn_prob"]].merge(clv, on="customer_id").merge(churn, on="customer_id")
+    m = (
+        customers_scores[["customer_id", "clv_12m_previsto", "churn_prob"]]
+        .merge(clv, on="customer_id")
+        .merge(churn, on="customer_id")
+    )
     assert len(m) == 50_000, "joins 1:1 quebrados — bases divergem em cardinalidade"
     diff_clv = (m["clv_12m_previsto"] - m["clv_predicted_12m"]).abs()
     diff_churn = (m["churn_prob"] - m["churn_prob_model"].round(4)).abs()
     assert float(diff_clv.max()) <= 0.005, f"CLV publicado difere do previsto em {diff_clv.max()}"
-    assert float(diff_churn.max()) <= 0.00005, f"churn publicado difere do modelo em {diff_churn.max()} (treino concorrente/estagnado?)"
+    assert float(diff_churn.max()) <= 0.00005, (
+        f"churn publicado difere do modelo em {diff_churn.max()} (treino concorrente/estagnado?)"
+    )

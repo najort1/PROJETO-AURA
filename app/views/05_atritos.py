@@ -6,6 +6,7 @@ Conteúdo:
 - Exemplos de comentários do corpus
 - NOTA OBRIGATÓRIA de que o corpus é 100% sintético para respeito a termos de uso
 """
+
 from __future__ import annotations
 
 import matplotlib.pyplot as plt
@@ -74,34 +75,36 @@ def render() -> None:
     pior_aspecto_row = sub_recent.sort_values("negative_rate", ascending=False).iloc[0]
     pior_aspecto_nome = pior_aspecto_row["aspect"].replace("_", " ").title()
 
-    metric_row([
-        {
-            "title": "Total de Menções Analisadas",
-            "value": format_int_br(total_mencoes),
-            "subtitle": f"Janela temporal de {df_friction['semester'].nunique()} semestres",
-            "border_color": AZUL_ACTION,
-        },
-        {
-            "title": "Taxa Global de Negatividade",
-            "value": format_percent(taxa_negativa_global),
-            "subtitle": f"{format_int_br(total_negativas)} menções negativas",
-            "border_color": MAGENTA_CTA,
-            "delta": "Indicador de Atrito",
-            "delta_positive": False,
-        },
-        {
-            "title": "Atrito Mais Crítico Recente",
-            "value": pior_aspecto_nome,
-            "subtitle": f"{format_percent(pior_aspecto_row['negative_rate'])} taxa negativa ({recent_sem})",
-            "border_color": MAGENTA_CTA,
-        },
-        {
-            "title": "Aspectos Monitorados",
-            "value": str(df_friction["aspect"].nunique()),
-            "subtitle": "Atraso, bagagem, resgate, app, preço...",
-            "border_color": AZUL_DEEP,
-        },
-    ])
+    metric_row(
+        [
+            {
+                "title": "Total de Menções Analisadas",
+                "value": format_int_br(total_mencoes),
+                "subtitle": f"Janela temporal de {df_friction['semester'].nunique()} semestres",
+                "border_color": AZUL_ACTION,
+            },
+            {
+                "title": "Taxa Global de Negatividade",
+                "value": format_percent(taxa_negativa_global),
+                "subtitle": f"{format_int_br(total_negativas)} menções negativas",
+                "border_color": MAGENTA_CTA,
+                "delta": "Indicador de Atrito",
+                "delta_positive": False,
+            },
+            {
+                "title": "Atrito Mais Crítico Recente",
+                "value": pior_aspecto_nome,
+                "subtitle": f"{format_percent(pior_aspecto_row['negative_rate'])} taxa negativa ({recent_sem})",
+                "border_color": MAGENTA_CTA,
+            },
+            {
+                "title": "Aspectos Monitorados",
+                "value": str(df_friction["aspect"].nunique()),
+                "subtitle": "Atraso, bagagem, resgate, app, preço...",
+                "border_color": AZUL_DEEP,
+            },
+        ]
+    )
 
     st.markdown("<div style='margin-top: 24px;'></div>", unsafe_allow_html=True)
 
@@ -119,7 +122,10 @@ def render() -> None:
     }
 
     with col_bar:
-        section_title("Intensidade por Aspecto (Semestre Recente)", f"Volume de menções e proporção de insatisfação ({recent_sem})")
+        section_title(
+            "Intensidade por Aspecto (Semestre Recente)",
+            f"Volume de menções e proporção de insatisfação ({recent_sem})",
+        )
 
         sub_recent_sorted = sub_recent.sort_values("negative_rate", ascending=True)
         aspect_labels = [aspect_label_map.get(a, a) for a in sub_recent_sorted["aspect"]]
@@ -138,7 +144,7 @@ def render() -> None:
             ax.text(
                 val + 0.02,
                 bar.get_y() + bar.get_height() / 2,
-                f"{val*100:.1f}% ({cnt} menções)",
+                f"{val * 100:.1f}% ({cnt} menções)",
                 va="center",
                 ha="left",
                 fontsize=8,
@@ -148,7 +154,9 @@ def render() -> None:
 
         ax.set_yticks(y_pos)
         ax.set_yticklabels(aspect_labels, fontsize=8.5, fontweight="bold", color=TEXT_PRIMARY)
-        ax.set_xlabel("Taxa de Menções Negativas", fontsize=8.5, color=TEXT_PRIMARY, fontweight="bold")
+        ax.set_xlabel(
+            "Taxa de Menções Negativas", fontsize=8.5, color=TEXT_PRIMARY, fontweight="bold"
+        )
         ax.set_xlim(0, 1.15)
         ax.tick_params(colors=TEXT_SECONDARY, labelsize=8)
         for spine in ax.spines.values():
@@ -158,12 +166,23 @@ def render() -> None:
         plt.close(fig)
 
     with col_trend:
-        section_title("Tendência Temporal por Semestre", "Evolução da taxa de insatisfação por aspecto ao longo do tempo")
+        section_title(
+            "Tendência Temporal por Semestre",
+            "Evolução da taxa de insatisfação por aspecto ao longo do tempo",
+        )
 
         fig, ax = plt.subplots(figsize=(6, 3.8), facecolor=CANVAS)
         ax.set_facecolor("#FFFFFF")
 
-        colors_palette = [AZUL_DEEP, MAGENTA_CTA, AZUL_ACTION, "#D97706", "#2563EB", "#059669", "#7C3AED"]
+        colors_palette = [
+            AZUL_DEEP,
+            MAGENTA_CTA,
+            AZUL_ACTION,
+            "#D97706",
+            "#2563EB",
+            "#059669",
+            "#7C3AED",
+        ]
 
         for i, asp in enumerate(df_friction["aspect"].unique()):
             sub_asp = df_friction[df_friction["aspect"] == asp].sort_values("semester")
@@ -187,7 +206,14 @@ def render() -> None:
         ax.set_ylabel("Taxa Negativa", fontsize=8.5, color=TEXT_PRIMARY)
         ax.set_ylim(0.2, 1.0)
         ax.tick_params(colors=TEXT_SECONDARY, labelsize=8)
-        ax.legend(loc="upper right", frameon=True, facecolor="#FFFFFF", edgecolor=BORDER_SUBTLE, fontsize=7.5, ncol=2)
+        ax.legend(
+            loc="upper right",
+            frameon=True,
+            facecolor="#FFFFFF",
+            edgecolor=BORDER_SUBTLE,
+            fontsize=7.5,
+            ncol=2,
+        )
         for spine in ax.spines.values():
             spine.set_color(BORDER_SUBTLE)
         fig.tight_layout()
@@ -197,7 +223,10 @@ def render() -> None:
     st.markdown("<div style='margin-top: 24px;'></div>", unsafe_allow_html=True)
 
     # Tabela de Pesos dos Aspectos (friction_map.parquet - 49 linhas: 7 aspectos x 7 semestres)
-    section_title("Pesos dos Aspectos no Modelo de Atrito", "Importância calibrada de cada aspecto no índice de insatisfação do cliente")
+    section_title(
+        "Pesos dos Aspectos no Modelo de Atrito",
+        "Importância calibrada de cada aspecto no índice de insatisfação do cliente",
+    )
 
     df_weights = (
         df_friction.groupby("aspect")
@@ -210,19 +239,37 @@ def render() -> None:
         .sort_values("aspect_weight", ascending=False)
     )
 
-    df_weights["aspect_label"] = df_weights["aspect"].map(aspect_label_map).fillna(df_weights["aspect"])
-    display_weights = df_weights[["aspect_label", "aspect_weight", "total_mencoes", "taxa_neg_media"]].copy()
-    display_weights.columns = ["Aspecto de Experiência", "Peso no Modelo", "Menções Acumuladas", "Taxa Negativa Média"]
-    display_weights["Peso no Modelo"] = display_weights["Peso no Modelo"].apply(lambda v: f"{v:.4f} ({v*100:.2f}%)")
-    display_weights["Menções Acumuladas"] = display_weights["Menções Acumuladas"].apply(format_int_br)
-    display_weights["Taxa Negativa Média"] = display_weights["Taxa Negativa Média"].apply(format_percent)
+    df_weights["aspect_label"] = (
+        df_weights["aspect"].map(aspect_label_map).fillna(df_weights["aspect"])
+    )
+    display_weights = df_weights[
+        ["aspect_label", "aspect_weight", "total_mencoes", "taxa_neg_media"]
+    ].copy()
+    display_weights.columns = [
+        "Aspecto de Experiência",
+        "Peso no Modelo",
+        "Menções Acumuladas",
+        "Taxa Negativa Média",
+    ]
+    display_weights["Peso no Modelo"] = display_weights["Peso no Modelo"].apply(
+        lambda v: f"{v:.4f} ({v * 100:.2f}%)"
+    )
+    display_weights["Menções Acumuladas"] = display_weights["Menções Acumuladas"].apply(
+        format_int_br
+    )
+    display_weights["Taxa Negativa Média"] = display_weights["Taxa Negativa Média"].apply(
+        format_percent
+    )
 
     st.dataframe(display_weights, width="stretch", hide_index=True)
 
     st.markdown("<div style='margin-top: 24px;'></div>", unsafe_allow_html=True)
 
     # Exemplos Sintéticos do Corpus
-    section_title("Exemplos do Corpus Sintético Rotulado", "Amostra qualitativa dos atritos identificados e classificados por aspecto")
+    section_title(
+        "Exemplos do Corpus Sintético Rotulado",
+        "Amostra qualitativa dos atritos identificados e classificados por aspecto",
+    )
 
     sample_reviews = [
         {

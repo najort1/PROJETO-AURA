@@ -7,6 +7,7 @@ Tokens e regras:
 - Blocos de citação de regulamento com fact_id, verificação, vigência e fonte
 - Banners de integridade e honestidade visual (Sintético e Fixtures)
 """
+
 from __future__ import annotations
 
 import html
@@ -100,7 +101,11 @@ def render_header(current_screen_name: str | None = None) -> None:
 
 def section_title(title: str, subtitle: str | None = None) -> None:
     """Título de seção com a assinatura visual do Azul Design System: traço magenta 34x3px."""
-    sub_html = f'<p style="margin: 4px 0 0 0; font-size: 12px; color: {TEXT_SECONDARY};">{html.escape(subtitle)}</p>' if subtitle else ""
+    sub_html = (
+        f'<p style="margin: 4px 0 0 0; font-size: 12px; color: {TEXT_SECONDARY};">{html.escape(subtitle)}</p>'
+        if subtitle
+        else ""
+    )
     html_code = f"""
     <div class="aura-section-title">
         <h2 style="color: {AZUL_NAVY}; font-size: 18px; font-weight: 700; margin: 0;">{html.escape(title)}</h2>
@@ -120,7 +125,11 @@ def kpi_card(
     border_color: str | None = None,
 ) -> None:
     """Card de métrica individual com padrão visual institucional."""
-    border_style = f"border-top: 3px solid {border_color};" if border_color else f"border-top: 3px solid {AZUL_PRIMARY};"
+    border_style = (
+        f"border-top: 3px solid {border_color};"
+        if border_color
+        else f"border-top: 3px solid {AZUL_PRIMARY};"
+    )
     sub_html = f'<div class="aura-kpi-sub">{html.escape(subtitle)}</div>' if subtitle else ""
 
     delta_html = ""
@@ -176,14 +185,18 @@ def tier_badge(tier_key: str, show_level: bool = False) -> str:
     if tag:
         tag_html = f'<span style="background: {MAGENTA_CTA}; color: #FFFFFF; font-size: 8px; font-weight: 800; padding: 1px 4px; border-radius: {RADIUS_PILL}; margin-left: 4px; text-transform: uppercase;">{html.escape(tag)}</span>'
 
-    level_html = f' <span style="font-size: 9px; opacity: 0.85;">({html.escape(token["level"])})</span>' if show_level else ""
+    level_html = (
+        f' <span style="font-size: 9px; opacity: 0.85;">({html.escape(token["level"])})</span>'
+        if show_level
+        else ""
+    )
 
     return (
         f'<span style="background: {bg}; color: {text}; font-size: 11px; font-weight: 700; '
-        f'padding: 3px 8px; border-radius: {RADIUS_SM}; display: inline-flex; align-items: center; gap: 2px; '
+        f"padding: 3px 8px; border-radius: {RADIUS_SM}; display: inline-flex; align-items: center; gap: 2px; "
         f'border: 1px solid rgba(0,0,0,0.08); vertical-align: middle;">'
-        f'✧ {html.escape(label)}{level_html}{tag_html}'
-        f'</span>'
+        f"✧ {html.escape(label)}{level_html}{tag_html}"
+        f"</span>"
     )
 
 
@@ -204,9 +217,15 @@ def citation_block(
 
     status_color = "#107C41" if "verif" in verification_status else "#B45309"
 
-    quote_html = f'<div style="margin-top: 8px; font-style: italic; background: #FFFFFF; padding: 8px; border-radius: 4px; border: 1px solid {BORDER_SUBTLE};">"{html.escape(quote)}"</div>' if quote else ""
+    quote_html = (
+        f'<div style="margin-top: 8px; font-style: italic; background: #FFFFFF; padding: 8px; border-radius: 4px; border: 1px solid {BORDER_SUBTLE};">"{html.escape(quote)}"</div>'
+        if quote
+        else ""
+    )
     source_html = f" · Fonte: <strong>{html.escape(source)}</strong>" if source else ""
-    valid_html = f" · Vigência: <strong>{html.escape(str(valid_from))}</strong>" if valid_from else ""
+    valid_html = (
+        f" · Vigência: <strong>{html.escape(str(valid_from))}</strong>" if valid_from else ""
+    )
 
     html_code = f"""
     <div class="aura-citation-card">
@@ -225,7 +244,11 @@ def citation_block(
 
 def empty_state_card(message: str, action_suggestion: str | None = None) -> None:
     """Card informativo quando um filtro ou tabela não retorna registros."""
-    sug_html = f'<p style="margin-top: 6px; font-size: 11px; color: {AZUL_ACTION}; font-weight: 600;">👉 {html.escape(action_suggestion)}</p>' if action_suggestion else ""
+    sug_html = (
+        f'<p style="margin-top: 6px; font-size: 11px; color: {AZUL_ACTION}; font-weight: 600;">👉 {html.escape(action_suggestion)}</p>'
+        if action_suggestion
+        else ""
+    )
     html_code = f"""
     <div style="background: {SURFACE}; border: 1px dashed {BORDER_SUBTLE}; border-radius: {RADIUS_MD}; padding: 24px; text-align: center; margin: 16px 0;">
         <span style="font-size: 28px; display: block; margin-bottom: 8px;">🔍</span>

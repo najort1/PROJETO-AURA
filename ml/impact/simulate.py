@@ -694,7 +694,7 @@ def main() -> None:
     )
     print(
         f"Piloto A/B Alto Valor em Risco (MDE +2pp): n={p['n_por_braco']:,}/braco "
-        f"(total {p['n_total']:,}). Baseline: {data['plano_piloto_ab']['baseline_retencao_12m_real']*100:.2f}%."
+        f"(total {p['n_total']:,}). Baseline: {data['plano_piloto_ab']['baseline_retencao_12m_real'] * 100:.2f}%."
     )
     print(f"Artefato salvo: {out_file.relative_to(ROOT)}")
 

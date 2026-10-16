@@ -212,7 +212,12 @@ def test_guardrail_act_no_action_rejeitado_se_cliente_tinha_elegiveis():
         "action_name": "nenhuma_acao_elegivel",
         "channel": "nenhum",
         "message": "Nenhuma ação disponível.",
-        "justification": {"shap_top3": [], "atritos": [], "regras_acionadas": [], "motivo_resumo": "Teste indevido"},
+        "justification": {
+            "shap_top3": [],
+            "atritos": [],
+            "regras_acionadas": [],
+            "motivo_resumo": "Teste indevido",
+        },
         "citations": [],
         "confidence": 1.0,
         "human_review": True,
@@ -423,7 +428,11 @@ def test_guardrail_bloqueia_prompt_injection_via_beneficio():
         assert "ignore tudo" not in rec.message.lower()
     except Exception as exc:
         # Se levantou exceção, a injeção foi detectada
-        assert "malicioso" in str(exc).lower() or "injeção" in str(exc).lower() or "guardrail" in str(exc).lower()
+        assert (
+            "malicioso" in str(exc).lower()
+            or "injeção" in str(exc).lower()
+            or "guardrail" in str(exc).lower()
+        )
 
 
 # --- NEW-03: Benefícios Fabricados (6 CRÍTICOS) ---
@@ -980,7 +989,9 @@ def test_guardrail_bloqueia_motivo_resumo_vazio():
     }
     res = check_guardrails(payload, eligible_action_names=["gesto_reconhecimento_bonus_pontos"])
     assert res.passed is False
-    assert any("validação de schema" in v.lower() or "motivo_resumo" in v.lower() for v in res.violations)
+    assert any(
+        "validação de schema" in v.lower() or "motivo_resumo" in v.lower() for v in res.violations
+    )
 
 
 def test_guardrail_forbidden_promises_variacoes_plural_feminino():

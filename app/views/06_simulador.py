@@ -12,6 +12,7 @@ Conteúdo:
 - Cenários pré-definidos (chips/botões): Conservador, Base, Otimista
 - Premissas explícitas na tela com nota permanente "estimativa, não resultado validado"
 """
+
 from __future__ import annotations
 
 import matplotlib.pyplot as plt
@@ -116,7 +117,13 @@ def render() -> None:
             st.rerun()
 
     with col_scen2:
-        if st.button("⚖️ Base (Recomendado)", type="primary" if st.session_state["current_scenario"] == "Base (Recomendado)" else "secondary", width="stretch"):
+        if st.button(
+            "⚖️ Base (Recomendado)",
+            type="primary"
+            if st.session_state["current_scenario"] == "Base (Recomendado)"
+            else "secondary",
+            width="stretch",
+        ):
             st.session_state["current_scenario"] = "Base (Recomendado)"
             sc = scenarios["Base (Recomendado)"]
             st.session_state["sim_orcamento"] = sc["orcamento"]
@@ -224,47 +231,54 @@ def render() -> None:
 
     custo_total_campanha = n_alvo * custo_por_acao
     delta_receita_liquida = receita_salva_bruta - custo_total_campanha
-    roi_liquido = (delta_receita_liquida / custo_total_campanha) if custo_total_campanha > 0 else 0.0
+    roi_liquido = (
+        (delta_receita_liquida / custo_total_campanha) if custo_total_campanha > 0 else 0.0
+    )
 
     st.markdown("<div style='margin-top: 24px;'></div>", unsafe_allow_html=True)
 
     # Resultados do Impacto Projetado
-    section_title("Resultados da Simulação na Carteira Carregada", "Retorno projetado sobre os clientes priorizados pelo algoritmo")
+    section_title(
+        "Resultados da Simulação na Carteira Carregada",
+        "Retorno projetado sobre os clientes priorizados pelo algoritmo",
+    )
 
-    metric_row([
-        {
-            "title": "ΔReceita Líquida Estimada",
-            "value": format_currency_brl(delta_receita_liquida),
-            "subtitle": "Receita salva ponderada menos custos",
-            "border_color": MAGENTA_CTA if delta_receita_liquida > 0 else WARNING,
-            "delta": f"ROI: {roi_liquido*100:+.1f}%",
-            "delta_positive": delta_receita_liquida > 0,
-        },
-        {
-            "title": "Receita Bruta Preservada",
-            "value": format_currency_brl(receita_salva_bruta),
-            "subtitle": f"Margem de {margem_pct}% sobre CLV retido",
-            "border_color": AZUL_ACTION,
-        },
-        {
-            "title": "Investimento Total da Campanha",
-            "value": format_currency_brl(custo_total_campanha),
-            "subtitle": f"{format_currency_brl(custo_por_acao)} / cliente abordado",
-            "border_color": AZUL_NAVY,
-        },
-        {
-            "title": "Clientes Abordados",
-            "value": f"{format_int_br(n_alvo)} ({n_alvo/len(df_customers)*100:.1f}%)",
-            "subtitle": "Top prioridade em Valor em Risco",
-            "border_color": AZUL_PRIMARY,
-        },
-        {
-            "title": "Evasões Evitadas (Absoluto)",
-            "value": f"~{evasoes_evitadas_abs:.1f} clientes",
-            "subtitle": f"Taxa média evitada: {evasoes_evitadas_abs/max(1, n_alvo)*100:.2f}%",
-            "border_color": AZUL_DEEP,
-        },
-    ])
+    metric_row(
+        [
+            {
+                "title": "ΔReceita Líquida Estimada",
+                "value": format_currency_brl(delta_receita_liquida),
+                "subtitle": "Receita salva ponderada menos custos",
+                "border_color": MAGENTA_CTA if delta_receita_liquida > 0 else WARNING,
+                "delta": f"ROI: {roi_liquido * 100:+.1f}%",
+                "delta_positive": delta_receita_liquida > 0,
+            },
+            {
+                "title": "Receita Bruta Preservada",
+                "value": format_currency_brl(receita_salva_bruta),
+                "subtitle": f"Margem de {margem_pct}% sobre CLV retido",
+                "border_color": AZUL_ACTION,
+            },
+            {
+                "title": "Investimento Total da Campanha",
+                "value": format_currency_brl(custo_total_campanha),
+                "subtitle": f"{format_currency_brl(custo_por_acao)} / cliente abordado",
+                "border_color": AZUL_NAVY,
+            },
+            {
+                "title": "Clientes Abordados",
+                "value": f"{format_int_br(n_alvo)} ({n_alvo / len(df_customers) * 100:.1f}%)",
+                "subtitle": "Top prioridade em Valor em Risco",
+                "border_color": AZUL_PRIMARY,
+            },
+            {
+                "title": "Evasões Evitadas (Absoluto)",
+                "value": f"~{evasoes_evitadas_abs:.1f} clientes",
+                "subtitle": f"Taxa média evitada: {evasoes_evitadas_abs / max(1, n_alvo) * 100:.2f}%",
+                "border_color": AZUL_DEEP,
+            },
+        ]
+    )
 
     st.markdown("<div style='margin-top: 20px;'></div>", unsafe_allow_html=True)
 
@@ -272,13 +286,20 @@ def render() -> None:
     col_chart, col_breakdown = st.columns([1.1, 0.9])
 
     with col_chart:
-        section_title("Decomposição Financeira do Retorno", "Comparativo de investimento, receita preservada e lucro marginal")
+        section_title(
+            "Decomposição Financeira do Retorno",
+            "Comparativo de investimento, receita preservada e lucro marginal",
+        )
         fig, ax = plt.subplots(figsize=(6, 3.2), facecolor=CANVAS)
         ax.set_facecolor("#FFFFFF")
 
         bars_labels = ["Investimento (Custo)", "Receita Salva Bruta", "ΔReceita Líquida"]
         bars_values = [custo_total_campanha, receita_salva_bruta, delta_receita_liquida]
-        bars_colors = [AZUL_NAVY, AZUL_ACTION, MAGENTA_CTA if delta_receita_liquida > 0 else WARNING]
+        bars_colors = [
+            AZUL_NAVY,
+            AZUL_ACTION,
+            MAGENTA_CTA if delta_receita_liquida > 0 else WARNING,
+        ]
 
         x_pos = np.arange(len(bars_labels))
         bars = ax.bar(x_pos, bars_values, color=bars_colors, width=0.45, edgecolor=BORDER_SUBTLE)
@@ -310,10 +331,15 @@ def render() -> None:
         plt.close(fig)
 
     with col_breakdown:
-        section_title("Distribuição do Alvo por Categoria", "Membros selecionados pelo critério de maior Valor em Risco")
+        section_title(
+            "Distribuição do Alvo por Categoria",
+            "Membros selecionados pelo critério de maior Valor em Risco",
+        )
         tier_counts = df_target["tier"].value_counts().reset_index()
         tier_counts.columns = ["Categoria", "Clientes Alvo"]
-        tier_counts["Share (%)"] = (tier_counts["Clientes Alvo"] / n_alvo * 100).apply(lambda v: f"{v:.1f}%")
+        tier_counts["Share (%)"] = (tier_counts["Clientes Alvo"] / n_alvo * 100).apply(
+            lambda v: f"{v:.1f}%"
+        )
         st.dataframe(tier_counts, width="stretch", hide_index=True)
 
 

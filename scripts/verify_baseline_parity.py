@@ -1,8 +1,10 @@
 """Script de verificação independente da paridade matemática (QA Revisor Adversarial).
 Calcula o ground truth direto dos artefatos Parquet em data/analytics/
 """
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+
 
 def run_checks():
     print("=== 01 CARTEIRA ===")
@@ -16,7 +18,7 @@ def run_checks():
     print(f"CLV Total: {clv_total:.2f}")
     print(f"CLV Medio: {clv_total / n:.2f}")
     print(f"VaR Total: {var_total:.2f}")
-    print(f"Alto Valor: {alto_valor_cnt} ({alto_valor_pct*100:.2f}%)")
+    print(f"Alto Valor: {alto_valor_cnt} ({alto_valor_pct * 100:.2f}%)")
 
     # Lorenz / Gini
     sorted_clv = np.sort(df_c["clv_12m_previsto"].values)
@@ -27,16 +29,20 @@ def run_checks():
     idx_80 = int(len(sorted_clv) * 0.8)
     top_20_share = 1.0 - cum_clv[idx_80]
     print(f"Gini: {gini:.4f} (aprox {gini:.2f})")
-    print(f"Top 20% detem: {top_20_share*100:.2f}% (aprox {top_20_share*100:.1f}%)")
+    print(f"Top 20% detem: {top_20_share * 100:.2f}% (aprox {top_20_share * 100:.1f}%)")
 
     print("\n=== 02 PERSONAS ===")
     df_p = pd.read_parquet("data/analytics/personas_summary.parquet")
-    print(df_p[["persona", "nome_display", "clientes_count", "share_pct", "clv_medio", "churn_medio"]])
+    print(
+        df_p[["persona", "nome_display", "clientes_count", "share_pct", "clv_medio", "churn_medio"]]
+    )
 
     print("\n=== 03 CLIENTE 360 & TIMELINE ===")
     df_sorted = df_c.sort_values("valor_em_risco", ascending=False)
     top1 = df_sorted.iloc[0]
-    print(f"Top 1 VaR: ID={top1['customer_id']}, VaR={top1['valor_em_risco']:.2f}, Churn={top1['churn_prob']*100:.1f}%, CLV={top1['clv_12m_previsto']:.2f}, Persona={top1['persona']}, Tier={top1['tier']}")
+    print(
+        f"Top 1 VaR: ID={top1['customer_id']}, VaR={top1['valor_em_risco']:.2f}, Churn={top1['churn_prob'] * 100:.1f}%, CLV={top1['clv_12m_previsto']:.2f}, Persona={top1['persona']}, Tier={top1['tier']}"
+    )
 
     df_t = pd.read_parquet("data/analytics/customer_timeline.parquet")
     max_date = df_t["data"].max()
@@ -74,19 +80,24 @@ def run_checks():
     print(f"Evasoes evitadas: {evasoes_evitadas_abs:.2f}")
     print(f"Receita salva: R$ {receita_salva_bruta:.2f}")
     print(f"Delta receita liquida: R$ {delta_receita_liquida:.2f}")
-    print(f"ROI liquido: {roi_liquido*100:.2f}%")
+    print(f"ROI liquido: {roi_liquido * 100:.2f}%")
 
     print("\n=== 07 IA RESPONSAVEL (FAIRNESS) ===")
     df_fair = pd.read_parquet("data/analytics/fairness_metrics.parquet")
     print(f"Total rows fairness: {len(df_fair)}")
-    is_nao_inf = df_fair["group_value"].str.lower().str.contains("informado", na=False) & ~df_fair["group_value"].str.lower().str.contains("prefiro", na=False)
+    is_nao_inf = df_fair["group_value"].str.lower().str.contains("informado", na=False) & ~df_fair[
+        "group_value"
+    ].str.lower().str.contains("prefiro", na=False)
     df_inf = df_fair[~is_nao_inf]
     print(f"Grupos informados: {len(df_inf)}")
     print(f"Conformes: {int(df_inf['four_fifths_compliant'].sum())}")
     print(f"Nao conformes: {len(df_inf) - int(df_inf['four_fifths_compliant'].sum())}")
     nao_conf = df_inf[~df_inf["four_fifths_compliant"]]
     for _, r in nao_conf.iterrows():
-        print(f"  - {r['sensitive_attribute']} | {r['group_value']}: ratio={r['selection_ratio_vs_max']:.4f}")
+        print(
+            f"  - {r['sensitive_attribute']} | {r['group_value']}: ratio={r['selection_ratio_vs_max']:.4f}"
+        )
+
 
 if __name__ == "__main__":
     run_checks()

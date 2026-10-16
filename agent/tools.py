@@ -19,8 +19,8 @@ import datetime as dt
 import json
 import re
 import uuid
-from pathlib import Path
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from typing import Any
 
 import duckdb
 import pandas as pd
@@ -37,10 +37,10 @@ from agent.models import (
     ConsultarCliente360Args,
     ConsultarRegulamentoArgs,
     DecisionRecord,
-    EmitirVoucherArgs,
     EmissaoVoucherResult,
-    EscalarVipArgs,
+    EmitirVoucherArgs,
     EscalacaoVipResult,
+    EscalarVipArgs,
     EventoHistorico,
     HistoricoAtritosResult,
     ListarClientesRiscoArgs,
@@ -67,7 +67,9 @@ def _get_analytics_df(name: str) -> pd.DataFrame:
     if name not in _CACHE_DFS:
         path = ANALYTICS_DIR / f"{name}.parquet"
         if not path.exists():
-            raise FileNotFoundError(f"Arquivo de dados '{name}.parquet' não encontrado em {ANALYTICS_DIR}.")
+            raise FileNotFoundError(
+                f"Arquivo de dados '{name}.parquet' não encontrado em {ANALYTICS_DIR}."
+            )
         _CACHE_DFS[name] = pd.read_parquet(path)
     return _CACHE_DFS[name]
 
@@ -173,9 +175,15 @@ def consultar_cliente_360(customer_id: str) -> dict[str, Any]:
         alto_valor=bool(row_in.get("alto_valor", row_sc.get("alto_valor", False))),
         score_av=float(row_sc.get("score_av", 0.0)),
         saldo_pontos=int(row_in.get("saldo_pontos", row_sc.get("saldo_pontos", 0))),
-        pontos_expirando_30d=int(row_in.get("pontos_expirando_30d", row_sc.get("pontos_expirando_30d", 0))),
-        pontos_qualificaveis_12m=int(row_in.get("pontos_qualificaveis_12m", row_sc.get("pontos_qualificaveis_12m", 0))),
-        meta_proximo_nivel_pct=float(row_in.get("meta_proximo_nivel_pct", row_sc.get("meta_proximo_nivel_pct", 0.0))),
+        pontos_expirando_30d=int(
+            row_in.get("pontos_expirando_30d", row_sc.get("pontos_expirando_30d", 0))
+        ),
+        pontos_qualificaveis_12m=int(
+            row_in.get("pontos_qualificaveis_12m", row_sc.get("pontos_qualificaveis_12m", 0))
+        ),
+        meta_proximo_nivel_pct=float(
+            row_in.get("meta_proximo_nivel_pct", row_sc.get("meta_proximo_nivel_pct", 0.0))
+        ),
         trechos_12m=int(row_in.get("trechos_12m", row_sc.get("trechos_12m", 0))),
         gastos_12m_brl=float(row_in.get("gastos_12m_brl", row_sc.get("gastos_12m_brl", 0.0))),
         rota_favorita=row_in.get("rota_favorita"),
@@ -265,15 +273,28 @@ def consultar_historico_atritos_voos(
                 orig = fl["origin_airport"].upper()
                 dest = fl["destination_airport"].upper()
                 f_num = fl["flight_number"].upper()
-                if (orig and dest and (f"{orig}-{dest}" in text_context or f"{orig} -> {dest}" in text_context or (orig in text_context and dest in text_context))) or (f_num and f_num in text_context):
+                if (
+                    orig
+                    and dest
+                    and (
+                        f"{orig}-{dest}" in text_context
+                        or f"{orig} -> {dest}" in text_context
+                        or (orig in text_context and dest in text_context)
+                    )
+                ) or (f_num and f_num in text_context):
                     candidate = fl
                     break
 
             if not candidate:
-                is_negative = str(row.get("impacto", "")) == "negativo" or str(row.get("tipo", "")) == "atrito"
+                is_negative = (
+                    str(row.get("impacto", "")) == "negativo"
+                    or str(row.get("tipo", "")) == "atrito"
+                )
                 if is_negative:
                     for fl in fl_list:
-                        if (fl["is_cancelled"] or fl["delay_minutes"] > 0) and fl["flight_id"] not in used_flight_ids:
+                        if (fl["is_cancelled"] or fl["delay_minutes"] > 0) and fl[
+                            "flight_id"
+                        ] not in used_flight_ids:
                             candidate = fl
                             break
 
@@ -310,7 +331,7 @@ def consultar_historico_atritos_voos(
 def consultar_regras_regulamento(
     termo_ou_pergunta: str,
     top_k: int = 3,
-    fact_id: Optional[str] = None,
+    fact_id: str | None = None,
 ) -> dict[str, Any]:
     """Consulta a base de conhecimento regulatória (RAG) para obter regras e citações formais."""
     retriever = get_retriever()
@@ -346,7 +367,7 @@ def conceder_milhas_cortesia(
     customer_id: str,
     quantidade_pontos: int,
     motivo: str,
-    flight_id: Optional[str] = None,
+    flight_id: str | None = None,
 ) -> dict[str, Any]:
     """Concede milhas de cortesia ou compensação com governança de autonomia L1/L2."""
     norm_cid = customer_id.strip()
@@ -444,7 +465,7 @@ def emitir_voucher_servico(
     customer_id: str,
     tipo_servico: str,
     motivo: str,
-    flight_id: Optional[str] = None,
+    flight_id: str | None = None,
 ) -> dict[str, Any]:
     """Emite voucher de conveniência/serviço (Lounge, Bagagem, etc.) com validade de 90 dias."""
     norm_cid = customer_id.strip()
@@ -500,9 +521,7 @@ def emitir_voucher_servico(
         f"Voucher de cortesia para {tipo_servico.title()} emitido com sucesso (Código: {voucher_code}). "
         f"Válido até {exp_date}. Motivo: {motivo}."
     )
-    notes_payload = (
-        f"Código: {voucher_code}. Validade: 90 dias ({exp_date}). Voo: {norm_flight or 'N/A'}. Motivo: {motivo}."
-    )
+    notes_payload = f"Código: {voucher_code}. Validade: 90 dias ({exp_date}). Voo: {norm_flight or 'N/A'}. Motivo: {motivo}."
 
     record = DecisionRecord(
         customer_id=norm_cid,
@@ -707,7 +726,7 @@ def listar_clientes_em_risco_ou_atrito(
     top_n: int = 10,
     min_churn_prob: float = 0.50,
     apenas_alto_valor: bool = True,
-    tipo_atrito: Optional[str] = None,
+    tipo_atrito: str | None = None,
 ) -> dict[str, Any]:
     """Varredura proativa de clientes em alto risco de churn ou atrito severo."""
     try:
@@ -725,7 +744,7 @@ def listar_clientes_em_risco_ou_atrito(
     # Filtro de alto valor
     if apenas_alto_valor:
         df = df[
-            (df["alto_valor"] == True)
+            (df["alto_valor"].astype(bool))
             | (df["score_av"] >= 0.70)
             | (df["tier"].isin(["Diamante", "Safira", "diamante", "safira"]))
         ]
@@ -733,7 +752,9 @@ def listar_clientes_em_risco_ou_atrito(
     # Filtro de atrito dominante [ROB-02: regex=False para prevenir ReDoS e falhas de parser]
     if tipo_atrito and "atritos_dominantes" in df_input.columns:
         matching_cids = df_input[
-            df_input["atritos_dominantes"].str.contains(tipo_atrito, case=False, na=False, regex=False)
+            df_input["atritos_dominantes"].str.contains(
+                tipo_atrito, case=False, na=False, regex=False
+            )
         ]["customer_id"]
         df = df[df["customer_id"].isin(matching_cids)]
 
@@ -996,7 +1017,13 @@ class ToolRegistry:
                                 "default": "whatsapp",
                             },
                         },
-                        "required": ["customer_id", "action_id", "action_name", "mensagem_proposta", "justificativa"],
+                        "required": [
+                            "customer_id",
+                            "action_id",
+                            "action_name",
+                            "mensagem_proposta",
+                            "justificativa",
+                        ],
                     },
                 },
             },
@@ -1073,14 +1100,18 @@ class ToolRegistry:
     def invoke(self, name: str, arguments: dict[str, Any]) -> Any:
         """Executa a ferramenta pelo nome com validação estrita de schema Pydantic [ROB-01]."""
         if name not in self._tools:
-            raise ValueError(f"Ferramenta desconhecida: {name!r}. Disponíveis: {list(self._tools.keys())}")
+            raise ValueError(
+                f"Ferramenta desconhecida: {name!r}. Disponíveis: {list(self._tools.keys())}"
+            )
 
         schema = _TOOL_SCHEMAS.get(name)
         if schema is not None:
             try:
                 coerced_args = schema(**arguments).model_dump()
             except Exception as e:
-                logger.error("Erro de validação Pydantic para tool '%s' com args %s: %s", name, arguments, e)
+                logger.error(
+                    "Erro de validação Pydantic para tool '%s' com args %s: %s", name, arguments, e
+                )
                 return {"error": f"Argumentos inválidos para {name}: {e}"}
         else:
             coerced_args = arguments
@@ -1089,7 +1120,9 @@ class ToolRegistry:
         try:
             return func(**coerced_args)
         except TypeError as e:
-            logger.error("Erro de assinatura ao invocar tool '%s' com args %s: %s", name, coerced_args, e)
+            logger.error(
+                "Erro de assinatura ao invocar tool '%s' com args %s: %s", name, coerced_args, e
+            )
             return {"error": f"Argumentos inválidos para {name}: {e}"}
         except Exception as e:
             logger.error("Exceção não tratada ao invocar tool '%s': %s", name, e)

@@ -241,7 +241,9 @@ Execução sem `AURA_LLM_API_KEY`:
 ```python
 client = LLMClient()
 client.is_available()  # Retorna False
-client.generate_chat_completion(...)  # Dispara RuntimeError("AURA_LLM_API_KEY não configurada. Nenhuma simulação é permitida...")
+client.generate_chat_completion(
+    ...
+)  # Dispara RuntimeError("AURA_LLM_API_KEY não configurada. Nenhuma simulação é permitida...")
 ```
 Grep em `agent/llm.py` não identificou nenhuma string de mock ou respostas pré-fabricadas. O modo padrão documental `offline` é respeitado com fidelidade.
 

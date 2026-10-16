@@ -5,6 +5,7 @@ Uso: python -m schemas.build_dictionary   (ou `python tasks.py dictionary`)
 O dicionário é 100% gerado: mudança de coluna muda o YAML, e o dicionário
 é regenerado. Documentação escrita à mão diverge do código; aqui ela não pode.
 """
+
 from __future__ import annotations
 
 import json

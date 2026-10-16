@@ -266,7 +266,9 @@ def generate_and_save_fidelity_report(
     interactions_file = s_dir / "interactions.parquet"
     interactions_df = pd.read_parquet(interactions_file) if interactions_file.exists() else None
 
-    metrics = compute_fidelity_metrics(customers_df, flights_df, transactions_df, interactions_df=interactions_df)
+    metrics = compute_fidelity_metrics(
+        customers_df, flights_df, transactions_df, interactions_df=interactions_df
+    )
     md_content = render_fidelity_report_markdown(metrics)
 
     ensure_dir(rep_path.parent)

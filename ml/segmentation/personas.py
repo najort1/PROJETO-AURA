@@ -81,18 +81,22 @@ def build_personas_summary(
     segments_df: pd.DataFrame,
 ) -> tuple[pd.DataFrame, dict[str, Any]]:
     """Constrói o resumo analítico e perfis detalhados por persona."""
-    df = features_df.merge(
-        clv_preds_df[["customer_id", "clv_predicted_12m"]],
-        on="customer_id",
-        how="inner",
-    ).merge(
-        churn_preds_df[["customer_id", "churn_prob_model"]],
-        on="customer_id",
-        how="inner",
-    ).merge(
-        segments_df[["customer_id", "segment_name"]],
-        on="customer_id",
-        how="inner",
+    df = (
+        features_df.merge(
+            clv_preds_df[["customer_id", "clv_predicted_12m"]],
+            on="customer_id",
+            how="inner",
+        )
+        .merge(
+            churn_preds_df[["customer_id", "churn_prob_model"]],
+            on="customer_id",
+            how="inner",
+        )
+        .merge(
+            segments_df[["customer_id", "segment_name"]],
+            on="customer_id",
+            how="inner",
+        )
     )
 
     df["valor_em_risco"] = df["clv_predicted_12m"] * df["churn_prob_model"]
@@ -211,7 +215,9 @@ def run_personas_pipeline(
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(profiles_dict, f, ensure_ascii=False, indent=2)
 
-    print(f"Personas geradas com sucesso: {len(summary_df)} personas em {parquet_path} e {json_path}")
+    print(
+        f"Personas geradas com sucesso: {len(summary_df)} personas em {parquet_path} e {json_path}"
+    )
     return summary_df, profiles_dict
 
 

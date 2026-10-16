@@ -54,9 +54,13 @@ def _serialize_turn_result(res: AgentTurnResult) -> dict[str, Any]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Aura Concierge Web Bridge")
-    parser.add_argument("--input-file", type=str, help="Caminho para arquivo JSON com payload de entrada")
+    parser.add_argument(
+        "--input-file", type=str, help="Caminho para arquivo JSON com payload de entrada"
+    )
     parser.add_argument("--input-json", type=str, help="String JSON com payload de entrada")
-    parser.add_argument("--output-file", type=str, help="Caminho para arquivo de saída JSON (opcional)")
+    parser.add_argument(
+        "--output-file", type=str, help="Caminho para arquivo de saída JSON (opcional)"
+    )
 
     args = parser.parse_args()
 
@@ -69,10 +73,7 @@ def main() -> None:
     else:
         # Tenta ler do stdin
         raw_in = sys.stdin.read()
-        if raw_in.strip():
-            payload = json.loads(raw_in)
-        else:
-            payload = {"action": "status"}
+        payload = json.loads(raw_in) if raw_in.strip() else {"action": "status"}
 
     action = payload.get("action", "chat")
     agent = AuraConciergeAgent()

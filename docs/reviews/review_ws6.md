@@ -150,8 +150,10 @@ Amostragem de 20 avaliações de `data/curated/sentiment_reviews.parquet`:
 Validação formal executada contra os contratos YAML em `schemas/`:
 ```python
 # 1. Dados reais
-validate_or_raise(load_contract("sentiment_reviews"), "data/curated/sentiment_reviews.parquet") # PASSED
-validate_or_raise(load_contract("friction_map"), "data/analytics/friction_map.parquet")         # PASSED
+validate_or_raise(
+    load_contract("sentiment_reviews"), "data/curated/sentiment_reviews.parquet"
+)  # PASSED
+validate_or_raise(load_contract("friction_map"), "data/analytics/friction_map.parquet")  # PASSED
 
 # 2. Injeção de violações artificiais em arquivo temporário:
 # A. Coluna renomeada ('review_id' -> 'id_invalido'):

@@ -1,4 +1,5 @@
 """Logging padronizado: console + arquivo logs/aura.log."""
+
 from __future__ import annotations
 
 import logging

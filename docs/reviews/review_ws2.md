@@ -92,6 +92,7 @@ Conforme a Seção 4 do protocolo (`docs/reviews/README.md`), achados de severid
 - **Consulta DuckDB executada pelo revisor:**
   ```python
   import duckdb, json, pandas as pd
+
   con = duckdb.connect()
   # Contagens, Pareto, Tiers, MAU e Sazonalidade
   ```
@@ -125,11 +126,13 @@ Conforme a Seção 4 do protocolo (`docs/reviews/README.md`), achados de severid
   from synthetic.loyalty import evaluate_tier
 
   assert evaluate_tier(6000, 6, 0.0) == "topazio"
-  assert evaluate_tier(12000, 11, 24000.0) == "safira"       # NÃO Diamante (exige 12 trechos E 12k QP ou R$ 25k)
-  assert evaluate_tier(0, 0, 25000.0) == "diamante"          # Gasto alternativo
-  assert evaluate_tier(26000, 25, 49000.0) == "diamante"     # NÃO Unique (falta 1 trecho)
+  assert (
+      evaluate_tier(12000, 11, 24000.0) == "safira"
+  )  # NÃO Diamante (exige 12 trechos E 12k QP ou R$ 25k)
+  assert evaluate_tier(0, 0, 25000.0) == "diamante"  # Gasto alternativo
+  assert evaluate_tier(26000, 25, 49000.0) == "diamante"  # NÃO Unique (falta 1 trecho)
   assert evaluate_tier(26000, 26, 0.0) == "diamante_unique"  # Unique por trechos + QP
-  assert evaluate_tier(0, 0, 50000.0) == "diamante_unique"   # Unique por gasto direto
+  assert evaluate_tier(0, 0, 50000.0) == "diamante_unique"  # Unique por gasto direto
   ```
 - **Resultados e Vulnerabilidades Detectadas:**
   1. **Casos construídos:** A lógica pura de `evaluate_tier()` implementa corretamente as condições OR (Topázio, Safira) e AND com gasto alternativo (Diamante, Unique).
@@ -295,7 +298,8 @@ Conforme a Seção 4 do protocolo (`docs/reviews/README.md`), achados de severid
   partner_offsets = np.sort(rng.integers(0, avail_days, size=n_partner_events))
   for p_off in partner_offsets:
       p_date = dt.datetime.combine(...)
-      pts_card = ...; qp_card = ...
+      pts_card = ...
+      qp_card = ...
       qual_history.append((p_date, qp_card, 0, 0.0))
   ```
   Posteriormente, dentro do loop de voos do cliente, ao comprar uma passagem na data `purchase_dt`, a janela móvel de 365 dias é calculada na linha 361:
@@ -326,11 +330,7 @@ Conforme a Seção 4 do protocolo (`docs/reviews/README.md`), achados de severid
   ```python
   new_tier = evaluate_tier(qp_rolling, segs_rolling, spend_rolling, rules_cfg)
   if new_tier != current_tier:
-      trigger = (
-          "qualifying_points_reached"
-          if qp_rolling >= 6000
-          else "alternative_spend_reached"
-      )
+      trigger = "qualifying_points_reached" if qp_rolling >= 6000 else "alternative_spend_reached"
       events_records.append(
           create_loyalty_event(
               event_seq,

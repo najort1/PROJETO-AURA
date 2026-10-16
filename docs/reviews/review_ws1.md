@@ -311,6 +311,7 @@ Todos os parâmetros de `config/calibration_map.yaml` foram auditados:
   ```python
   try:
       from ingestion.render_calibration import render_report
+
       report_file = render_report()
       logger.info(f"Relatório de calibração renderizado em {report_file}.")
   except ImportError:

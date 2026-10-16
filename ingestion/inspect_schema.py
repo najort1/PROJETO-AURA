@@ -4,6 +4,7 @@ Uso:
     python -m ingestion.inspect_schema                 # amostras padrão (primeiro/último mês)
     python -m ingestion.inspect_schema <caminho...>    # arquivos específicos
 """
+
 from __future__ import annotations
 
 import sys

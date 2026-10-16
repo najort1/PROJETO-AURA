@@ -13,7 +13,6 @@ e) Guardrail de Segurança / LGPD: Verificar ausência de atributos sensíveis (
 
 from __future__ import annotations
 
-import json
 import sys
 import time
 from typing import Any
@@ -25,7 +24,6 @@ if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 from agent.autonomous import AuraConciergeAgent
-from agent.llm import LLMClient
 from agent.safety import get_safety_engine
 from agent.tools import get_tool_registry
 
@@ -57,7 +55,7 @@ def test_flow_l1_autonomous() -> dict[str, Any]:
         "de milhas de cortesia (dentro do limite de autonomia L1 <= 2.000 pontos) associada ao voo correspondente."
     )
 
-    print(f"[*] Executando AuraConciergeAgent.chat com LLM real (principal-combo)...")
+    print("[*] Executando AuraConciergeAgent.chat com LLM real (principal-combo)...")
     res = agent.chat(prompt, customer_id=customer_id)
     elapsed = time.perf_counter() - t0
 
@@ -73,9 +71,13 @@ def test_flow_l1_autonomous() -> dict[str, Any]:
     has_milhas = "conceder_milhas_cortesia" in tools_called
 
     print(f"  - Consultou perfil 360: {GREEN if has_c360 else RED}{has_c360}{RESET}")
-    print(f"  - Consultou histórico de atritos: {GREEN if has_atritos else RED}{has_atritos}{RESET}")
+    print(
+        f"  - Consultou histórico de atritos: {GREEN if has_atritos else RED}{has_atritos}{RESET}"
+    )
     print(f"  - Consultou regras do regulamento: {GREEN if has_regras else RED}{has_regras}{RESET}")
-    print(f"  - Invocou conceder_milhas_cortesia: {GREEN if has_milhas else RED}{has_milhas}{RESET}")
+    print(
+        f"  - Invocou conceder_milhas_cortesia: {GREEN if has_milhas else RED}{has_milhas}{RESET}"
+    )
 
     # Encontra decisão de milhas
     milhas_dec = None
@@ -92,10 +94,20 @@ def test_flow_l1_autonomous() -> dict[str, Any]:
     if milhas_dec:
         print(f"  - Status da decisão: {GREEN if is_approved else RED}{milhas_dec.status}{RESET}")
         print(f"  - Alçada de autonomia: {GREEN if is_l1 else RED}L1{RESET}")
-        print(f"  - Assinatura SHA-256 válida: {GREEN if has_sha256 else RED}{milhas_dec.hash_signature}{RESET}")
+        print(
+            f"  - Assinatura SHA-256 válida: {GREEN if has_sha256 else RED}{milhas_dec.hash_signature}{RESET}"
+        )
 
-    passed = has_c360 and has_atritos and (has_milhas or milhas_dec is not None) and is_approved and is_l1
-    print(f"\n>> RESULTADO TESTE 2.A: {GREEN + 'APROVADO [PASS]' if passed else RED + 'REPROVADO [FAIL]'}{RESET}")
+    passed = (
+        has_c360
+        and has_atritos
+        and (has_milhas or milhas_dec is not None)
+        and is_approved
+        and is_l1
+    )
+    print(
+        f"\n>> RESULTADO TESTE 2.A: {GREEN + 'APROVADO [PASS]' if passed else RED + 'REPROVADO [FAIL]'}{RESET}"
+    )
 
     return {
         "test": "2.a Fluxo L1 Autônomo",
@@ -120,7 +132,7 @@ def test_flow_l2_human_in_the_loop() -> dict[str, Any]:
         "Consulte seu perfil e registre a concessão respeitando a governança L2."
     )
 
-    print(f"[*] Executando AuraConciergeAgent.chat para caso de alçada L2 (3.000 milhas)...")
+    print("[*] Executando AuraConciergeAgent.chat para caso de alçada L2 (3.000 milhas)...")
     res = agent.chat(prompt, customer_id=customer_id)
     elapsed = time.perf_counter() - t0
 
@@ -142,7 +154,9 @@ def test_flow_l2_human_in_the_loop() -> dict[str, Any]:
 
     print(f"  - Decisão registrada: {milhas_dec.action_id if milhas_dec else 'NENHUMA'}")
     if milhas_dec:
-        print(f"  - Status da decisão: {GREEN if is_in_review else RED}{milhas_dec.status} (esperado: in_review){RESET}")
+        print(
+            f"  - Status da decisão: {GREEN if is_in_review else RED}{milhas_dec.status} (esperado: in_review){RESET}"
+        )
         print(f"  - Alçada de autonomia: {GREEN if is_l2 else RED}L2 (Supervisor){RESET}")
         print(f"  - Flag human_review_required: {GREEN if human_rev else RED}{human_rev}{RESET}")
         print(f"  - Hash SHA-256: {milhas_dec.hash_signature}")
@@ -163,10 +177,14 @@ def test_flow_l2_human_in_the_loop() -> dict[str, Any]:
         and vip_res.get("status") == "in_review"
         and vip_res.get("human_review") is True
     )
-    print(f"  - Teste complementar Escalar Atendimento VIP (L2): {GREEN if vip_ok else RED}Status='in_review', Human_review=True{RESET}")
+    print(
+        f"  - Teste complementar Escalar Atendimento VIP (L2): {GREEN if vip_ok else RED}Status='in_review', Human_review=True{RESET}"
+    )
 
     passed = (is_in_review and is_l2 and human_rev) or vip_ok
-    print(f"\n>> RESULTADO TESTE 2.B: {GREEN + 'APROVADO [PASS]' if passed else RED + 'REPROVADO [FAIL]'}{RESET}")
+    print(
+        f"\n>> RESULTADO TESTE 2.B: {GREEN + 'APROVADO [PASS]' if passed else RED + 'REPROVADO [FAIL]'}{RESET}"
+    )
 
     return {
         "test": "2.b Fluxo L2 Human-in-the-Loop",
@@ -186,7 +204,9 @@ def test_flow_antifraud_idempotency() -> dict[str, Any]:
     customer_id = "C000030"
     flight_id = "FL0000130"
 
-    print(f"[*] Tentando conceder compensação repetida para cliente {customer_id} no voo {flight_id}...")
+    print(
+        f"[*] Tentando conceder compensação repetida para cliente {customer_id} no voo {flight_id}..."
+    )
     res = reg.invoke(
         "conceder_milhas_cortesia",
         {
@@ -205,7 +225,9 @@ def test_flow_antifraud_idempotency() -> dict[str, Any]:
 
     print(f"[+] Tempo de resposta: {elapsed:.2f}s")
     print(f"[+] Success: {RED if success else GREEN}{success} (esperado: False){RESET}")
-    print(f"[+] Nível de Autonomia: {GREEN if autonomy_level == 'BLOCKED' else RED}{autonomy_level}{RESET}")
+    print(
+        f"[+] Nível de Autonomia: {GREEN if autonomy_level == 'BLOCKED' else RED}{autonomy_level}{RESET}"
+    )
     print(f"[+] Status: {GREEN if status == 'rejected' else RED}{status}{RESET}")
     print(f"[+] Mensagem de bloqueio: {message}")
 
@@ -215,7 +237,9 @@ def test_flow_antifraud_idempotency() -> dict[str, Any]:
         and status == "rejected"
         and "antifraude" in message.lower()
     )
-    print(f"\n>> RESULTADO TESTE 2.C: {GREEN + 'APROVADO [PASS]' if passed else RED + 'REPROVADO [FAIL]'}{RESET}")
+    print(
+        f"\n>> RESULTADO TESTE 2.C: {GREEN + 'APROVADO [PASS]' if passed else RED + 'REPROVADO [FAIL]'}{RESET}"
+    )
 
     return {
         "test": "2.c Antifraude / Idempotência",
@@ -249,9 +273,13 @@ def test_flow_safety_ceiling() -> dict[str, Any]:
     elapsed = time.perf_counter() - t0
 
     print(f"[+] Tempo de resposta: {elapsed:.2f}s")
-    print(f"[+] Tentativa 5.001 pts -> Approved: {r_5001.approved}, Level: {r_5001.level}, Status: {r_5001.status}")
+    print(
+        f"[+] Tentativa 5.001 pts -> Approved: {r_5001.approved}, Level: {r_5001.level}, Status: {r_5001.status}"
+    )
     print(f"    Razão: {r_5001.reason}")
-    print(f"[+] Tentativa 10.000 pts via Tool -> Success: {r_tool.get('success')}, Level: {r_tool.get('autonomy_level')}, Status: {r_tool.get('status')}")
+    print(
+        f"[+] Tentativa 10.000 pts via Tool -> Success: {r_tool.get('success')}, Level: {r_tool.get('autonomy_level')}, Status: {r_tool.get('status')}"
+    )
     print(f"    Mensagem: {r_tool.get('message')}")
 
     passed = (
@@ -263,7 +291,9 @@ def test_flow_safety_ceiling() -> dict[str, Any]:
         and r_tool.get("status") == "rejected"
         and "teto" in r_tool.get("message", "").lower()
     )
-    print(f"\n>> RESULTADO TESTE 2.D: {GREEN + 'APROVADO [PASS]' if passed else RED + 'REPROVADO [FAIL]'}{RESET}")
+    print(
+        f"\n>> RESULTADO TESTE 2.D: {GREEN + 'APROVADO [PASS]' if passed else RED + 'REPROVADO [FAIL]'}{RESET}"
+    )
 
     return {
         "test": "2.d Bloqueio de Teto de Segurança",
@@ -285,8 +315,10 @@ def test_flow_lgpd_guardrails() -> dict[str, Any]:
     c360 = reg.invoke("consultar_cliente_360", {"customer_id": "C000004"})
     has_age_gender = "faixa_etaria" in c360 or "genero" in c360 or "regiao" in c360
 
-    print(f"[1] Sanitização na fonte (consultar_cliente_360):")
-    print(f"    Exposição de atributos sensíveis (faixa_etaria, genero, regiao): {RED if has_age_gender else GREEN}{has_age_gender} (esperado: False){RESET}")
+    print("[1] Sanitização na fonte (consultar_cliente_360):")
+    print(
+        f"    Exposição de atributos sensíveis (faixa_etaria, genero, regiao): {RED if has_age_gender else GREEN}{has_age_gender} (esperado: False){RESET}"
+    )
 
     # 2. Detecção de atributos sensíveis pelo SafetyEngine
     sensitive_samples = [
@@ -305,11 +337,15 @@ def test_flow_lgpd_guardrails() -> dict[str, Any]:
     # 3. Verificação de texto limpo e ético
     clean_sample = "Lamentamos profundamente o inconveniente operacional em sua viagem recente e estamos à disposição para auxiliar."
     safe_clean, viol_clean = safety.check_text_guardrails(clean_sample)
-    print(f"    Texto ético limpo -> Safe: {GREEN if safe_clean else RED}{safe_clean}{RESET} (Violações: {viol_clean})")
+    print(
+        f"    Texto ético limpo -> Safe: {GREEN if safe_clean else RED}{safe_clean}{RESET} (Violações: {viol_clean})"
+    )
 
     elapsed = time.perf_counter() - t0
     passed = (not has_age_gender) and all_flagged and safe_clean
-    print(f"\n>> RESULTADO TESTE 2.E: {GREEN + 'APROVADO [PASS]' if passed else RED + 'REPROVADO [FAIL]'}{RESET}")
+    print(
+        f"\n>> RESULTADO TESTE 2.E: {GREEN + 'APROVADO [PASS]' if passed else RED + 'REPROVADO [FAIL]'}{RESET}"
+    )
 
     return {
         "test": "2.e Guardrail de Segurança / LGPD",
@@ -344,7 +380,9 @@ def main() -> int:
         status_tag = f"{GREEN}[PASS]{RESET}" if r["passed"] else f"{RED}[FAIL]{RESET}"
         print(f"  {status_tag} {r['test']:<40} | Duração: {r['elapsed_sec']:>7.2f}s")
 
-    print(f"\n{BOLD}Total de Testes: {total} | Aprovados: {GREEN}{passed_count}{RESET} | Falhas: {RED}{total - passed_count}{RESET}\n")
+    print(
+        f"\n{BOLD}Total de Testes: {total} | Aprovados: {GREEN}{passed_count}{RESET} | Falhas: {RED}{total - passed_count}{RESET}\n"
+    )
 
     return 0 if passed_count == total else 1
 

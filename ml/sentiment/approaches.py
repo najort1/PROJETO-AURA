@@ -719,7 +719,9 @@ def run_evaluation(
     # Fail loud: datas nulas (NaT) jamais podem ser descartadas silenciosamente no split.
     n_nat = int(df["review_date"].isna().sum())
     if n_nat > 0:
-        raise ValueError(f"{n_nat} datas nulas (NaT) no corpus — correção obrigatória antes do split.")
+        raise ValueError(
+            f"{n_nat} datas nulas (NaT) no corpus — correção obrigatória antes do split."
+        )
 
     # Normalização de fuso: tz-aware -> naive (comparação com cutoff naive).
     if getattr(df["review_date"].dt, "tz", None) is not None:

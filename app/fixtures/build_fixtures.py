@@ -8,6 +8,7 @@ Gera conjuntos Parquet em `app/fixtures/` com seed fixa (42):
 - friction_map.parquet
 - fairness_metrics.parquet
 """
+
 from __future__ import annotations
 
 import datetime as dt
@@ -142,7 +143,13 @@ def build_all_fixtures(target_dir: Path | None = None, seed: int = 42) -> dict[s
         # CLV 12m
         clv_base = p_info["clv_medio_base"] * np.random.lognormal(0.0, 0.35)
         # Bônus por tier
-        tier_mult = {"azul": 0.6, "topazio": 0.9, "safira": 1.3, "diamante": 1.9, "diamante_unique": 2.8}
+        tier_mult = {
+            "azul": 0.6,
+            "topazio": 0.9,
+            "safira": 1.3,
+            "diamante": 1.9,
+            "diamante_unique": 2.8,
+        }
         clv_12m = round(float(clv_base * tier_mult[tier]), 2)
 
         # Churn Prob (0.05 a 0.95)
@@ -154,21 +161,33 @@ def build_all_fixtures(target_dir: Path | None = None, seed: int = 42) -> dict[s
 
         # Recência e frequência
         recencia_dias = int(np.random.exponential(35) + 5)
-        trechos_12m = max(1, int(np.random.poisson(14 if persona_key == "executivo_recorrente" else 6)))
+        trechos_12m = max(
+            1, int(np.random.poisson(14 if persona_key == "executivo_recorrente" else 6))
+        )
         frequencia_voos = trechos_12m
 
         # Gastos 12m
         gastos_12m = round(clv_12m * float(np.random.uniform(0.7, 1.1)), 2)
 
         # Saldo de pontos
-        saldo_base = {"azul": 5000, "topazio": 18000, "safira": 45000, "diamante": 110000, "diamante_unique": 260000}[tier]
+        saldo_base = {
+            "azul": 5000,
+            "topazio": 18000,
+            "safira": 45000,
+            "diamante": 110000,
+            "diamante_unique": 260000,
+        }[tier]
         saldo_pontos = int(saldo_base * np.random.uniform(0.5, 2.2))
-        pontos_expirando_30d = int(saldo_pontos * np.random.choice([0.0, 0.05, 0.15, 0.25], p=[0.5, 0.3, 0.15, 0.05]))
+        pontos_expirando_30d = int(
+            saldo_pontos * np.random.choice([0.0, 0.05, 0.15, 0.25], p=[0.5, 0.3, 0.15, 0.05])
+        )
         pontos_qualificaveis = int(gastos_12m * 1.5 + np.random.randint(500, 3000))
         meta_proximo_pct = float(np.clip(np.random.beta(3, 2), 0.15, 1.25))
 
         # ScoreAV: 0.6*pct(CLV) + 0.2*pct(RFM) + 0.2*pct(Potencial) - calculado preliminarmente
-        score_av = float(np.clip(clv_12m / 18000.0 * 0.7 + (1.0 - recencia_dias / 180.0) * 0.3, 0.05, 0.99))
+        score_av = float(
+            np.clip(clv_12m / 18000.0 * 0.7 + (1.0 - recencia_dias / 180.0) * 0.3, 0.05, 0.99)
+        )
         alto_valor = bool(score_av >= 0.70 or clv_12m >= 8000.0)
 
         # Risk state
@@ -198,10 +217,19 @@ def build_all_fixtures(target_dir: Path | None = None, seed: int = 42) -> dict[s
             ("atraso_voos_ultimos_90d", round(float(np.random.uniform(0.05, 0.20)), 3)),
         ]
         np.random.shuffle(shap_factors_pool)
-        shap_top3 = json.dumps([{"factor": f[0], "shap_value": f[1]} for f in shap_factors_pool[:3]])
+        shap_top3 = json.dumps(
+            [{"factor": f[0], "shap_value": f[1]} for f in shap_factors_pool[:3]]
+        )
 
         beneficio_nao_utilizado = np.random.choice(
-            ["espaco_azul", "bagagem_adicional", "embarque_prioritario", "sala_vip", "upgrade_voo", None],
+            [
+                "espaco_azul",
+                "bagagem_adicional",
+                "embarque_prioritario",
+                "sala_vip",
+                "upgrade_voo",
+                None,
+            ],
             p=[0.25, 0.25, 0.20, 0.15, 0.10, 0.05],
         )
 
@@ -237,7 +265,10 @@ def build_all_fixtures(target_dir: Path | None = None, seed: int = 42) -> dict[s
     df_customers = pd.DataFrame(rows)
     # Recalcula ScoreAV real percentilar:
     pct_clv = df_customers["clv_12m_previsto"].rank(pct=True)
-    pct_rfm = (df_customers["frequencia_voos"].rank(pct=True) + (1.0 - df_customers["recencia_dias"].rank(pct=True))) / 2.0
+    pct_rfm = (
+        df_customers["frequencia_voos"].rank(pct=True)
+        + (1.0 - df_customers["recencia_dias"].rank(pct=True))
+    ) / 2.0
     pct_pot = df_customers["meta_proximo_nivel_pct"].rank(pct=True)
     df_customers["score_av"] = (0.60 * pct_clv + 0.20 * pct_rfm + 0.20 * pct_pot).round(4)
     df_customers["alto_valor"] = df_customers["score_av"] >= df_customers["score_av"].quantile(0.85)
@@ -256,13 +287,24 @@ def build_all_fixtures(target_dir: Path | None = None, seed: int = 42) -> dict[s
                 "cor": p["cor"],
                 "clientes_count": cnt,
                 "share_pct": round(cnt / n_customers, 3),
-                "clv_medio": round(float(sub["clv_12m_previsto"].mean()), 2) if cnt > 0 else p["clv_medio_base"],
-                "churn_medio": round(float(sub["churn_prob"].mean()), 3) if cnt > 0 else p["churn_base"],
+                "clv_medio": round(float(sub["clv_12m_previsto"].mean()), 2)
+                if cnt > 0
+                else p["clv_medio_base"],
+                "churn_medio": round(float(sub["churn_prob"].mean()), 3)
+                if cnt > 0
+                else p["churn_base"],
                 "valor_em_risco_total": round(float(sub["valor_em_risco"].sum()), 2),
                 "atritos_dominantes": p["atritos_dominantes"],
                 "acao_recomendada": p["acao_recomendada"],
                 "descricao": p["descricao"],
-                "ticket_medio": round(float(sub["gastos_12m_brl"].mean() / np.maximum(1, sub["frequencia_voos"].mean())), 2) if cnt > 0 else 650.0,
+                "ticket_medio": round(
+                    float(
+                        sub["gastos_12m_brl"].mean() / np.maximum(1, sub["frequencia_voos"].mean())
+                    ),
+                    2,
+                )
+                if cnt > 0
+                else 650.0,
             }
         )
     df_personas_summary = pd.DataFrame(personas_summary_rows)
@@ -282,7 +324,7 @@ def build_all_fixtures(target_dir: Path | None = None, seed: int = 42) -> dict[s
                 "data": d1.isoformat(),
                 "tipo": "voo",
                 "titulo": f"Voo {sub_c['rota_favorita']}",
-                "detalhe": f"Trecho operado pontualmente em classe { 'Executiva' if sub_c['tier'] in ['diamante', 'diamante_unique'] else 'Econômica' }",
+                "detalhe": f"Trecho operado pontualmente em classe {'Executiva' if sub_c['tier'] in ['diamante', 'diamante_unique'] else 'Econômica'}",
                 "impacto": "positivo",
             }
         )
@@ -446,7 +488,15 @@ def build_all_fixtures(target_dir: Path | None = None, seed: int = 42) -> dict[s
     df_recs.to_parquet(out_dir / "agent_recommendations.parquet", index=False)
 
     # 5. FRICTION MAP (conforming to schemas/friction_map.yaml)
-    aspects = ["atraso", "bagagem", "atendimento", "app_checkin", "resgate_milhas", "preco", "conforto"]
+    aspects = [
+        "atraso",
+        "bagagem",
+        "atendimento",
+        "app_checkin",
+        "resgate_milhas",
+        "preco",
+        "conforto",
+    ]
     semesters = ["2024-S1", "2024-S2", "2025-S1", "2025-S2", "2026-S1", "2026-S2"]
 
     fric_rows = []

@@ -63,7 +63,9 @@ def sample_features_and_predictions() -> tuple[pd.DataFrame, pd.DataFrame]:
     return feat_df, clv_df
 
 
-def test_score_av_determinism(sample_features_and_predictions: tuple[pd.DataFrame, pd.DataFrame]) -> None:
+def test_score_av_determinism(
+    sample_features_and_predictions: tuple[pd.DataFrame, pd.DataFrame],
+) -> None:
     """Verifica se o cálculo do ScoreAV é 100% determinístico e idempotente."""
     feat_df, clv_df = sample_features_and_predictions
 
@@ -117,7 +119,11 @@ def test_pareto_concentration_calculation(
     results = analyze_pareto_concentration(feat_df, clv_df, score_df, cutoffs=(0.05, 0.10, 0.20))
     assert len(results) == 3
     # Monotonicidade estrita de receita capturada
-    assert results[0]["clv_captured_pct"] < results[1]["clv_captured_pct"] < results[2]["clv_captured_pct"]
+    assert (
+        results[0]["clv_captured_pct"]
+        < results[1]["clv_captured_pct"]
+        < results[2]["clv_captured_pct"]
+    )
 
 
 def test_real_artifacts_contracts_validation() -> None:
@@ -145,7 +151,9 @@ def test_personas_reconcile_with_actions_catalog() -> None:
     p_summary = pd.read_parquet(data_dir / "personas_summary.parquet")
     p_names = set(p_summary["persona"].unique())
 
-    assert p_names == ALLOWED_PERSONAS, f"Discrepância nas personas geradas: {p_names} vs {ALLOWED_PERSONAS}"
+    assert p_names == ALLOWED_PERSONAS, (
+        f"Discrepância nas personas geradas: {p_names} vs {ALLOWED_PERSONAS}"
+    )
 
     agent_input = pd.read_parquet(data_dir / "agent_input.parquet")
     ai_personas = set(agent_input["persona"].unique())
@@ -194,7 +202,13 @@ def test_timeline_exclui_voos_com_partida_pos_cutoff() -> None:
         {"customer_id": [], "interaction_date": [], "has_friction": [], "aspect": [], "channel": []}
     ).astype(object)
     lo = pd.DataFrame(
-        {"customer_id": [], "event_date": [], "new_tier": [], "previous_tier": [], "trigger_reason": []}
+        {
+            "customer_id": [],
+            "event_date": [],
+            "new_tier": [],
+            "previous_tier": [],
+            "trigger_reason": [],
+        }
     ).astype(object)
 
     tl = build_customer_timeline(tx, fl, inter, lo, cutoff_date=cutoff)

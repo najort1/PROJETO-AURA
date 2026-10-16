@@ -8,6 +8,7 @@ Conteúdo:
 - Atritos recentes identificados
 - Linha do tempo de eventos do cliente (voos, resgates, atritos, evolução de tier)
 """
+
 from __future__ import annotations
 
 import contextlib
@@ -67,7 +68,12 @@ def render() -> None:
     with col_sort:
         sort_by = st.selectbox(
             "Ordenar clientes por:",
-            options=["Maior Valor em Risco", "Maior CLV Previsto", "Maior Prob. Churn", "ID do Cliente"],
+            options=[
+                "Maior Valor em Risco",
+                "Maior CLV Previsto",
+                "Maior Prob. Churn",
+                "ID do Cliente",
+            ],
             index=0,
         )
 
@@ -94,7 +100,13 @@ def render() -> None:
     f_var = df_sorted["valor_em_risco"].map(format_currency_brl)
     f_churn = df_sorted["churn_prob"].map(format_percent)
     cust_options = (
-        df_sorted["customer_id"] + " · " + df_sorted["tier"].str.upper() + " · VaR " + f_var + " · Churn " + f_churn
+        df_sorted["customer_id"]
+        + " · "
+        + df_sorted["tier"].str.upper()
+        + " · VaR "
+        + f_var
+        + " · Churn "
+        + f_churn
     ).tolist()
 
     # Recupera cliente selecionado do session_state se existir
@@ -121,7 +133,9 @@ def render() -> None:
     st.markdown("<div style='margin-top: 14px;'></div>", unsafe_allow_html=True)
 
     # Header de Perfil do Cliente Selecionado
-    p_info = PERSONA_TOKENS.get(customer["persona"], {"label": customer["persona"], "color": AZUL_ACTION})
+    p_info = PERSONA_TOKENS.get(
+        customer["persona"], {"label": customer["persona"], "color": AZUL_ACTION}
+    )
     alto_valor_badge = (
         f'<span style="background: {MAGENTA_CTA}; color: #FFFFFF; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 4px; margin-left: 6px;">★ ALTO VALOR</span>'
         if customer["alto_valor"]
@@ -129,73 +143,75 @@ def render() -> None:
     )
 
     profile_card_html = f"""
-    <div style="background: {SURFACE}; border: 1px solid {BORDER_SUBTLE}; border-left: 6px solid {p_info['color']}; border-radius: {RADIUS_MD}; padding: 18px 22px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(3,55,116,0.04);">
+    <div style="background: {SURFACE}; border: 1px solid {BORDER_SUBTLE}; border-left: 6px solid {p_info["color"]}; border-radius: {RADIUS_MD}; padding: 18px 22px; margin-bottom: 20px; box-shadow: 0 2px 10px rgba(3,55,116,0.04);">
         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
             <div>
                 <div style="font-size: 11px; font-weight: 700; color: {TEXT_SECONDARY}; text-transform: uppercase;">
                     Perfil do Cliente · ID Sintético
                 </div>
                 <div style="font-size: 24px; font-weight: 800; color: {AZUL_NAVY}; display: flex; align-items: center; gap: 8px;">
-                    {customer['customer_id']}
-                    {tier_badge(customer['tier'], show_level=True)}
+                    {customer["customer_id"]}
+                    {tier_badge(customer["tier"], show_level=True)}
                     {alto_valor_badge}
                 </div>
             </div>
             <div style="text-align: right;">
                 <span style="font-size: 11px; color: {TEXT_SECONDARY}; display: block;">Persona Atribuída</span>
-                <span style="font-size: 15px; font-weight: 800; color: {p_info['color']};">
-                    {p_info['label']}
+                <span style="font-size: 15px; font-weight: 800; color: {p_info["color"]};">
+                    {p_info["label"]}
                 </span>
             </div>
         </div>
         <div style="margin-top: 14px; display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: {TEXT_PRIMARY}; border-top: 1px solid {BORDER_SUBTLE}; pt: 10px; padding-top: 10px;">
-            <span>📍 <strong>Rota Favorita:</strong> {customer.get('rota_favorita', 'N/D')}</span>
-            <span>⏱️ <strong>Última Atividade:</strong> {customer.get('recencia_dias', 0)} dias atrás</span>
-            <span>✈️ <strong>Trechos 12M:</strong> {customer.get('trechos_12m', 0)}</span>
-            <span>🪙 <strong>Saldo de Pontos:</strong> {format_int_br(customer.get('saldo_pontos', 0))}</span>
-            <span>⚠️ <strong>Atrito Recente:</strong> <span style="background: #FFF1F2; color: #BE123C; padding: 1px 6px; border-radius: 4px; font-weight: 600;">{customer.get('atritos_dominantes', 'nenhum')}</span></span>
+            <span>📍 <strong>Rota Favorita:</strong> {customer.get("rota_favorita", "N/D")}</span>
+            <span>⏱️ <strong>Última Atividade:</strong> {customer.get("recencia_dias", 0)} dias atrás</span>
+            <span>✈️ <strong>Trechos 12M:</strong> {customer.get("trechos_12m", 0)}</span>
+            <span>🪙 <strong>Saldo de Pontos:</strong> {format_int_br(customer.get("saldo_pontos", 0))}</span>
+            <span>⚠️ <strong>Atrito Recente:</strong> <span style="background: #FFF1F2; color: #BE123C; padding: 1px 6px; border-radius: 4px; font-weight: 600;">{customer.get("atritos_dominantes", "nenhum")}</span></span>
         </div>
     </div>
     """
     st.markdown(profile_card_html, unsafe_allow_html=True)
 
     # Métricas do Cliente em Destaque
-    metric_row([
-        {
-            "title": "Valor em Risco",
-            "value": format_currency_brl(customer["valor_em_risco"]),
-            "subtitle": "CLV × P_churn (perda potencial)",
-            "border_color": MAGENTA_CTA,
-            "delta": f"{customer['churn_prob']*100:.1f}% do valor total",
-            "delta_positive": False,
-        },
-        {
-            "title": "CLV 12M Previsto",
-            "value": format_currency_brl(customer["clv_12m_previsto"]),
-            "subtitle": f"Gastos últimos 12m: {format_currency_brl(customer['gastos_12m_brl'])}",
-            "border_color": AZUL_ACTION,
-        },
-        {
-            "title": "Probabilidade de Evasão (Churn)",
-            "value": format_percent(customer["churn_prob"]),
-            "subtitle": "Horizonte: 12 meses",
-            "border_color": MAGENTA_CTA if customer["churn_prob"] > 0.40 else AZUL_PRIMARY,
-            "delta": "Risco Alto" if customer["churn_prob"] >= 0.50 else "Risco Moderado",
-            "delta_positive": customer["churn_prob"] < 0.50,
-        },
-        {
-            "title": "Score de Alto Valor (ScoreAV)",
-            "value": f"{customer['score_av']:.2f}",
-            "subtitle": "0,6·CLV + 0,2·RFM + 0,2·Potencial",
-            "border_color": AZUL_DEEP,
-        },
-        {
-            "title": "Progresso Próximo Nível",
-            "value": format_percent(customer["meta_proximo_nivel_pct"]),
-            "subtitle": f"{format_int_br(customer['pontos_qualificaveis_12m'])} pts qualificáveis",
-            "border_color": AZUL_PRIMARY,
-        },
-    ])
+    metric_row(
+        [
+            {
+                "title": "Valor em Risco",
+                "value": format_currency_brl(customer["valor_em_risco"]),
+                "subtitle": "CLV × P_churn (perda potencial)",
+                "border_color": MAGENTA_CTA,
+                "delta": f"{customer['churn_prob'] * 100:.1f}% do valor total",
+                "delta_positive": False,
+            },
+            {
+                "title": "CLV 12M Previsto",
+                "value": format_currency_brl(customer["clv_12m_previsto"]),
+                "subtitle": f"Gastos últimos 12m: {format_currency_brl(customer['gastos_12m_brl'])}",
+                "border_color": AZUL_ACTION,
+            },
+            {
+                "title": "Probabilidade de Evasão (Churn)",
+                "value": format_percent(customer["churn_prob"]),
+                "subtitle": "Horizonte: 12 meses",
+                "border_color": MAGENTA_CTA if customer["churn_prob"] > 0.40 else AZUL_PRIMARY,
+                "delta": "Risco Alto" if customer["churn_prob"] >= 0.50 else "Risco Moderado",
+                "delta_positive": customer["churn_prob"] < 0.50,
+            },
+            {
+                "title": "Score de Alto Valor (ScoreAV)",
+                "value": f"{customer['score_av']:.2f}",
+                "subtitle": "0,6·CLV + 0,2·RFM + 0,2·Potencial",
+                "border_color": AZUL_DEEP,
+            },
+            {
+                "title": "Progresso Próximo Nível",
+                "value": format_percent(customer["meta_proximo_nivel_pct"]),
+                "subtitle": f"{format_int_br(customer['pontos_qualificaveis_12m'])} pts qualificáveis",
+                "border_color": AZUL_PRIMARY,
+            },
+        ]
+    )
 
     st.markdown("<div style='margin-top: 24px;'></div>", unsafe_allow_html=True)
 
@@ -203,7 +219,10 @@ def render() -> None:
     col_shap, col_timeline = st.columns([1.1, 0.9])
 
     with col_shap:
-        section_title("Explicabilidade Local SHAP (CLV)", "Contribuição dos principais fatores para o valor de vida previsto")
+        section_title(
+            "Explicabilidade Local SHAP (CLV)",
+            "Contribuição dos principais fatores para o valor de vida previsto",
+        )
 
         shap_raw = customer.get("shap_top3")
         shap_factors: list[dict] = []
@@ -285,10 +304,17 @@ def render() -> None:
 
             ax.set_yticks(y_pos)
             ax.set_yticklabels(factors_names, fontsize=8.5, fontweight="bold", color=TEXT_PRIMARY)
-            ax.set_xlabel("Contribuição Marginal no CLV 12M Previsto (R$)", fontsize=8.5, color=TEXT_PRIMARY, fontweight="bold")
+            ax.set_xlabel(
+                "Contribuição Marginal no CLV 12M Previsto (R$)",
+                fontsize=8.5,
+                color=TEXT_PRIMARY,
+                fontweight="bold",
+            )
             max_abs = max([abs(v) for v in shap_vals] + [10.0])
             margin = max_abs * 0.45
-            min_lim = min(min(shap_vals) - margin, -margin) if any(v < 0 for v in shap_vals) else 0.0
+            min_lim = (
+                min(min(shap_vals) - margin, -margin) if any(v < 0 for v in shap_vals) else 0.0
+            )
             max_lim = max(shap_vals) + margin
             ax.set_xlim(min_lim, max_lim)
             if min_lim < 0:
@@ -300,7 +326,9 @@ def render() -> None:
             st.pyplot(fig)
             plt.close(fig)
 
-            st.caption("Explicabilidade SHAP do modelo de CLV: barras em azul elevam a projeção financeira; barras em magenta reduzem a estimativa.")
+            st.caption(
+                "Explicabilidade SHAP do modelo de CLV: barras em azul elevam a projeção financeira; barras em magenta reduzem a estimativa."
+            )
         else:
             st.info("Fatores SHAP indisponíveis para este registro.")
 
@@ -311,7 +339,9 @@ def render() -> None:
             st.rerun()
 
     with col_timeline:
-        section_title("Linha do Tempo de Relacionamento", "Histórico recente de eventos, voos e manifestações")
+        section_title(
+            "Linha do Tempo de Relacionamento", "Histórico recente de eventos, voos e manifestações"
+        )
 
         df_time, _ = load_timeline_data(customer_id=selected_cid)
         if not df_time.empty:
@@ -332,11 +362,11 @@ def render() -> None:
                 event_html = f"""
                 <div style="background: {color_bg}; border-left: 3px solid {color_border}; padding: 8px 12px; border-radius: 4px; margin-bottom: 8px; font-size: 11px;">
                     <div style="display: flex; justify-content: space-between; font-weight: 700; color: {AZUL_NAVY};">
-                        <span>{icon} {event['titulo']}</span>
-                        <span style="color: {TEXT_SECONDARY}; font-weight: normal;">{format_date_br(event['data'])}</span>
+                        <span>{icon} {event["titulo"]}</span>
+                        <span style="color: {TEXT_SECONDARY}; font-weight: normal;">{format_date_br(event["data"])}</span>
                     </div>
                     <div style="color: {TEXT_PRIMARY}; margin-top: 3px;">
-                        {event['detalhe']}
+                        {event["detalhe"]}
                     </div>
                 </div>
                 """

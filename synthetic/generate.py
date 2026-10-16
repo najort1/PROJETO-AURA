@@ -466,7 +466,10 @@ def generate_synthetic_dataset(
         # Data de expiração = min(sim_end, última_atividade + 365d)
         if qual_history:
             last_act_dt = max(h[0] for h in qual_history)
-            exp_date = min(dt.datetime.combine(sim_end, dt.time(23, 59, 59)), last_act_dt + dt.timedelta(days=365))
+            exp_date = min(
+                dt.datetime.combine(sim_end, dt.time(23, 59, 59)),
+                last_act_dt + dt.timedelta(days=365),
+            )
         else:
             # Cliente sem nenhuma atividade: tier base (azul) mantido
             exp_date = dt.datetime.combine(sim_end, dt.time(23, 59, 59))
@@ -520,7 +523,12 @@ def generate_synthetic_dataset(
     # Para cada cliente, se o último evento (por data) não bater com customer_tiers, emitir evento de correção
     if len(loyalty_events_df) > 0:
         # Último evento por cliente (por event_date, event_id)
-        last_events = loyalty_events_df.sort_values(["event_date", "event_id"]).groupby("customer_id").last().reset_index()
+        last_events = (
+            loyalty_events_df.sort_values(["event_date", "event_id"])
+            .groupby("customer_id")
+            .last()
+            .reset_index()
+        )
         replay_tiers = dict(zip(last_events["customer_id"], last_events["new_tier"], strict=False))
 
         corrections = 0
@@ -548,7 +556,9 @@ def generate_synthetic_dataset(
                         replay_tier,
                         final_tier,
                         trigger,
-                        0, 0, 0.0,
+                        0,
+                        0,
+                        0.0,
                     )
                 )
                 event_seq += 1
@@ -590,13 +600,19 @@ def generate_synthetic_dataset(
 
     # Ordenação canônica temporal global antes de gravar (MENOR 1)
     # Transactions: transaction_date, customer_id
-    transactions_df = transactions_df.sort_values(["transaction_date", "customer_id"]).reset_index(drop=True)
+    transactions_df = transactions_df.sort_values(["transaction_date", "customer_id"]).reset_index(
+        drop=True
+    )
     # Flights: scheduled_departure, flight_id
     flights_df = flights_df.sort_values(["scheduled_departure", "flight_id"]).reset_index(drop=True)
     # Interactions: interaction_date, interaction_id
-    interactions_df = interactions_df.sort_values(["interaction_date", "interaction_id"]).reset_index(drop=True)
+    interactions_df = interactions_df.sort_values(
+        ["interaction_date", "interaction_id"]
+    ).reset_index(drop=True)
     # Loyalty events: event_date, event_id
-    loyalty_events_df = loyalty_events_df.sort_values(["event_date", "event_id"]).reset_index(drop=True)
+    loyalty_events_df = loyalty_events_df.sort_values(["event_date", "event_id"]).reset_index(
+        drop=True
+    )
 
     # 4. Gravação dos Parquets
     final_customers_df.to_parquet(out_dir / "customers.parquet", index=False)

@@ -7,6 +7,7 @@ Regras:
 4. Nunca mistura dados silenciosamente sem declarar a origem.
 5. Persiste decisões do operador em `data/analytics/decisions.jsonl`.
 """
+
 from __future__ import annotations
 
 import datetime as dt

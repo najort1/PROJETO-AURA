@@ -150,7 +150,9 @@ def plot_waterfall(
         labels.append(f"{name} ({val:+.2f})")
 
     # Final prediction bar
-    final_val = accum if abs(predicted_value - accum) > 0.01 and abs(accum) > 0.01 else predicted_value
+    final_val = (
+        accum if abs(predicted_value - accum) > 0.01 and abs(accum) > 0.01 else predicted_value
+    )
     ax.barh(len(names) + 1, final_val, color="#0D47A1", alpha=0.9, label="Predição Final")
     labels.append(f"f(x) Final ({final_val:+.2f})")
 

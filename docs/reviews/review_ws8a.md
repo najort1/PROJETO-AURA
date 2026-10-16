@@ -180,12 +180,12 @@ import pandas as pd
 
 df = pd.read_parquet("app/fixtures/customers_scores.parquet")
 # 600 clientes sintéticos
-n_clientes = len(df)                                     # 600
-clv_total = float(df["clv_12m_previsto"].sum())         # R$ 5.094.587,80
-clv_medio = float(df["clv_12m_previsto"].mean())        # R$ 8.490,98
-var_coluna = float(df["valor_em_risco"].sum())          # R$ 1.837.551,28
-var_recalculado = float((df["clv_12m_previsto"] * df["churn_prob"]).sum()) # R$ 1.837.551,15
-alto_valor_pct = float(df["alto_valor"].mean())         # 15.0% (90 clientes)
+n_clientes = len(df)  # 600
+clv_total = float(df["clv_12m_previsto"].sum())  # R$ 5.094.587,80
+clv_medio = float(df["clv_12m_previsto"].mean())  # R$ 8.490,98
+var_coluna = float(df["valor_em_risco"].sum())  # R$ 1.837.551,28
+var_recalculado = float((df["clv_12m_previsto"] * df["churn_prob"]).sum())  # R$ 1.837.551,15
+alto_valor_pct = float(df["alto_valor"].mean())  # 15.0% (90 clientes)
 ```
 *Conclusão:* A coluna `valor_em_risco` e os KPIs gerados em `app/views/01_carteira.py` possuem correspondência matemática com os microdados reais da base.
 

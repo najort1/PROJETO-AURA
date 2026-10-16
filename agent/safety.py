@@ -18,7 +18,7 @@ import re
 import threading
 import unicodedata
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from agent.guardrails import (
     FABRICATED_BENEFIT_PATTERNS,
@@ -51,7 +51,9 @@ class SafetyEngine:
         self.decisions_path = decisions_path or DECISIONS_FILE
         self._compiled_sensitive = [re.compile(p, re.IGNORECASE) for p in SENSITIVE_PATTERNS]
         self._compiled_urgency = [re.compile(p, re.IGNORECASE) for p in URGENCY_PATTERNS]
-        self._compiled_fabricated = [re.compile(p, re.IGNORECASE) for p in FABRICATED_BENEFIT_PATTERNS]
+        self._compiled_fabricated = [
+            re.compile(p, re.IGNORECASE) for p in FABRICATED_BENEFIT_PATTERNS
+        ]
         self._compiled_injection = [re.compile(p, re.IGNORECASE) for p in PROMPT_INJECTION_VARIANTS]
 
     @staticmethod
@@ -67,7 +69,9 @@ class SafetyEngine:
 
         Formula: sha256(f"{timestamp}|{customer_id}|{action_id}|{status}|{operator}|{final_message.strip()}")
         """
-        payload = f"{timestamp}|{customer_id}|{action_id}|{status}|{operator}|{final_message.strip()}"
+        payload = (
+            f"{timestamp}|{customer_id}|{action_id}|{status}|{operator}|{final_message.strip()}"
+        )
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
     def check_text_guardrails(self, text: str) -> tuple[bool, list[str]]:
@@ -75,25 +79,33 @@ class SafetyEngine:
         if not text or not text.strip():
             return True, []
 
-        norm_text = unicodedata.normalize("NFKD", text).encode("ASCII", "ignore").decode("utf-8").lower()
+        norm_text = (
+            unicodedata.normalize("NFKD", text).encode("ASCII", "ignore").decode("utf-8").lower()
+        )
         violations: list[str] = []
 
         # 1. Checagem de dados sensíveis (LGPD)
         for pattern in self._compiled_sensitive:
             if pattern.search(norm_text):
-                violations.append("LGPD: Uso indevido de atributos sensíveis (idade, gênero, documentos ou região).")
+                violations.append(
+                    "LGPD: Uso indevido de atributos sensíveis (idade, gênero, documentos ou região)."
+                )
                 break
 
         # 2. Checagem de tom abusivo / escassez artificial
         for pattern in self._compiled_urgency:
             if pattern.search(norm_text):
-                violations.append("Tom Abusivo: Expressão de urgência manipulativa ou escassez artificial detectada.")
+                violations.append(
+                    "Tom Abusivo: Expressão de urgência manipulativa ou escassez artificial detectada."
+                )
                 break
 
         # 3. Promessas de benefícios inexistentes
         for pattern in self._compiled_fabricated:
             if pattern.search(norm_text):
-                violations.append("Benefício Inexistente: Promessa de gratuidade vitalícia ou vantagem fora de regulamento.")
+                violations.append(
+                    "Benefício Inexistente: Promessa de gratuidade vitalícia ou vantagem fora de regulamento."
+                )
                 break
 
         # 4. Injeção de prompt
@@ -122,8 +134,8 @@ class SafetyEngine:
 
         with self._file_lock:
             try:
-                with open(self.decisions_path, "r", encoding="utf-8") as f:
-                    for line_no, line in enumerate(f, start=1):
+                with open(self.decisions_path, encoding="utf-8") as f:
+                    for _line_no, line in enumerate(f, start=1):
                         line = line.strip()
                         if not line:
                             continue
@@ -159,7 +171,9 @@ class SafetyEngine:
                                 f"status: {record.get('status')}).",
                             )
             except Exception as e:
-                logger.error("Erro ao verificar duplicidade de voo em %s: %s", self.decisions_path, e)
+                logger.error(
+                    "Erro ao verificar duplicidade de voo em %s: %s", self.decisions_path, e
+                )
                 # FAIL-CLOSED [CON-01]
                 return False, "Erro de I/O ao verificar duplicidade: bloqueio preventivo ativado."
 
@@ -192,7 +206,7 @@ class SafetyEngine:
         customer_id: str,
         new_points: int,
         cap: int = 5000,
-        current_time: Optional[dt.datetime] = None,
+        current_time: dt.datetime | None = None,
     ) -> tuple[bool, str]:
         """Calcula a soma de pontos concedidos nos últimos 30 dias para o cliente em decisions.jsonl.
 
@@ -208,13 +222,13 @@ class SafetyEngine:
             return True, "Arquivo de decisões ainda não existe; sem registros prévios."
 
         norm_customer = customer_id.strip().upper()
-        now = current_time or dt.datetime.now(dt.timezone.utc)
+        now = current_time or dt.datetime.now(dt.UTC)
         thirty_days_ago = now - dt.timedelta(days=30)
         total_granted = 0
 
         with self._file_lock:
             try:
-                with open(self.decisions_path, "r", encoding="utf-8") as f:
+                with open(self.decisions_path, encoding="utf-8") as f:
                     for line in f:
                         line = line.strip()
                         if not line:
@@ -237,7 +251,7 @@ class SafetyEngine:
                             try:
                                 ts = dt.datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
                                 if ts.tzinfo is None:
-                                    ts = ts.replace(tzinfo=dt.timezone.utc)
+                                    ts = ts.replace(tzinfo=dt.UTC)
                                 if ts < thirty_days_ago:
                                     in_window = False
                             except Exception:
@@ -250,9 +264,14 @@ class SafetyEngine:
                         total_granted += pts
 
             except Exception as e:
-                logger.error("Erro ao verificar teto orçamentário em %s: %s", self.decisions_path, e)
+                logger.error(
+                    "Erro ao verificar teto orçamentário em %s: %s", self.decisions_path, e
+                )
                 # FAIL-CLOSED [CON-01]
-                return False, "Erro de I/O ao verificar teto orçamentário mensal: bloqueio preventivo ativado."
+                return (
+                    False,
+                    "Erro de I/O ao verificar teto orçamentário mensal: bloqueio preventivo ativado.",
+                )
 
         if total_granted + new_points > cap:
             return (
@@ -269,7 +288,7 @@ class SafetyEngine:
         customer_id: str,
         quantidade_pontos: int,
         motivo: str,
-        flight_id: Optional[str] = None,
+        flight_id: str | None = None,
     ) -> SafetyCheckResult:
         """Avalia concessão de milhas quanto a limites L1/L2, teto, limite sem voo, teto mensal e antifraude."""
         if quantidade_pontos <= 0:
@@ -284,19 +303,18 @@ class SafetyEngine:
 
         # 1. Concessão sem flight_id: limitar a no máximo 1.000 pontos [FIN-01]
         norm_flight = flight_id.strip() if flight_id and flight_id.strip() else None
-        if not norm_flight:
-            if quantidade_pontos > MAX_POINTS_WITHOUT_FLIGHT:
-                return SafetyCheckResult(
-                    approved=False,
-                    level="BLOCKED",
-                    status="rejected",
-                    human_review=False,
-                    reason=(
-                        f"Concessão de milhas sem flight_id limitada ao teto de {MAX_POINTS_WITHOUT_FLIGHT} pontos "
-                        f"(solicitado: {quantidade_pontos} pontos)."
-                    ),
-                    violations=["Concessão sem flight_id acima de 1.000 pontos."],
-                )
+        if not norm_flight and quantidade_pontos > MAX_POINTS_WITHOUT_FLIGHT:
+            return SafetyCheckResult(
+                approved=False,
+                level="BLOCKED",
+                status="rejected",
+                human_review=False,
+                reason=(
+                    f"Concessão de milhas sem flight_id limitada ao teto de {MAX_POINTS_WITHOUT_FLIGHT} pontos "
+                    f"(solicitado: {quantidade_pontos} pontos)."
+                ),
+                violations=["Concessão sem flight_id acima de 1.000 pontos."],
+            )
 
         # 2. Idempotência por flight_id
         if norm_flight:
@@ -382,7 +400,7 @@ class SafetyEngine:
         customer_id: str,
         tipo_servico: str,
         motivo: str,
-        flight_id: Optional[str] = None,
+        flight_id: str | None = None,
     ) -> SafetyCheckResult:
         """Avalia emissão de vouchers de serviço (Autonomia L1 para conveniências)."""
         valid_services = {
@@ -495,7 +513,9 @@ class SafetyEngine:
             )
 
         status_final: DecisionStatus = (
-            status_proposto if status_proposto in ["suggested", "in_review", "approved"] else "suggested"
+            status_proposto
+            if status_proposto in ["suggested", "in_review", "approved"]
+            else "suggested"
         )
         needs_human = status_final in ["suggested", "in_review"]
         level: Any = "L2" if needs_human else "L1"

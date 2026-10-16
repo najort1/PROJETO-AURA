@@ -38,14 +38,25 @@ def build_customer_timeline(
     ].copy()
 
     tx_flights = tx_sub.merge(
-        flights_df[["flight_id", "origin_airport", "destination_airport", "departure_date", "delay_minutes", "has_delay"]],
+        flights_df[
+            [
+                "flight_id",
+                "origin_airport",
+                "destination_airport",
+                "departure_date",
+                "delay_minutes",
+                "has_delay",
+            ]
+        ],
         on="flight_id",
         how="inner",
     )
     # Anti-vazamento temporal (revisor WS5-B, achado B4-01): a PARTIDA também deve
     # ser <= cutoff. Voos pré-comprados com partida futura não podem exibir
     # resultado operacional (atraso) que não seria conhecido no snapshot.
-    tx_flights = tx_flights[pd.to_datetime(tx_flights["departure_date"]) <= pd.Timestamp(cutoff_date)]
+    tx_flights = tx_flights[
+        pd.to_datetime(tx_flights["departure_date"]) <= pd.Timestamp(cutoff_date)
+    ]
 
     for _, f in tx_flights.iterrows():
         dt_str = pd.to_datetime(f["departure_date"]).strftime("%Y-%m-%d")
@@ -145,7 +156,9 @@ def build_customer_timeline(
                 f"Vazamento temporal na timeline: max(data)={max_data.date()} > cutoff {cutoff_date}"
             )
     # Ordenação decrescente por data e customer_id
-    out_df = out_df.sort_values(["customer_id", "data"], ascending=[True, False]).reset_index(drop=True)
+    out_df = out_df.sort_values(["customer_id", "data"], ascending=[True, False]).reset_index(
+        drop=True
+    )
 
     # Garante tipagem de strings pura
     for c in ["customer_id", "data", "tipo", "titulo", "detalhe", "impacto"]:

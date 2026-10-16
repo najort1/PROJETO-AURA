@@ -12,14 +12,13 @@ Implementa:
 from __future__ import annotations
 
 import json
-from typing import Any, Optional
+from typing import Any
 
 from agent.guardrails import sanitize_input_text
 from agent.llm import LLMClient
 from agent.models import (
     AgentTurnResult,
     DecisionRecord,
-    ToolCallRequest,
 )
 from agent.safety import get_safety_engine
 from agent.tools import ToolRegistry, get_tool_registry
@@ -76,8 +75,8 @@ class AuraConciergeEngine:
 
     def __init__(
         self,
-        llm_client: Optional[LLMClient] = None,
-        tool_registry: Optional[ToolRegistry] = None,
+        llm_client: LLMClient | None = None,
+        tool_registry: ToolRegistry | None = None,
         max_turns: int = 8,
     ) -> None:
         self.llm_client = llm_client or LLMClient()
@@ -88,7 +87,7 @@ class AuraConciergeEngine:
     def run_turn(
         self,
         messages: list[dict[str, Any]],
-        customer_id: Optional[str] = None,
+        customer_id: str | None = None,
     ) -> AgentTurnResult:
         """Executa o ciclo iterativo ReAct com o modelo LLM e o catálogo de ferramentas."""
         thought_process: list[str] = []
@@ -96,9 +95,9 @@ class AuraConciergeEngine:
         decisions_taken: list[DecisionRecord] = []
         human_review_required = False
 
-        conversation: list[dict[str, Any]] = [
-            {"role": "system", "content": SYSTEM_PROMPT}
-        ] + [m for m in messages if m.get("role") != "system"]
+        conversation: list[dict[str, Any]] = [{"role": "system", "content": SYSTEM_PROMPT}] + [
+            m for m in messages if m.get("role") != "system"
+        ]
 
         schemas = self.tool_registry.get_openai_schemas()
         turn_count = 0
@@ -194,12 +193,14 @@ class AuraConciergeEngine:
                 tools_executed.append(record_log)
 
                 # Alimenta a observação de volta no diálogo
-                conversation.append({
-                    "role": "tool",
-                    "tool_call_id": call_id,
-                    "name": name,
-                    "content": json.dumps(tool_result, ensure_ascii=False),
-                })
+                conversation.append(
+                    {
+                        "role": "tool",
+                        "tool_call_id": call_id,
+                        "name": name,
+                        "content": json.dumps(tool_result, ensure_ascii=False),
+                    }
+                )
 
             if finish_reason == "stop" and not tool_calls:
                 break
@@ -213,7 +214,11 @@ class AuraConciergeEngine:
             decisions_summary = []
             for d in decisions_taken:
                 decisions_summary.append(f"{d.action_name} ({d.action_id}, status: {d.status})")
-            dec_str = "; ".join(decisions_summary) if decisions_summary else "Nenhuma decisão financeira ou operacional foi persistida."
+            dec_str = (
+                "; ".join(decisions_summary)
+                if decisions_summary
+                else "Nenhuma decisão financeira ou operacional foi persistida."
+            )
 
             final_text = (
                 f"Limite máximo de turnos atingido ({self.max_turns} turnos). "
@@ -243,8 +248,8 @@ class AuraConciergeAgent:
 
     def __init__(
         self,
-        llm_client: Optional[LLMClient] = None,
-        tool_registry: Optional[ToolRegistry] = None,
+        llm_client: LLMClient | None = None,
+        tool_registry: ToolRegistry | None = None,
         max_turns: int = 8,
     ) -> None:
         self.engine = AuraConciergeEngine(
@@ -267,8 +272,8 @@ class AuraConciergeAgent:
     def chat(
         self,
         message: str,
-        history: Optional[list[dict[str, Any]]] = None,
-        customer_id: Optional[str] = None,
+        history: list[dict[str, Any]] | None = None,
+        customer_id: str | None = None,
     ) -> AgentTurnResult:
         """Modo conversacional interativo com memória de diálogo e sanitização de entrada [SEC-02]."""
         sanitized_msg = sanitize_input_text(message)
@@ -304,24 +309,34 @@ class AuraConciergeAgent:
 
         results: list[AgentTurnResult] = []
         for item in clientes:
-            cid = item.get("customer_id") if isinstance(item, dict) else getattr(item, "customer_id", None)
+            cid = (
+                item.get("customer_id")
+                if isinstance(item, dict)
+                else getattr(item, "customer_id", None)
+            )
             if not cid:
                 continue
 
             if dry_run:
                 # Em modo dry-run, apenas consulta o perfil 360 sem registrar novas decisões
-                c360 = self.engine.tool_registry.invoke("consultar_cliente_360", {"customer_id": cid})
+                c360 = self.engine.tool_registry.invoke(
+                    "consultar_cliente_360", {"customer_id": cid}
+                )
                 simulated_result = AgentTurnResult(
                     customer_id=cid,
                     turns=1,
-                    thought_process=[f"[DRY-RUN] Cliente {cid} avaliado com churn={item.get('churn_prob', 0):.2f}"],
-                    tool_calls_executed=[{
-                        "turn": 1,
-                        "call_id": "dry_run_call",
-                        "tool": "consultar_cliente_360",
-                        "arguments": {"customer_id": cid},
-                        "result_summary": str(c360)[:200],
-                    }],
+                    thought_process=[
+                        f"[DRY-RUN] Cliente {cid} avaliado com churn={item.get('churn_prob', 0):.2f}"
+                    ],
+                    tool_calls_executed=[
+                        {
+                            "turn": 1,
+                            "call_id": "dry_run_call",
+                            "tool": "consultar_cliente_360",
+                            "arguments": {"customer_id": cid},
+                            "result_summary": str(c360)[:200],
+                        }
+                    ],
                     decisions_taken=[],
                     final_message=(
                         f"[DRY-RUN] Avaliação simulada para {cid}: Tier {c360.get('tier')}, "

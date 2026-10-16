@@ -16,24 +16,20 @@ Exemplos de uso:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import sys
 from typing import Any
 
 # Garante saída UTF-8 no terminal Windows para evitar UnicodeEncodeError em cp1252
 if hasattr(sys.stdout, "reconfigure"):
-    try:
+    with contextlib.suppress(Exception):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    except Exception:
-        pass
 if hasattr(sys.stderr, "reconfigure"):
-    try:
+    with contextlib.suppress(Exception):
         sys.stderr.reconfigure(encoding="utf-8", errors="replace")
-    except Exception:
-        pass
 
 from agent.autonomous import AuraConciergeAgent
 from agent.models import AgentTurnResult
-
 
 # Estilização ANSI para saída rica no terminal
 CYAN = "\033[96m"
@@ -59,7 +55,9 @@ def print_banner() -> None:
 def format_turn_result(res: AgentTurnResult) -> None:
     """Formata e imprime de maneira estruturada e rica o resultado de um turno."""
     print(f"\n{BOLD}{'-' * 80}{RESET}")
-    print(f"{BOLD}>> RESULTADO DO CICLO AUTÔNOMO -- CLIENTE: {CYAN}{res.customer_id or 'N/A'}{RESET}")
+    print(
+        f"{BOLD}>> RESULTADO DO CICLO AUTÔNOMO -- CLIENTE: {CYAN}{res.customer_id or 'N/A'}{RESET}"
+    )
     print(f"{DIM}Turnos ReAct: {res.turns} | Motivo Término: {res.finish_reason}{RESET}\n")
 
     # 1. Raciocínio (Thought Process)
@@ -71,7 +69,9 @@ def format_turn_result(res: AgentTurnResult) -> None:
 
     # 2. Ferramentas Invocadas
     if res.tool_calls_executed:
-        print(f"{CYAN}{BOLD}[*] Ferramentas Corporativas Executadas ({len(res.tool_calls_executed)}):{RESET}")
+        print(
+            f"{CYAN}{BOLD}[*] Ferramentas Corporativas Executadas ({len(res.tool_calls_executed)}):{RESET}"
+        )
         for t in res.tool_calls_executed:
             tool_name = t.get("tool", "")
             turn = t.get("turn", 1)
@@ -84,7 +84,9 @@ def format_turn_result(res: AgentTurnResult) -> None:
 
     # 3. Decisões Tomadas
     if res.decisions_taken:
-        print(f"{GREEN}{BOLD}[*] Decisões Registradas no Kanban / Auditoria ({len(res.decisions_taken)}):{RESET}")
+        print(
+            f"{GREEN}{BOLD}[*] Decisões Registradas no Kanban / Auditoria ({len(res.decisions_taken)}):{RESET}"
+        )
         for dec in res.decisions_taken:
             status_color = GREEN if dec.status == "approved" else YELLOW
             status_tag = f"{status_color}[{dec.status.upper()}]{RESET}"
@@ -101,9 +103,13 @@ def format_turn_result(res: AgentTurnResult) -> None:
 
     # 4. Status de Revisão Humana
     if res.human_review_required:
-        print(f"{YELLOW}{BOLD}[!] ALERTA DE GOVERNANÇA: Ação de Autonomia L2 requer homologação de supervisor.{RESET}")
+        print(
+            f"{YELLOW}{BOLD}[!] ALERTA DE GOVERNANÇA: Ação de Autonomia L2 requer homologação de supervisor.{RESET}"
+        )
     else:
-        print(f"{GREEN}[OK] Conformidade total: Ações dentro da alçada de Autonomia L1 automática.{RESET}")
+        print(
+            f"{GREEN}[OK] Conformidade total: Ações dentro da alçada de Autonomia L1 automática.{RESET}"
+        )
     print()
 
     # 5. Mensagem Final
@@ -154,7 +160,11 @@ def run_scan(
 ) -> None:
     """Executa varredura proativa de clientes em risco."""
     print_banner()
-    mode_str = f"{YELLOW}[MODO DRY-RUN SIMULADO]{RESET}" if dry_run else f"{GREEN}[MODO EXECUÇÃO REAL]{RESET}"
+    mode_str = (
+        f"{YELLOW}[MODO DRY-RUN SIMULADO]{RESET}"
+        if dry_run
+        else f"{GREEN}[MODO EXECUÇÃO REAL]{RESET}"
+    )
     print(f"Iniciando Varredura Proativa de Carteira {mode_str}")
     print(f"Parâmetros: Limite={limit} clientes | Churn Mínimo={min_churn:.0%}\n")
 
@@ -196,7 +206,9 @@ def run_scan(
 def run_single_customer(agent: AuraConciergeAgent, customer_id: str) -> None:
     """Executa diagnóstico e resolução para um único cliente."""
     print_banner()
-    print(f"Iniciando Diagnóstico e Ação de Retenção para o cliente: {CYAN}{BOLD}{customer_id}{RESET}\n")
+    print(
+        f"Iniciando Diagnóstico e Ação de Retenção para o cliente: {CYAN}{BOLD}{customer_id}{RESET}\n"
+    )
     res = agent.evaluate_and_act(customer_id)
     format_turn_result(res)
 

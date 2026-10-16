@@ -53,8 +53,10 @@ top20 = all_spend.head(max(1, int(n_cust * 0.2))).sum() / all_spend.sum()
 print(f"  Pareto top-20%: {top20:.4f} (rel. 74.40%)")
 
 tiers = cust["current_tier"].value_counts(normalize=True)
-print(f"  %azul: {tiers.get('azul', 0):.4f} (rel. 95.61%) | %diamante+unique: "
-      f"{tiers.get('diamante', 0) + tiers.get('diamante_unique', 0):.5f} (rel. 0.15%)")
+print(
+    f"  %azul: {tiers.get('azul', 0):.4f} (rel. 95.61%) | %diamante+unique: "
+    f"{tiers.get('diamante', 0) + tiers.get('diamante_unique', 0):.5f} (rel. 0.15%)"
+)
 
 nps_missing = inter["nps_rating"].isna().mean()
 print(f"  NPS missingness: {nps_missing:.4f} (rel. ~49.2%)")
@@ -68,15 +70,27 @@ synth_norm = synth_counts / synth_counts.sum()
 anac_norm = {int(k): v for k, v in anac.items()}
 anac_s = pd.Series(anac_norm)
 anac_share = anac_s / anac_s.sum()
-r = pd.concat([synth_norm, anac_share], axis=1, keys=["synth", "anac"]).dropna().iloc[:, 0].corr(
-    pd.concat([synth_norm, anac_share], axis=1, keys=["synth", "anac"]).dropna().iloc[:, 1]
+r = (
+    pd.concat([synth_norm, anac_share], axis=1, keys=["synth", "anac"])
+    .dropna()
+    .iloc[:, 0]
+    .corr(pd.concat([synth_norm, anac_share], axis=1, keys=["synth", "anac"]).dropna().iloc[:, 1])
 )
 print(f"  r sazonalidade: {r:.4f} (rel. 0.8744)")
 
 print("== B2c: isolamento ground truth em data/analytics ==")
-banned = {"arquetipo", "arquetipo_latente", "clv_real_12m", "hazard_latente", "churn_latente", "propensao"}
+banned = {
+    "arquetipo",
+    "arquetipo_latente",
+    "clv_real_12m",
+    "hazard_latente",
+    "churn_latente",
+    "propensao",
+}
 for f in sorted(glob.glob("data/analytics/*.parquet")):
-    cols = [c.lower() for c in con.execute(f"SELECT * FROM read_parquet('{f}') LIMIT 0").df().columns]
+    cols = [
+        c.lower() for c in con.execute(f"SELECT * FROM read_parquet('{f}') LIMIT 0").df().columns
+    ]
     leaks = sorted(set(cols) & banned)
     print(f"  {f.split(chr(92))[-1]}: {'VAZOU ' + str(leaks) if leaks else 'ok'}")
 with open("schemas/ground_truth.yaml", encoding="utf-8") as f:

@@ -1,4 +1,5 @@
 """Carregamento de configuração YAML e derivação determinística de seeds."""
+
 from __future__ import annotations
 
 import zlib

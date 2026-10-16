@@ -170,6 +170,7 @@ All checks passed!
 **Script de Validação de Contratos (executado):**
 ```python
 import sys
+
 sys.path.insert(0, ".")
 from schemas.load import validate_or_raise, load_contract
 
