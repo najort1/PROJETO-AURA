@@ -24,6 +24,16 @@ from typing import Any
 
 from aura_core.config import settings
 from aura_core.log import get_logger
+from aura_core.paths import ROOT
+
+try:
+    from dotenv import load_dotenv
+
+    _env_file = ROOT / ".env"
+    if _env_file.exists():
+        load_dotenv(_env_file)
+except ImportError:
+    pass
 
 logger = get_logger("agent.llm")
 

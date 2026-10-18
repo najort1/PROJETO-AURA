@@ -13,7 +13,8 @@ const tmpOut = path.join(os.tmpdir(), `test_bridge_out_${Date.now()}.json`);
 fs.writeFileSync(tmpIn, JSON.stringify({ action: 'status' }), 'utf-8');
 
 try {
-  execSync(`uv run python -m agent.autonomous_bridge --input-file "${tmpIn}" --output-file "${tmpOut}"`, {
+  const envArg = fs.existsSync(path.resolve(projectRoot, '.env')) ? '--env-file .env ' : '';
+  execSync(`uv run ${envArg}python -m agent.autonomous_bridge --input-file "${tmpIn}" --output-file "${tmpOut}"`, {
     cwd: projectRoot,
     timeout: 30000,
     windowsHide: true,

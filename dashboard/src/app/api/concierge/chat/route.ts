@@ -24,7 +24,8 @@ export async function GET() {
     fs.writeFileSync(tmpIn, JSON.stringify({ action: 'status' }), 'utf-8');
 
     try {
-      execSync(`uv run python -m agent.autonomous_bridge --input-file "${tmpIn}" --output-file "${tmpOut}"`, {
+      const envArg = fs.existsSync(path.resolve(projectRoot, '.env')) ? '--env-file .env ' : '';
+      execSync(`uv run ${envArg}python -m agent.autonomous_bridge --input-file "${tmpIn}" --output-file "${tmpOut}"`, {
         cwd: projectRoot,
         timeout: 20000,
         windowsHide: true,
@@ -65,7 +66,8 @@ export async function POST(request: NextRequest) {
     fs.writeFileSync(tmpIn, JSON.stringify(body), 'utf-8');
 
     // Executa a bridge com timeout de 2 minutos para permitir múltiplos turnos ReAct e chamadas de tools
-    execSync(`uv run python -m agent.autonomous_bridge --input-file "${tmpIn}" --output-file "${tmpOut}"`, {
+    const envArg = fs.existsSync(path.resolve(projectRoot, '.env')) ? '--env-file .env ' : '';
+    execSync(`uv run ${envArg}python -m agent.autonomous_bridge --input-file "${tmpIn}" --output-file "${tmpOut}"`, {
       cwd: projectRoot,
       timeout: 180000,
       windowsHide: true,

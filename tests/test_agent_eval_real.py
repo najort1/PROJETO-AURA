@@ -86,8 +86,12 @@ def test_stratified_sample_coverage(real_input_df: pd.DataFrame) -> None:
     assert sample["atritos_dominantes"].notna().sum() > 0
 
 
-def test_real_eval_determinism(real_input_df: pd.DataFrame) -> None:
+def test_real_eval_determinism(
+    real_input_df: pd.DataFrame, monkeypatch: pytest.MonkeyPatch
+) -> None:
     """Verifica se duas execuções sucessivas sobre a mesma amostra produzem resultados idênticos."""
+    # Garante modo offline determinístico para o teste de bitwise determinism
+    monkeypatch.setenv("AURA_LLM_API_KEY", "")
     sample_1 = sample_stratified_real_clients(real_input_df, seed=DEFAULT_SEED)
     sample_2 = sample_stratified_real_clients(real_input_df, seed=DEFAULT_SEED)
 

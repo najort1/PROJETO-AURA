@@ -7,7 +7,16 @@ from functools import cache
 
 import yaml
 
-from aura_core.paths import path
+from aura_core.paths import ROOT, path
+
+try:
+    from dotenv import load_dotenv
+
+    _env_file = ROOT / ".env"
+    if _env_file.exists():
+        load_dotenv(_env_file)
+except ImportError:
+    pass
 
 
 def load_yaml(p: str) -> dict:
