@@ -12,6 +12,15 @@ import sys
 from pathlib import Path
 from typing import Any
 
+try:
+    from dotenv import load_dotenv
+
+    _env_file = Path(__file__).resolve().parent.parent / ".env"
+    if _env_file.exists():
+        load_dotenv(_env_file)
+except ImportError:
+    pass
+
 # Força codificação UTF-8 na saída padrão do Windows
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8")
@@ -80,16 +89,20 @@ def main() -> None:
 
     try:
         if action == "chat":
-            message = payload.get("message", "Olá")
+            message = payload.get("message") or "Olá"
             history = payload.get("history", [])
-            # Se vier customer_id opcional no contexto do chat, insere lembrete inicial se histórico estiver vazio
+            # Se vier customer_id opcional no contexto do chat, insere contexto do cliente com deduplicação
             customer_id = payload.get("customer_id")
-            if customer_id and not history:
-                augmented_message = f"[Contexto do Operador: Cliente selecionado na tela = {customer_id}]\n{message}"
+            if customer_id:
+                context_prefix = f"[Contexto do Operador: Cliente selecionado na tela = {customer_id}]"
+                if not message.startswith(context_prefix):
+                    augmented_message = f"{context_prefix}\n{message}"
+                else:
+                    augmented_message = message
             else:
                 augmented_message = message
 
-            res = agent.chat(message=augmented_message, history=history)
+            res = agent.chat(message=augmented_message, history=history, customer_id=customer_id)
             out_data = _serialize_turn_result(res)
 
         elif action == "evaluate":

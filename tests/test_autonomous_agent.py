@@ -593,3 +593,113 @@ def test_decision_record_iso_timestamp_normalization() -> None:
     )
     assert rec2.timestamp.endswith("Z")
     assert "+00:00" not in rec2.timestamp
+
+
+def test_autonomous_bridge_customer_context_injection() -> None:
+    """[REG-CONCIERGE-01] Valida injeção de contexto de cliente na bridge mesmo com histórico longo e deduplicação."""
+    import json
+    import sys
+    import types
+    from unittest.mock import MagicMock, patch
+
+    from agent.autonomous_bridge import main
+
+    def _make_fake_turn(customer_id: str | None = "C000032") -> types.SimpleNamespace:
+        return types.SimpleNamespace(
+            customer_id=customer_id,
+            final_message="Análise concluída com sucesso.",
+            turns=1,
+            thought_process=["Passo 1: Verificação de status."],
+            tool_calls_executed=[
+                {
+                    "turn": 1,
+                    "call_id": "call_test_1",
+                    "tool": "consultar_cliente_360",
+                    "arguments": {"customer_id": customer_id},
+                    "result_summary": "Cliente encontrado.",
+                }
+            ],
+            decisions_taken=[],
+            finish_reason="stop",
+            human_review_required=False,
+            metadata={"total_decisions": 0, "total_tool_calls": 1},
+        )
+
+    # Caso 1: Histórico preenchido + customer_id presente -> prefixo injetado (correção do bug)
+    payload_history = {
+        "action": "chat",
+        "message": "Qual o status de churn deste cliente?",
+        "customer_id": "C000032",
+        "history": [
+            {"role": "user", "content": "Olá"},
+            {"role": "assistant", "content": "Olá! Como posso ajudar?"},
+        ],
+    }
+
+    mock_agent1 = MagicMock()
+    mock_agent1.chat.return_value = _make_fake_turn("C000032")
+
+    with (
+        patch.object(sys, "argv", ["autonomous_bridge"]),
+        patch("agent.autonomous_bridge.AuraConciergeAgent", return_value=mock_agent1),
+        patch("sys.stdin.read", return_value=json.dumps(payload_history)),
+        patch("sys.stdout.write"),
+    ):
+        main()
+
+    called_kwargs1 = mock_agent1.chat.call_args.kwargs
+    assert called_kwargs1["message"].startswith(
+        "[Contexto do Operador: Cliente selecionado na tela = C000032]\n"
+    )
+    assert "Qual o status de churn deste cliente?" in called_kwargs1["message"]
+    assert len(called_kwargs1["history"]) == 2
+    assert called_kwargs1["customer_id"] == "C000032"
+
+    # Caso 2: Mensagem já inicia com o prefixo -> não duplica o prefixo (dedupe)
+    context_prefix = "[Contexto do Operador: Cliente selecionado na tela = C000032]"
+    payload_dedupe = {
+        "action": "chat",
+        "message": f"{context_prefix}\nQual o status de churn deste cliente?",
+        "customer_id": "C000032",
+        "history": [{"role": "user", "content": "Olá"}],
+    }
+
+    mock_agent2 = MagicMock()
+    mock_agent2.chat.return_value = _make_fake_turn("C000032")
+
+    with (
+        patch.object(sys, "argv", ["autonomous_bridge"]),
+        patch("agent.autonomous_bridge.AuraConciergeAgent", return_value=mock_agent2),
+        patch("sys.stdin.read", return_value=json.dumps(payload_dedupe)),
+        patch("sys.stdout.write"),
+    ):
+        main()
+
+    called_kwargs2 = mock_agent2.chat.call_args.kwargs
+    assert called_kwargs2["message"].count(context_prefix) == 1
+    assert called_kwargs2["customer_id"] == "C000032"
+
+    # Caso 3: customer_id ausente / nulo -> mensagem permanece inalterada sem prefixo
+    payload_no_cust = {
+        "action": "chat",
+        "message": "Explique o que é o programa Azul Fidelidade.",
+        "customer_id": None,
+        "history": [],
+    }
+
+    mock_agent3 = MagicMock()
+    mock_agent3.chat.return_value = _make_fake_turn(None)
+
+    with (
+        patch.object(sys, "argv", ["autonomous_bridge"]),
+        patch("agent.autonomous_bridge.AuraConciergeAgent", return_value=mock_agent3),
+        patch("sys.stdin.read", return_value=json.dumps(payload_no_cust)),
+        patch("sys.stdout.write"),
+    ):
+        main()
+
+    called_kwargs3 = mock_agent3.chat.call_args.kwargs
+    assert called_kwargs3["message"] == "Explique o que é o programa Azul Fidelidade."
+    assert "[Contexto do Operador" not in called_kwargs3["message"]
+    assert called_kwargs3["customer_id"] is None
+
