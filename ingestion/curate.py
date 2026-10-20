@@ -18,6 +18,7 @@ from datetime import UTC
 from pathlib import Path
 
 import duckdb
+import numpy as np
 import pandas as pd
 
 from aura_core.config import settings
@@ -308,7 +309,11 @@ def curate_delays_monthly(
         SELECT
             CAST(ano AS INT) AS ano,
             CAST(mes AS INT) AS mes,
-            STRFTIME(TRY_STRPTIME(ano || '-' || LPAD(mes, 2, '0'), '%Y-%m'), '%Y-%m') AS ano_mes,
+            CASE
+                WHEN TRY_CAST(mes AS INT) BETWEEN 1 AND 12
+                THEN PRINTF('%04d-%02d', TRY_CAST(ano AS INT), TRY_CAST(mes AS INT))
+                ELSE NULL
+            END AS ano_mes,
             TRY_STRPTIME(dt_previsto || ' ' || hh_previsto, '%Y-%m-%d %H:%M:%S') AS ts_prev,
             TRY_STRPTIME(dt_calco || ' ' || hh_calco, '%Y-%m-%d %H:%M:%S') AS ts_calc
         FROM read_parquet($files)
@@ -369,31 +374,38 @@ def compute_seasonality_indices(
         str(m): round(float(avg_per_month.loc[m] / overall_mean), 3) for m in range(1, 13)
     }
 
-    # Sazonalidade por rota para rotas com volume representativo
-    route_seasonality: dict[str, list[float]] = {}
-    grouped = routes_df.groupby(["rota", "mes"])["total_pax_pagos"].sum()
-    route_occ = routes_df.groupby(["rota", "mes"])["ano_mes"].nunique()
+    # Sazonalidade por rota para rotas com volume representativo (otimização vetorizada 2D)
     route_totals = routes_df.groupby("rota")["total_pax_pagos"].sum()
+    valid_routes = route_totals[route_totals >= 1000].index
 
-    for rota, total_vol in route_totals.items():
-        if total_vol < 1000:
-            continue
-        route_indices: list[float] = []
-        monthly_avgs: list[float] = []
-        for m in range(1, 13):
-            if (rota, m) in grouped.index:
-                vol = grouped.loc[(rota, m)]
-                occ = route_occ.loc[(rota, m)]
-                monthly_avgs.append(vol / max(occ, 1))
-            else:
-                monthly_avgs.append(0.0)
+    route_seasonality: dict[str, list[float]] = {}
+    if len(valid_routes) > 0:
+        filtered = routes_df[routes_df["rota"].isin(valid_routes)]
 
-        mean_val = sum(monthly_avgs) / 12.0
-        if mean_val > 0:
-            route_indices = [round(float(v / mean_val), 3) for v in monthly_avgs]
-        else:
-            route_indices = [1.0] * 12
-        route_seasonality[str(rota)] = route_indices
+        grouped_vol = (
+            filtered.groupby(["rota", "mes"])["total_pax_pagos"]
+            .sum()
+            .unstack(level="mes", fill_value=0.0)
+        )
+        grouped_occ = (
+            filtered.groupby(["rota", "mes"])["ano_mes"]
+            .nunique()
+            .unstack(level="mes", fill_value=0)
+        )
+
+        vol_2d = grouped_vol.reindex(index=valid_routes, columns=range(1, 13), fill_value=0.0)
+        occ_2d = grouped_occ.reindex(index=valid_routes, columns=range(1, 13), fill_value=0)
+
+        occ_safe = np.maximum(occ_2d.values, 1)
+        monthly_avgs = vol_2d.values / occ_safe
+
+        mean_vals = monthly_avgs.sum(axis=1, keepdims=True) / 12.0
+
+        with np.errstate(divide="ignore", invalid="ignore"):
+            indices = np.where(mean_vals > 0, np.round(monthly_avgs / mean_vals, 3), 1.0)
+
+        for rota, row in zip(valid_routes, indices, strict=True):
+            route_seasonality[str(rota)] = [float(v) for v in row]
 
     return market_seasonality, route_seasonality
 
