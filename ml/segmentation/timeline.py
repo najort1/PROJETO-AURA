@@ -12,8 +12,8 @@ Regras de negócio:
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
+import numpy as np
 import pandas as pd
 
 from aura_core.paths import ROOT
@@ -30,7 +30,7 @@ def build_customer_timeline(
     cutoff_date: str = FEATURE_CUTOFF,
 ) -> pd.DataFrame:
     """Consolida os eventos históricos do cliente em uma linha do tempo unificada."""
-    timeline_records: list[dict[str, Any]] = []
+    parts: list[pd.DataFrame] = []
 
     # 1. Voos operados
     tx_sub = transactions_df[
@@ -58,29 +58,38 @@ def build_customer_timeline(
         pd.to_datetime(tx_flights["departure_date"]) <= pd.Timestamp(cutoff_date)
     ]
 
-    for _, f in tx_flights.iterrows():
-        dt_str = pd.to_datetime(f["departure_date"]).strftime("%Y-%m-%d")
-        orig = f["origin_airport"]
-        dest = f["destination_airport"]
-        has_del = bool(f["has_delay"])
-        del_min = int(f.get("delay_minutes", 0))
+    if not tx_flights.empty:
+        dt_str = pd.to_datetime(tx_flights["departure_date"]).dt.strftime("%Y-%m-%d")
+        orig = tx_flights["origin_airport"].astype(str)
+        dest = tx_flights["destination_airport"].astype(str)
+        # Divergência deliberada vs implementação original (iterrows): com
+        # has_delay NaN (merge left sem match), a original falhava alto em
+        # int(nan); a vetorizada trata NaN como sem atraso (False→operado
+        # pontualmente). Estados intermediários não existem nos dados atuais
+        # (verificado); a decisão documenta a semântica para futuros merge misses.
+        has_del = tx_flights["has_delay"].fillna(False).astype(bool)
+        del_min = tx_flights["delay_minutes"].fillna(0).astype(int)
 
-        if has_del and del_min > 0:
-            detalhe = f"Trecho {orig} -> {dest} com atraso operacional de {del_min} min."
-            impacto = "negativo"
-        else:
-            detalhe = f"Trecho {orig} -> {dest} operado pontualmente."
-            impacto = "positivo"
+        is_delayed = has_del & (del_min > 0)
+        detalhe = np.where(
+            is_delayed,
+            "Trecho " + orig + " -> " + dest + " com atraso operacional de " + del_min.astype(str) + " min.",
+            "Trecho " + orig + " -> " + dest + " operado pontualmente.",
+        )
+        impacto = np.where(is_delayed, "negativo", "positivo")
+        titulo = "Voo " + orig + "-" + dest
 
-        timeline_records.append(
-            {
-                "customer_id": str(f["customer_id"]),
-                "data": dt_str,
-                "tipo": "voo",
-                "titulo": f"Voo {orig}-{dest}",
-                "detalhe": detalhe,
-                "impacto": impacto,
-            }
+        parts.append(
+            pd.DataFrame(
+                {
+                    "customer_id": tx_flights["customer_id"].astype(str),
+                    "data": dt_str,
+                    "tipo": "voo",
+                    "titulo": titulo,
+                    "detalhe": detalhe,
+                    "impacto": impacto,
+                }
+            )
         )
 
     # 2. Resgates de Pontos
@@ -89,18 +98,23 @@ def build_customer_timeline(
         & (transactions_df["pontos_azul_resgatados"] > 0)
     ]
 
-    for _, r in tx_resgates.iterrows():
-        dt_str = pd.to_datetime(r["transaction_date"]).strftime("%Y-%m-%d")
-        pts = int(r["pontos_azul_resgatados"])
-        timeline_records.append(
-            {
-                "customer_id": str(r["customer_id"]),
-                "data": dt_str,
-                "tipo": "resgate",
-                "titulo": "Resgate de Pontos Azul",
-                "detalhe": f"Emissão com pontos: {pts:,} pts Azul resgatados.".replace(",", "."),
-                "impacto": "neutro",
-            }
+    if not tx_resgates.empty:
+        dt_str = pd.to_datetime(tx_resgates["transaction_date"]).dt.strftime("%Y-%m-%d")
+        pts_list = [
+            f"Emissão com pontos: {int(p):,} pts Azul resgatados.".replace(",", ".")
+            for p in tx_resgates["pontos_azul_resgatados"]
+        ]
+        parts.append(
+            pd.DataFrame(
+                {
+                    "customer_id": tx_resgates["customer_id"].astype(str),
+                    "data": dt_str,
+                    "tipo": "resgate",
+                    "titulo": "Resgate de Pontos Azul",
+                    "detalhe": pts_list,
+                    "impacto": "neutro",
+                }
+            )
         )
 
     # 3. Interações com Atrito
@@ -109,45 +123,83 @@ def build_customer_timeline(
         & (interactions_df["has_friction"] == 1)
     ]
 
-    for _, it in inter_frictions.iterrows():
-        dt_str = pd.to_datetime(it["interaction_date"]).strftime("%Y-%m-%d")
-        aspect = str(it["aspect"])
-        channel = str(it["channel"])
-        nps = it.get("nps_rating")
-        nps_str = f" (NPS: {int(nps)})" if pd.notna(nps) else ""
+    if not inter_frictions.empty:
+        dt_str = pd.to_datetime(inter_frictions["interaction_date"]).dt.strftime("%Y-%m-%d")
+        aspect = inter_frictions["aspect"].astype(str)
+        channel = inter_frictions["channel"].astype(str)
+        if "nps_rating" in inter_frictions.columns:
+            nps = inter_frictions["nps_rating"]
+            nps_notna = nps.notna()
+            nps_str = np.where(
+                nps_notna,
+                " (NPS: " + nps.fillna(0).astype(int).astype(str) + ")",
+                "",
+            )
+        else:
+            nps_str = ""
 
-        timeline_records.append(
-            {
-                "customer_id": str(it["customer_id"]),
-                "data": dt_str,
-                "tipo": "atrito",
-                "titulo": f"Atrito registrado: {aspect.capitalize()}",
-                "detalhe": f"Manifestação no canal {channel} referente a {aspect}{nps_str}.",
-                "impacto": "negativo",
-            }
+        titulo = "Atrito registrado: " + aspect.str.capitalize()
+        detalhe = "Manifestação no canal " + channel + " referente a " + aspect + nps_str + "."
+
+        parts.append(
+            pd.DataFrame(
+                {
+                    "customer_id": inter_frictions["customer_id"].astype(str),
+                    "data": dt_str,
+                    "tipo": "atrito",
+                    "titulo": titulo,
+                    "detalhe": detalhe,
+                    "impacto": "negativo",
+                }
+            )
         )
 
     # 4. Mudança de Categoria / Eventos de Fidelidade
     lo_events = loyalty_events_df[loyalty_events_df["event_date"] <= cutoff_date]
 
-    for _, le in lo_events.iterrows():
-        dt_str = pd.to_datetime(le["event_date"]).strftime("%Y-%m-%d")
-        new_tier = str(le.get("new_tier", "azul")).replace("_", " ").title()
-        prev_tier = str(le.get("previous_tier", "azul")).replace("_", " ").title()
-        reason = str(le.get("trigger_reason", "qualificacao_periodica"))
-
-        timeline_records.append(
-            {
-                "customer_id": str(le["customer_id"]),
-                "data": dt_str,
-                "tipo": "tier_change",
-                "titulo": f"Qualificação Categoria {new_tier}",
-                "detalhe": f"Transição de {prev_tier} para {new_tier} por {reason}.",
-                "impacto": "positivo",
-            }
+    if not lo_events.empty:
+        dt_str = pd.to_datetime(lo_events["event_date"]).dt.strftime("%Y-%m-%d")
+        new_tier_s = (
+            lo_events["new_tier"].fillna("azul").astype(str)
+            if "new_tier" in lo_events.columns
+            else pd.Series("azul", index=lo_events.index)
+        )
+        prev_tier_s = (
+            lo_events["previous_tier"].fillna("azul").astype(str)
+            if "previous_tier" in lo_events.columns
+            else pd.Series("azul", index=lo_events.index)
+        )
+        reason_s = (
+            lo_events["trigger_reason"].fillna("qualificacao_periodica").astype(str)
+            if "trigger_reason" in lo_events.columns
+            else pd.Series("qualificacao_periodica", index=lo_events.index)
         )
 
-    out_df = pd.DataFrame(timeline_records)
+        new_tier = new_tier_s.str.replace("_", " ", regex=False).str.title()
+        prev_tier = prev_tier_s.str.replace("_", " ", regex=False).str.title()
+
+        titulo = "Qualificação Categoria " + new_tier
+        detalhe = "Transição de " + prev_tier + " para " + new_tier + " por " + reason_s + "."
+
+        parts.append(
+            pd.DataFrame(
+                {
+                    "customer_id": lo_events["customer_id"].astype(str),
+                    "data": dt_str,
+                    "tipo": "tier_change",
+                    "titulo": titulo,
+                    "detalhe": detalhe,
+                    "impacto": "positivo",
+                }
+            )
+        )
+
+    if parts:
+        out_df = pd.concat(parts, ignore_index=True)
+    else:
+        out_df = pd.DataFrame(
+            columns=["customer_id", "data", "tipo", "titulo", "detalhe", "impacto"]
+        )
     # Guarda fail-loud: nenhum evento posterior ao cutoff pode existir na timeline.
     if not out_df.empty:
         max_data = pd.to_datetime(out_df["data"]).max()

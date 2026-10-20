@@ -319,28 +319,29 @@ def build_customers_scores(
         ("atendimento", "atritos_atendimento_12m"),
         ("preco", "atritos_preco_12m"),
     ]
-    atritos_list = []
-    for _, row in df.iterrows():
-        best_aspect = "atraso"
-        max_val = -1
-        for asp, col_name in friction_cols:
-            val = row.get(col_name, 0)
-            if val > max_val:
-                max_val = val
-                best_aspect = asp
-        if max_val <= 0:
-            # Fallback para o atrito característico da persona
-            p_val = row.get("segment_name", "eventual_promocional")
-            p_fallback = {
-                "executivo_recorrente": "atraso",
-                "lazer_premium": "bagagem",
-                "maximizador_milhas": "resgate_milhas",
-                "regional_dependente": "atraso",
-                "eventual_ascendente": "app_checkin",
-                "eventual_promocional": "preco",
-            }
-            best_aspect = p_fallback.get(p_val, "atraso")
-        atritos_list.append(best_aspect)
+    p_fallback = {
+        "executivo_recorrente": "atraso",
+        "lazer_premium": "bagagem",
+        "maximizador_milhas": "resgate_milhas",
+        "regional_dependente": "atraso",
+        "eventual_ascendente": "app_checkin",
+        "eventual_promocional": "preco",
+    }
+    aspect_names = np.array([asp for asp, _ in friction_cols])
+    col_names = [col for _, col in friction_cols]
+    friction_matrix = np.column_stack([
+        df[col].fillna(0).values if col in df.columns else np.zeros(len(df))
+        for col in col_names
+    ])
+    max_vals = np.max(friction_matrix, axis=1)
+    best_indices = np.argmax(friction_matrix, axis=1)
+    best_aspects = aspect_names[best_indices]
+    p_series = df["segment_name"] if "segment_name" in df.columns else pd.Series("eventual_promocional", index=df.index)
+    # NaN em segment_name NÃO recebe o fallback da persona: .map devolve NaN e
+    # .fillna("atraso") restaura o default de negócio da implementação original
+    # (dict.get com chave NaN → 'atraso'). É o comportamento legado deliberado.
+    fallback_aspects = p_series.map(p_fallback).fillna("atraso").values
+    atritos_list = np.where(max_vals > 0, best_aspects, fallback_aspects).tolist()
 
     # Benefício não utilizado (trata 'nenhum' como None)
     ben_raw = df["beneficio_nao_utilizado"]
@@ -348,24 +349,56 @@ def build_customers_scores(
         lambda b: None if (pd.isna(b) or str(b).strip() in {"", "nenhum", "None"}) else str(b)
     )
 
-    # SHAP top3 formatado como JSON list de dicts para a interface
-    shap_top3_list = []
-    for _, row in df.iterrows():
-        factors = [
-            {
-                "factor": str(row.get("top1_feature", "frequencia")),
-                "shap_value": round(float(row.get("top1_shap", 0.0)), 4),
-            },
-            {
-                "factor": str(row.get("top2_feature", "monetario")),
-                "shap_value": round(float(row.get("top2_shap", 0.0)), 4),
-            },
-            {
-                "factor": str(row.get("top3_feature", "recencia")),
-                "shap_value": round(float(row.get("top3_shap", 0.0)), 4),
-            },
-        ]
-        shap_top3_list.append(json.dumps(factors))
+    # SHAP top3 formatado como JSON list de dicts para a interface.
+    # Divergência deliberada vs implementação original (iterrows): na original,
+    # top{N}_feature/top{N}_shap ausentes ou NaN emitiam fator 'nan' e o literal
+    # NaN dentro da string JSON (payload tecnicamente inválido para parsers
+    # estritos). A versão vetorizada aplica defaults ('frequencia'/0.0 etc.) —
+    # só alcançáveis em inputs estruturalmente quebrados (merge left sem match);
+    # nos dados atuais essas colunas nunca contêm NaN (verificado).
+    t1_feat = (
+        df["top1_feature"].fillna("frequencia").astype(str).tolist()
+        if "top1_feature" in df.columns
+        else ["frequencia"] * len(df)
+    )
+    t1_shap = (
+        df["top1_shap"].fillna(0.0).tolist()
+        if "top1_shap" in df.columns
+        else [0.0] * len(df)
+    )
+    t2_feat = (
+        df["top2_feature"].fillna("monetario").astype(str).tolist()
+        if "top2_feature" in df.columns
+        else ["monetario"] * len(df)
+    )
+    t2_shap = (
+        df["top2_shap"].fillna(0.0).tolist()
+        if "top2_shap" in df.columns
+        else [0.0] * len(df)
+    )
+    t3_feat = (
+        df["top3_feature"].fillna("recencia").astype(str).tolist()
+        if "top3_feature" in df.columns
+        else ["recencia"] * len(df)
+    )
+    t3_shap = (
+        df["top3_shap"].fillna(0.0).tolist()
+        if "top3_shap" in df.columns
+        else [0.0] * len(df)
+    )
+
+    shap_top3_list = [
+        json.dumps(
+            [
+                {"factor": f1, "shap_value": round(float(s1), 4)},
+                {"factor": f2, "shap_value": round(float(s2), 4)},
+                {"factor": f3, "shap_value": round(float(s3), 4)},
+            ]
+        )
+        for f1, s1, f2, s2, f3, s3 in zip(
+            t1_feat, t1_shap, t2_feat, t2_shap, t3_feat, t3_shap, strict=False
+        )
+    ]
 
     frequencia_voos = df["trechos_12m"].fillna(0).astype("int64")
 

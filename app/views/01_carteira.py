@@ -36,6 +36,44 @@ from app.theme import (
 )
 
 
+@st.cache_data
+def _compute_lorenz_and_gini(
+    clv_vals: np.ndarray, n_plot_points: int = 300
+) -> tuple[float, np.ndarray, np.ndarray, float]:
+    """Calcula Gini na resolução total e retorna curva de Lorenz amostrada para renderização leve."""
+    sorted_clv = np.sort(clv_vals)
+    total_clv = np.sum(sorted_clv)
+    if total_clv <= 0 or len(sorted_clv) == 0:
+        return 0.0, np.array([0.0, 1.0]), np.array([0.0, 1.0]), 0.0
+
+    cum_clv = np.cumsum(sorted_clv) / total_clv
+    cum_pop = np.arange(1, len(sorted_clv) + 1) / len(sorted_clv)
+
+    # Gini exato na resolução total (compatível com NumPy 1.x e 2.x)
+    trap_fn = getattr(np, "trapezoid", getattr(np, "trapz", None))
+    gini = 1.0 - 2.0 * float(trap_fn(cum_clv, cum_pop))
+
+    # Ponto 80/20 calculado na resolução total
+    idx_80 = int(len(sorted_clv) * 0.8)
+    cum_clv_80 = float(cum_clv[idx_80])
+
+    # Downsample para renderização leve no matplotlib (~250-500 vértices vs 50.000)
+    if len(cum_pop) > n_plot_points:
+        indices = np.linspace(0, len(cum_pop) - 1, n_plot_points, dtype=int)
+        plot_pop = cum_pop[indices]
+        plot_clv = cum_clv[indices]
+    else:
+        plot_pop = cum_pop
+        plot_clv = cum_clv
+
+    # Assegura ancoragem em (0, 0)
+    if plot_pop[0] != 0.0 or plot_clv[0] != 0.0:
+        plot_pop = np.insert(plot_pop, 0, 0.0)
+        plot_clv = np.insert(plot_clv, 0, 0.0)
+
+    return gini, plot_pop, plot_clv, cum_clv_80
+
+
 def render() -> None:
     render_synthetic_banner()
 
@@ -159,20 +197,14 @@ def render() -> None:
             "Curva de Concentração (Lorenz / Pareto)",
             "Distribuição acumulada de receita vs clientes (Gini)",
         )
-        # Curva de Lorenz
-        sorted_clv = np.sort(clv_vals)
-        cum_clv = np.cumsum(sorted_clv) / np.sum(sorted_clv)
-        cum_pop = np.arange(1, len(sorted_clv) + 1) / len(sorted_clv)
-
-        # Gini (compatível com NumPy 1.x e 2.x)
-        trap_fn = getattr(np, "trapezoid", getattr(np, "trapz", None))
-        gini = 1.0 - 2.0 * float(trap_fn(cum_clv, cum_pop))
+        # Curva de Lorenz e Coeficiente de Gini (resolução total com renderização leve)
+        gini, plot_pop, plot_clv, cum_clv_80 = _compute_lorenz_and_gini(clv_vals)
 
         fig, ax = plt.subplots(figsize=(6, 3.8), facecolor=CANVAS)
         ax.set_facecolor("#FFFFFF")
         ax.plot(
-            cum_pop,
-            cum_clv,
+            plot_pop,
+            plot_clv,
             color=AZUL_ACTION,
             linewidth=2.5,
             label=f"Curva de Lorenz (Gini = {gini:.2f})",
@@ -187,12 +219,11 @@ def render() -> None:
         )
 
         # Ponto 80/20
-        idx_80 = int(len(sorted_clv) * 0.8)
-        top_20_share = 1.0 - cum_clv[idx_80]
-        ax.scatter([0.8], [cum_clv[idx_80]], color=MAGENTA_CTA, s=60, zorder=5)
+        top_20_share = 1.0 - cum_clv_80
+        ax.scatter([0.8], [cum_clv_80], color=MAGENTA_CTA, s=60, zorder=5)
         ax.annotate(
             f"Top 20% detém {top_20_share * 100:.1f}% do CLV",
-            xy=(0.8, cum_clv[idx_80]),
+            xy=(0.8, cum_clv_80),
             xytext=(0.35, 0.55),
             arrowprops=dict(
                 facecolor=MAGENTA_CTA, edgecolor=MAGENTA_CTA, shrink=0.08, width=1, headwidth=6

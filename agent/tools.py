@@ -87,13 +87,19 @@ def _is_customer_valid_and_exists(customer_id: str) -> tuple[bool, str]:
 
     try:
         if _VALID_CUSTOMER_IDS is None:
-            df_input = _get_analytics_df("agent_input")
-            df_scores = _get_analytics_df("customers_scores")
+            # União dos IDs de AMBAS as bases (projeção de coluna única: leitura
+            # barata mesmo com dois arquivos). Sem break: preserva a semântica de
+            # união da implementação original. Se ambos falharem → set vazio →
+            # fail-closed (nenhum cliente validado).
             cids: set[str] = set()
-            if "customer_id" in df_input.columns:
-                cids.update(df_input["customer_id"].astype(str).str.strip())
-            if "customer_id" in df_scores.columns:
-                cids.update(df_scores["customer_id"].astype(str).str.strip())
+            for name in ("customers_scores", "agent_input"):
+                file_path = ANALYTICS_DIR / f"{name}.parquet"
+                if file_path.exists():
+                    try:
+                        df_proj = pd.read_parquet(file_path, columns=["customer_id"])
+                        cids.update(df_proj["customer_id"].astype(str).str.strip())
+                    except Exception as ex:
+                        logger.debug("Leitura de customer_id em %s falhou: %s", file_path, ex)
             _VALID_CUSTOMER_IDS = cids
 
         if norm_cid not in _VALID_CUSTOMER_IDS:
@@ -241,7 +247,7 @@ def consultar_historico_atritos_voos(
                 WHERE t.customer_id = ?
             """
             f_df = conn.execute(q, [norm_cid]).df()
-            for _, r in f_df.iterrows():
+            for r in f_df.to_dict(orient="records"):
                 f_date = str(r["flight_date"])
                 fl_data = {
                     "flight_id": str(r["flight_id"]),
@@ -259,7 +265,7 @@ def consultar_historico_atritos_voos(
 
     used_flight_ids: set[str] = set()
     eventos: list[EventoHistorico] = []
-    for _, row in match_events.iterrows():
+    for row in match_events.to_dict(orient="records"):
         event_date = str(row.get("data", ""))
         titulo = str(row.get("titulo", ""))
         detalhe = str(row.get("detalhe", ""))
@@ -769,11 +775,17 @@ def listar_clientes_em_risco_ou_atrito(
     # Dicionário de atritos dominantes de agent_input
     input_friction_map = {}
     if "atritos_dominantes" in df_input.columns:
-        for _, r in df_input[df_input["customer_id"].isin(df_top["customer_id"])].iterrows():
-            input_friction_map[str(r["customer_id"])] = str(r["atritos_dominantes"])
+        sub_input = df_input[df_input["customer_id"].isin(df_top["customer_id"])]
+        input_friction_map = dict(
+            zip(
+                sub_input["customer_id"].astype(str),
+                sub_input["atritos_dominantes"].astype(str),
+                strict=False,
+            )
+        )
 
     items: list[ClienteRiscoItem] = []
-    for _, row in df_top.iterrows():
+    for row in df_top.to_dict(orient="records"):
         cid = str(row["customer_id"])
         items.append(
             ClienteRiscoItem(

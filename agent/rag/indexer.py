@@ -14,7 +14,6 @@ import pickle
 from pathlib import Path
 
 import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
 
 from agent.rag.knowledge import KnowledgeChunk, build_knowledge_chunks, compute_chunk_hash
 from aura_core.log import get_logger
@@ -52,6 +51,8 @@ def index_knowledge_base(output_dir: Path | None = None) -> dict[str, int | str]
         corpus.append(f"{c.fact_id} {c.title} {c.title} {c.title} {c.title} {kw_str} {c.text}")
 
     logger.info("Vetorizando %d chunks com TfidfVectorizer...", len(chunks))
+    from sklearn.feature_extraction.text import TfidfVectorizer
+
     vectorizer = TfidfVectorizer(
         ngram_range=(1, 2),
         sublinear_tf=True,

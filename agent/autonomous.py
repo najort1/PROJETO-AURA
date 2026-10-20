@@ -26,6 +26,50 @@ from aura_core.log import get_logger
 
 logger = get_logger("agent.autonomous")
 
+
+def _repair_tool_pair_integrity(
+    messages: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """Repara a integridade de pares assistant(tool_calls)↔tool após janela deslizante.
+
+    A fatia de histórico pode iniciar no meio de um par (orphan `tool` sem a
+    mensagem assistant(tool_calls) pai) ou conter assistant(tool_calls) cujas
+    respostas `tool` foram cortadas (ex.: janela do cliente). Ambos os casos são
+    rejeitados com 400 por APIs compatíveis com OpenAI. Estratégia: drop
+    defensivo e limitado, em duas passadas para garantir transitividade —
+    (a) assistant(tool_calls) sem TODAS as respostas presentes é removido;
+    (b) `tool` cujo pai não sobreviveu à passada (a) é removido.
+    Preserva a garantia rígida de tamanho da janela (nunca expande).
+    """
+    answered_ids = {m.get("tool_call_id") for m in messages if m.get("role") == "tool"}
+
+    # Passada 1: IDs de chamadas cujos pais assistant(tool_calls) permanecem
+    kept_parent_ids: set[Any] = set()
+    for msg in messages:
+        if msg.get("role") == "assistant" and msg.get("tool_calls"):
+            call_ids = {c.get("id") for c in msg["tool_calls"] if c.get("id")}
+            if call_ids and call_ids.issubset(answered_ids):
+                kept_parent_ids.update(call_ids)
+
+    # Passada 2: reconstrói a fatia sem orphans de nenhum dos lados
+    repaired: list[dict[str, Any]] = []
+    for msg in messages:
+        role = msg.get("role")
+
+        if role == "tool" and msg.get("tool_call_id") not in kept_parent_ids:
+            # Pai assistant(tool_calls) fatiado/removido -> orphan tool
+            continue
+
+        if role == "assistant" and msg.get("tool_calls"):
+            call_ids = {c.get("id") for c in msg["tool_calls"] if c.get("id")}
+            if not call_ids.issubset(answered_ids):
+                # Respostas tool ausentes da fatia -> assistant tool_calls sem resposta
+                continue
+
+        repaired.append(msg)
+
+    return repaired
+
 SYSTEM_PROMPT = """Você é o Aura Concierge, Agente Autônomo Especialista de CRM de Alto Valor e Relacionamento do programa Azul Fidelidade.
 Sua missão é atuar com proatividade, empatia e máxima precisão técnica para reter clientes valiosos (Diamante, Safira e Top-Tier), resolver atritos e garantir conformidade regulatória incondicional.
 
@@ -78,11 +122,15 @@ class AuraConciergeEngine:
         llm_client: LLMClient | None = None,
         tool_registry: ToolRegistry | None = None,
         max_turns: int = 8,
+        max_history_messages: int = 8,
+        max_tool_result_chars: int = 3000,
     ) -> None:
         self.llm_client = llm_client or LLMClient()
         self.tool_registry = tool_registry or get_tool_registry()
         self.safety_engine = get_safety_engine()
         self.max_turns = max_turns
+        self.max_history_messages = max_history_messages
+        self.max_tool_result_chars = max_tool_result_chars
 
     def run_turn(
         self,
@@ -95,9 +143,14 @@ class AuraConciergeEngine:
         decisions_taken: list[DecisionRecord] = []
         human_review_required = False
 
-        conversation: list[dict[str, Any]] = [{"role": "system", "content": SYSTEM_PROMPT}] + [
-            m for m in messages if m.get("role") != "system"
-        ]
+        # Janela deslizante no histórico prévio para evitar estouro da janela de contexto (4096 tokens)
+        non_system = [m for m in messages if m.get("role") != "system"]
+        if len(non_system) > self.max_history_messages + 1:
+            non_system = non_system[-(self.max_history_messages + 1):]
+        # Reparo de pares assistant(tool_calls)↔tool cortados pela janela
+        non_system = _repair_tool_pair_integrity(non_system)
+
+        conversation: list[dict[str, Any]] = [{"role": "system", "content": SYSTEM_PROMPT}] + non_system
 
         schemas = self.tool_registry.get_openai_schemas()
         turn_count = 0
@@ -192,13 +245,22 @@ class AuraConciergeEngine:
                 }
                 tools_executed.append(record_log)
 
-                # Alimenta a observação de volta no diálogo
+                # Alimenta a observação de volta no diálogo com capping defensivo para respeitar teto de tokens
+                tool_json = json.dumps(tool_result, ensure_ascii=False)
+                if len(tool_json) > self.max_tool_result_chars:
+                    tool_content = (
+                        tool_json[: self.max_tool_result_chars]
+                        + "\n... [Resultado truncado defensivamente pelo Aura Concierge para respeitar limite de tokens]"
+                    )
+                else:
+                    tool_content = tool_json
+
                 conversation.append(
                     {
                         "role": "tool",
                         "tool_call_id": call_id,
                         "name": name,
-                        "content": json.dumps(tool_result, ensure_ascii=False),
+                        "content": tool_content,
                     }
                 )
 
@@ -251,11 +313,15 @@ class AuraConciergeAgent:
         llm_client: LLMClient | None = None,
         tool_registry: ToolRegistry | None = None,
         max_turns: int = 8,
+        max_history_messages: int = 8,
+        max_tool_result_chars: int = 3000,
     ) -> None:
         self.engine = AuraConciergeEngine(
             llm_client=llm_client,
             tool_registry=tool_registry,
             max_turns=max_turns,
+            max_history_messages=max_history_messages,
+            max_tool_result_chars=max_tool_result_chars,
         )
 
     def evaluate_and_act(self, customer_id: str) -> AgentTurnResult:
@@ -277,8 +343,12 @@ class AuraConciergeAgent:
     ) -> AgentTurnResult:
         """Modo conversacional interativo com memória de diálogo e sanitização de entrada [SEC-02]."""
         sanitized_msg = sanitize_input_text(message)
-        msgs = list(history or [])
-        msgs.append({"role": "user", "content": sanitized_msg})
+        raw_history = list(history or [])
+        if len(raw_history) > self.engine.max_history_messages:
+            raw_history = raw_history[-self.engine.max_history_messages:]
+        # Reparo de pares assistant(tool_calls)↔tool cortados pela janela
+        raw_history = _repair_tool_pair_integrity(raw_history)
+        msgs = raw_history + [{"role": "user", "content": sanitized_msg}]
         return self.engine.run_turn(msgs, customer_id=customer_id)
 
     def scan_and_resolve(

@@ -401,8 +401,8 @@ def precompute_recommendations(
     if in_file.exists():
         logger.info("Carregando tabela analítica de entrada: %s", in_file)
         df_in = pd.read_parquet(in_file)
-        for _, row in df_in.iterrows():
-            clients.append(ClientState(**row.to_dict()))
+        for row_dict in df_in.to_dict(orient="records"):
+            clients.append(ClientState(**row_dict))
     else:
         logger.info(
             "Tabela analítica de entrada (%s) ausente. Utilizando fixtures declaradas de demonstração.",

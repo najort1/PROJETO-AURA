@@ -703,3 +703,218 @@ def test_autonomous_bridge_customer_context_injection() -> None:
     assert "[Contexto do Operador" not in called_kwargs3["message"]
     assert called_kwargs3["customer_id"] is None
 
+
+def test_conversation_history_sliding_window() -> None:
+    """[D4] Valida janela deslizante mantendo as últimas N (8) mensagens no prompt para o LLM."""
+    mock_llm = MagicMock()
+    mock_llm.chat_completion_with_tools.return_value = {
+        "message": {"role": "assistant", "content": "Resposta do assistente"},
+        "finish_reason": "stop",
+    }
+
+    agent = AuraConciergeAgent(llm_client=mock_llm, max_history_messages=8)
+    long_history = [
+        {"role": "user" if i % 2 == 0 else "assistant", "content": f"Mensagem {i}"}
+        for i in range(20)
+    ]
+    agent.chat("Pergunta final", history=long_history)
+
+    call_messages = mock_llm.chat_completion_with_tools.call_args.kwargs["messages"]
+    assert call_messages[0]["role"] == "system"
+    prompt_msgs = call_messages[1:-1]
+    assert len(prompt_msgs) == 9
+    assert "pergunta final" in prompt_msgs[-1]["content"]
+    assert prompt_msgs[0]["content"] == "Mensagem 12"  # 20 - 8 = 12
+
+
+def test_tool_output_capping_in_react_loop() -> None:
+    """[D4] Valida capping/truncamento seguro de outputs longos de tools na conversa enviada ao LLM."""
+    mock_llm = MagicMock()
+    mock_llm.chat_completion_with_tools.side_effect = [
+        {
+            "message": {
+                "role": "assistant",
+                "content": "",
+                "tool_calls": [
+                    {
+                        "id": "call_big_1",
+                        "function": {
+                            "name": "consultar_cliente_360",
+                            "arguments": '{"customer_id": "C000004"}',
+                        },
+                    }
+                ],
+            },
+            "finish_reason": "tool_calls",
+        },
+        {
+            "message": {
+                "role": "assistant",
+                "content": "Cliente avaliado.",
+            },
+            "finish_reason": "stop",
+        },
+    ]
+
+    mock_registry = MagicMock()
+    big_payload = {"customer_id": "C000004", "huge_data": "X" * 6000}
+    mock_registry.invoke.return_value = big_payload
+    mock_registry.get_openai_schemas.return_value = []
+
+    engine = AuraConciergeEngine(
+        llm_client=mock_llm,
+        tool_registry=mock_registry,
+        max_turns=2,
+        max_tool_result_chars=2000,
+    )
+    result = engine.run_turn([{"role": "user", "content": "Avalie C000004"}])
+
+    second_call_messages = mock_llm.chat_completion_with_tools.call_args_list[1].kwargs["messages"]
+    tool_msg = next(m for m in second_call_messages if m.get("role") == "tool")
+    assert len(tool_msg["content"]) < 2500
+    assert "... [Resultado truncado defensivamente pelo Aura Concierge" in tool_msg["content"]
+    assert len(result.tool_calls_executed) == 1
+    assert result.tool_calls_executed[0]["tool"] == "consultar_cliente_360"
+
+
+def _assert_no_orphan_tool_payload(messages: list[dict]) -> None:
+    """Invariante de integridade: nenhum tool orphan, nenhum tool_calls sem resposta."""
+    parent_ids = set()
+    for m in messages:
+        if m.get("role") == "assistant" and m.get("tool_calls"):
+            parent_ids.update(c.get("id") for c in m["tool_calls"])
+    answered_ids = {m.get("tool_call_id") for m in messages if m.get("role") == "tool"}
+    tool_msgs = [m for m in messages if m.get("role") == "tool"]
+    orphan_tool = [m for m in tool_msgs if m.get("tool_call_id") not in parent_ids]
+    unanswered_assistant = [
+        m
+        for m in messages
+        if m.get("role") == "assistant"
+        and m.get("tool_calls")
+        and not {c.get("id") for c in m["tool_calls"]}.issubset(answered_ids)
+    ]
+    assert not orphan_tool, f"Payload contém tool orphan: {orphan_tool[0]}"
+    assert not unanswered_assistant, (
+        f"Payload contém assistant(tool_calls) sem resposta: {unanswered_assistant[0]}"
+    )
+
+
+def test_sliding_window_repairs_tool_pair_integrity() -> None:
+    """[FIX-1] Janela que cai ENTRE um par assistant(tool_calls)↔tool não pode produzir orphans.
+
+    Com max_history_messages=2 e histórico contendo pares tool, o corte da janela
+    pode deixar um `tool` sem o pai assistant(tool_calls) (início da fatia) ou um
+    assistant(tool_calls) sem as respostas (fim da fatia). Ambos são rejeitados
+    com 400 por APIs OpenAI-compatíveis; o reparo defensivo remove os orphans.
+    """
+    mock_llm = MagicMock()
+    mock_llm.chat_completion_with_tools.return_value = {
+        "message": {"role": "assistant", "content": "Resposta final do assistente"},
+        "finish_reason": "stop",
+    }
+
+    # Histórico com pares tool: a janela de 2 deve cair ENTRE o par mais antigo
+    history = [
+        {"role": "user", "content": "Primeira pergunta"},
+        {  # par 1 — será cortado: somente a resposta tool entra na fatia
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+                {
+                    "id": "call_A1",
+                    "type": "function",
+                    "function": {"name": "consultar_cliente_360", "arguments": "{}"},
+                }
+            ],
+        },
+        {"role": "tool", "tool_call_id": "call_A1", "name": "consultar_cliente_360", "content": "{}"},
+        {  # par 2 — fica inteiro dentro da fatia
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+                {
+                    "id": "call_B1",
+                    "type": "function",
+                    "function": {"name": "consultar_regulamento", "arguments": "{}"},
+                }
+            ],
+        },
+        {"role": "tool", "tool_call_id": "call_B1", "name": "consultar_regulamento", "content": "{}"},
+        {"role": "assistant", "content": "Análise intermediária"},
+    ]
+
+    agent = AuraConciergeAgent(llm_client=mock_llm, max_history_messages=2)
+    agent.chat("Pergunta final", history=history)
+
+    call_messages = mock_llm.chat_completion_with_tools.call_args.kwargs["messages"]
+    _assert_no_orphan_tool_payload(call_messages)
+
+    # Fatia bruta (últimas 2 de histórico): [tool(call_A1) SEM pai,
+    # assistant(tool_calls B1) SEM resposta] + user atual.
+    # O reparo deve remover AMBOS os orphans: nenhuma msg tool e nenhum
+    # tool_calls sobrevivem isolados.
+    roles = [m.get("role") for m in call_messages]
+    assert "tool" not in roles
+    assert not any(m.get("tool_calls") for m in call_messages)
+
+    # Com janela maior (3), o par B1 fica completo: assistant(B1)+tool(B1) preservados
+    mock_llm.reset_mock()
+    agent3 = AuraConciergeAgent(llm_client=mock_llm, max_history_messages=3)
+    agent3.chat("Pergunta final", history=history)
+    msgs3 = mock_llm.chat_completion_with_tools.call_args.kwargs["messages"]
+    _assert_no_orphan_tool_payload(msgs3)
+    tool_ids3 = {m.get("tool_call_id") for m in msgs3 if m.get("role") == "tool"}
+    assert tool_ids3 == {"call_B1"}
+
+
+def test_sliding_window_repairs_trailing_unanswered_tool_calls() -> None:
+    """[FIX-1] Variante: janela encerra em assistant(tool_calls) cujas respostas foram cortadas."""
+    mock_llm = MagicMock()
+    mock_llm.chat_completion_with_tools.return_value = {
+        "message": {"role": "assistant", "content": "Resposta final do assistente"},
+        "finish_reason": "stop",
+    }
+
+    history = [
+        {"role": "user", "content": "Pergunta antiga"},
+        {"role": "assistant", "content": "Resposta antiga"},
+        {  # par — o assistant entra na fatia mas as respostas tool ficam fora
+            "role": "assistant",
+            "content": "",
+            "tool_calls": [
+                {
+                    "id": "call_Z1",
+                    "type": "function",
+                    "function": {"name": "consultar_cliente_360", "arguments": "{}"},
+                },
+                {
+                    "id": "call_Z2",
+                    "type": "function",
+                    "function": {"name": "consultar_regulamento", "arguments": "{}"},
+                },
+            ],
+        },
+        {"role": "tool", "tool_call_id": "call_Z1", "name": "consultar_cliente_360", "content": "{}"},
+        {"role": "tool", "tool_call_id": "call_Z2", "name": "consultar_regulamento", "content": "{}"},
+    ]
+
+    # max_h=3: fatia = [assistant(tool_calls Z1,Z2), tool(Z1), tool(Z2)] — par completo preservado
+    agent = AuraConciergeAgent(llm_client=mock_llm, max_history_messages=3)
+    agent.chat("Pergunta final", history=history)
+
+    call_messages = mock_llm.chat_completion_with_tools.call_args.kwargs["messages"]
+    _assert_no_orphan_tool_payload(call_messages)
+    tool_ids = {m.get("tool_call_id") for m in call_messages if m.get("role") == "tool"}
+    assert tool_ids == {"call_Z1", "call_Z2"}
+
+    # max_h=2: fatia = [tool(Z1), tool(Z2)] SEM o pai assistant(tool_calls) —
+    # ambos orphans, o reparo deve removê-los
+    mock_llm.reset_mock()
+    agent2 = AuraConciergeAgent(llm_client=mock_llm, max_history_messages=2)
+    agent2.chat("Pergunta final", history=history)
+    call_messages2 = mock_llm.chat_completion_with_tools.call_args.kwargs["messages"]
+    _assert_no_orphan_tool_payload(call_messages2)
+    roles2 = [m.get("role") for m in call_messages2]
+    assert "tool" not in roles2  # orphans removidos
+
+

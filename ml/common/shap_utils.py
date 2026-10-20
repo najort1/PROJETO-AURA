@@ -77,6 +77,12 @@ def local_top_k(
     feats = list(contrib_df.columns)
     c_vals = contrib_df.values
 
+    x_vals: np.ndarray | None = None
+    x_col_map: dict[str, int] = {}
+    if X_df is not None:
+        x_vals = X_df.values
+        x_col_map = {col: j for j, col in enumerate(X_df.columns)}
+
     records: list[dict[str, Any]] = []
 
     for i in range(n):
@@ -94,8 +100,8 @@ def local_top_k(
             feat_name = feats[idx]
             rec[f"top{rank}_feature"] = feat_name
             rec[f"top{rank}_shap"] = float(row_shap[idx])
-            if X_df is not None and feat_name in X_df.columns:
-                rec[f"top{rank}_value"] = float(X_df.iloc[i][feat_name])
+            if x_vals is not None and feat_name in x_col_map:
+                rec[f"top{rank}_value"] = float(x_vals[i, x_col_map[feat_name]])
             else:
                 rec[f"top{rank}_value"] = 0.0
 

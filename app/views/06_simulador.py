@@ -216,13 +216,17 @@ def render() -> None:
     efeito_acao = efeito_acao_pct / 100.0
     margem = margem_pct / 100.0
 
-    # Ordena carteira por Valor em Risco decrescente (prioridade analítica)
-    df_prioritized = df_customers.sort_values("valor_em_risco", ascending=False).copy()
+    # Ordena carteira por Valor em Risco decrescente (prioridade analítica).
+    # Sort executa 1x por rerun (~20 ms em 50k linhas); o downstream apenas LE o
+    # resultado (nenhuma mutação), portanto o slice iloc é seguro sem .copy().
+    # Nota: @st.cache_data aqui seria contraproducente — re-hash do DataFrame
+    # completo (~51 ms/tick) excede o próprio custo do sort.
+    df_prioritized = df_customers.sort_values("valor_em_risco", ascending=False)
 
     # Quantidade de clientes que o orçamento comporta
     max_clientes_alcancaveis = int(orcamento // custo_por_acao)
     n_alvo = min(len(df_prioritized), max_clientes_alcancaveis)
-    df_target = df_prioritized.iloc[:n_alvo].copy()
+    df_target = df_prioritized.iloc[:n_alvo]
 
     # Cálculo por cliente:
     p_evitada = df_target["churn_prob"] * efeito_acao * taxa_resp
