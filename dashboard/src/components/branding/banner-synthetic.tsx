@@ -11,7 +11,7 @@ export function BannerSynthetic() {
         </span>
         <span className="text-slate-400">|</span>
         <span className="text-slate-300">
-          Base Sintética Calibrada (50.000 Clientes) — Em conformidade estrita com a LGPD (Lei nº 13.709/2018)
+          Base Sintética Calibrada — Em conformidade estrita com a LGPD (Lei nº 13.709/2018)
         </span>
       </div>
       <div className="hidden sm:flex items-center gap-1.5 text-slate-400 text-[11px]">

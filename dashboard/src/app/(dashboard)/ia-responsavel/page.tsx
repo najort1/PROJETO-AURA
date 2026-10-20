@@ -79,10 +79,10 @@ export default async function IaResponsavelPage() {
         <Card className="p-4 border-l-4 border-l-emerald-600 shadow-xs">
           <span className="text-xs font-semibold text-text-muted block">Grupos em Conformidade</span>
           <span className="text-2xl font-extrabold text-emerald-700 font-mono">
-            9 Grupos
+            {compliantCount + referenceCount} Grupos
           </span>
           <span className="text-xs text-text-secondary mt-1 block">
-            Impact Ratio &ge; 0,80 (inclui 3 grupos de referência)
+            Impact Ratio &ge; 0,80 (inclui {referenceCount} grupos de referência)
           </span>
         </Card>
 
@@ -91,8 +91,15 @@ export default async function IaResponsavelPage() {
           <span className="text-2xl font-extrabold text-magenta-cta font-mono">
             {nonCompliant.length} Grupos
           </span>
-          <span className="text-xs text-text-secondary mt-1 block">
-            18-24 anos (0,795) e 4 Regiões Geográficas (Nordeste, CO, Sudeste, Sul)
+          <span
+            className="text-xs text-text-secondary mt-1 block leading-relaxed"
+            title={nonCompliant
+              .map((g) => `${g.group_value} (${g.selection_ratio_vs_max.toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 })})`)
+              .join(", ")}
+          >
+            {nonCompliant
+              .map((g) => `${g.group_value} (${g.selection_ratio_vs_max.toLocaleString("pt-BR", { minimumFractionDigits: 3, maximumFractionDigits: 3 })})`)
+              .join(", ")}
           </span>
         </Card>
 
@@ -126,13 +133,13 @@ export default async function IaResponsavelPage() {
             <table className="w-full text-xs text-left">
               <thead className="bg-muted text-azul-navy font-semibold uppercase">
                 <tr>
-                  <th className="p-3">Dimensão Protegida</th>
-                  <th className="p-3">Grupo Demográfico</th>
-                  <th className="p-3">Amostra ($N$)</th>
-                  <th className="p-3">Taxa Alto Valor</th>
-                  <th className="p-3">Razão vs Máximo</th>
-                  <th className="p-3">Churn Médio</th>
-                  <th className="p-3">Status de Conformidade</th>
+                  <th className="p-3 sticky left-0 bg-muted z-10 whitespace-nowrap">Dimensão Protegida</th>
+                  <th className="p-3 whitespace-nowrap">Grupo Demográfico</th>
+                  <th className="p-3 whitespace-nowrap">Total da Amostra (N)</th>
+                  <th className="p-3 whitespace-nowrap">Taxa Alto Valor</th>
+                  <th className="p-3 whitespace-nowrap">Razão vs Máximo</th>
+                  <th className="p-3 whitespace-nowrap">Churn Médio</th>
+                  <th className="p-3 whitespace-nowrap">Status de Conformidade</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle">
@@ -148,7 +155,11 @@ export default async function IaResponsavelPage() {
                         isNonCompliant ? "bg-magenta-cta/5" : ""
                       }`}
                     >
-                      <td className="p-3 font-semibold text-azul-navy">
+                      <td
+                        className={`p-3 font-semibold text-azul-navy sticky left-0 z-10 whitespace-nowrap shadow-xs ${
+                          isNonCompliant ? "bg-[#FAF0F6]" : "bg-surface"
+                        }`}
+                      >
                         {row.sensitive_attribute === "faixa_etaria"
                           ? "Faixa Etária"
                           : row.sensitive_attribute === "genero"

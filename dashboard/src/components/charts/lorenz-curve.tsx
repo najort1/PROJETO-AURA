@@ -46,48 +46,100 @@ export function LorenzCurve({ points, gini, paretoPct }: LorenzCurveProps) {
         <svg
           viewBox={`0 0 ${width} ${height}`}
           className="w-full h-full overflow-visible select-none"
+          role="img"
+          aria-label={`Curva de Concentração de Lorenz e Coeficiente de Gini (${gini.toFixed(2)})`}
         >
-          {/* Grid lines */}
-          {[0, 0.2, 0.4, 0.6, 0.8, 1.0].map((tick) => (
-            <g key={tick}>
-              <line
-                x1={getX(tick)}
-                y1={getY(0)}
-                x2={getX(tick)}
-                y2={getY(1)}
-                stroke="#E2E6E9"
-                strokeDasharray="3 3"
-                strokeWidth="1"
-              />
-              <line
-                x1={getX(0)}
-                y1={getY(tick)}
-                x2={getX(1)}
-                y2={getY(tick)}
-                stroke="#E2E6E9"
-                strokeDasharray="3 3"
-                strokeWidth="1"
-              />
-              <text
-                x={getX(tick)}
-                y={height - padding + 15}
-                fontSize="10"
-                fill="#5E6F7A"
-                textAnchor="middle"
-              >
-                {Math.round(tick * 100)}%
-              </text>
-              <text
-                x={padding - 8}
-                y={getY(tick) + 3}
-                fontSize="10"
-                fill="#5E6F7A"
-                textAnchor="end"
-              >
-                {Math.round(tick * 100)}%
-              </text>
-            </g>
-          ))}
+          <desc>
+            {`Curva de Lorenz comparando a fração acumulada de clientes com a fração acumulada do CLV. Coeficiente de Gini calculado em ${gini.toFixed(2)}. Ponto 80/20 indica que o Top 20% dos clientes detém ${paretoPct.toFixed(1)}% do CLV total.`}
+          </desc>
+
+          {/* Grid lines & Ticks - Desktop (intervalos de 20%) */}
+          <g className="hidden sm:inline">
+            {[0, 0.2, 0.4, 0.6, 0.8, 1.0].map((tick) => (
+              <g key={`dt-${tick}`}>
+                <line
+                  x1={getX(tick)}
+                  y1={getY(0)}
+                  x2={getX(tick)}
+                  y2={getY(1)}
+                  stroke="#E2E6E9"
+                  strokeDasharray="3 3"
+                  strokeWidth="1"
+                />
+                <line
+                  x1={getX(0)}
+                  y1={getY(tick)}
+                  x2={getX(1)}
+                  y2={getY(tick)}
+                  stroke="#E2E6E9"
+                  strokeDasharray="3 3"
+                  strokeWidth="1"
+                />
+                <text
+                  x={getX(tick)}
+                  y={height - padding + 15}
+                  fontSize="10"
+                  fill="#5E6F7A"
+                  textAnchor="middle"
+                >
+                  {Math.round(tick * 100)}%
+                </text>
+                <text
+                  x={padding - 8}
+                  y={getY(tick) + 3}
+                  fontSize="10"
+                  fill="#5E6F7A"
+                  textAnchor="end"
+                >
+                  {Math.round(tick * 100)}%
+                </text>
+              </g>
+            ))}
+          </g>
+
+          {/* Grid lines & Ticks - Mobile (intervalos a cada 25% - P3-10) */}
+          <g className="inline sm:hidden">
+            {[0, 0.25, 0.5, 0.75, 1.0].map((tick) => (
+              <g key={`mb-${tick}`}>
+                <line
+                  x1={getX(tick)}
+                  y1={getY(0)}
+                  x2={getX(tick)}
+                  y2={getY(1)}
+                  stroke="#E2E6E9"
+                  strokeDasharray="3 3"
+                  strokeWidth="1"
+                />
+                <line
+                  x1={getX(0)}
+                  y1={getY(tick)}
+                  x2={getX(1)}
+                  y2={getY(tick)}
+                  stroke="#E2E6E9"
+                  strokeDasharray="3 3"
+                  strokeWidth="1"
+                />
+                <text
+                  x={getX(tick)}
+                  y={height - padding + 15}
+                  fontSize="10"
+                  fill="#5E6F7A"
+                  textAnchor="middle"
+                >
+                  {Math.round(tick * 100)}%
+                </text>
+                <text
+                  x={padding - 8}
+                  y={getY(tick) + 3}
+                  fontSize="10"
+                  fill="#5E6F7A"
+                  textAnchor="end"
+                >
+                  {Math.round(tick * 100)}%
+                </text>
+              </g>
+            ))}
+          </g>
 
           {/* Área do Gini Sombreada */}
           <path
@@ -116,7 +168,7 @@ export function LorenzCurve({ points, gini, paretoPct }: LorenzCurveProps) {
             strokeLinecap="round"
           />
 
-          {/* Ponto e Destaque 80/20 */}
+          {/* Ponto e Destaque 80/20 (com motion-reduce:animate-none P2-12) */}
           <circle
             cx={paretoX}
             cy={paretoY}
@@ -124,7 +176,7 @@ export function LorenzCurve({ points, gini, paretoPct }: LorenzCurveProps) {
             fill="#E832A5"
             stroke="#FFFFFF"
             strokeWidth="2"
-            className="animate-pulse"
+            className="animate-pulse motion-reduce:animate-none"
           />
           <line
             x1={paretoX}
@@ -145,7 +197,7 @@ export function LorenzCurve({ points, gini, paretoPct }: LorenzCurveProps) {
             strokeDasharray="2 2"
           />
 
-          {/* Interactive hover overlay */}
+          {/* Interactive hover e teclado overlay (P2-12) */}
           {points.map((pt, i) => (
             <circle
               key={i}
@@ -153,9 +205,20 @@ export function LorenzCurve({ points, gini, paretoPct }: LorenzCurveProps) {
               cy={getY(pt.l_p)}
               r="8"
               fill="transparent"
-              className="cursor-pointer hover:stroke-azul-navy hover:stroke-2"
+              tabIndex={0}
+              role="button"
+              aria-label={`Percentil ${(pt.p * 100).toFixed(0)}% dos clientes acumula ${(pt.l_p * 100).toFixed(1)}% do CLV`}
+              className="cursor-pointer hover:stroke-azul-navy hover:stroke-2 focus:stroke-azul-navy focus:stroke-2 focus:outline-hidden transition-colors motion-reduce:transition-none"
               onMouseEnter={() => setHoveredPoint(pt)}
               onMouseLeave={() => setHoveredPoint(null)}
+              onFocus={() => setHoveredPoint(pt)}
+              onBlur={() => setHoveredPoint(null)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setHoveredPoint(pt);
+                }
+              }}
             />
           ))}
 

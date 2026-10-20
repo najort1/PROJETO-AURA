@@ -20,7 +20,7 @@ const tierStyles: Record<string, { bg: string; text: string; border: string }> =
     border: "border-[#2DA6D4]",
   },
   safira: {
-    bg: "bg-[#147FB8]",
+    bg: "bg-[#0F74A8]",
     text: "text-white",
     border: "border-[#08648F]",
   },
@@ -71,7 +71,7 @@ export function TierBadge({ tier, showNewBadge = true, className, ...props }: Ti
         {tier}
       </span>
       {isUnique && showNewBadge && (
-        <span className="inline-flex items-center rounded-full bg-magenta-cta px-1.5 py-0.2 text-[10px] font-extrabold uppercase tracking-wider text-white shadow-xs animate-pulse">
+        <span className="inline-flex items-center rounded-full bg-magenta-cta px-1.5 py-0.2 text-[10px] font-extrabold uppercase tracking-wider text-white shadow-xs">
           NOVO
         </span>
       )}

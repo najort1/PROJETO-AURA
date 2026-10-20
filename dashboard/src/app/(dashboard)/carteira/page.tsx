@@ -167,7 +167,7 @@ export default async function CarteiraPage() {
                 <PieChart className="h-4 w-4 text-azul-action" />
                 <span>Curva de Concentração (Lorenz / Pareto) & Gini ({summary.gini.toFixed(2)})</span>
               </div>
-              <TermHelp term="clv" />
+              <TermHelp term="gini" />
             </CardTitle>
             <CardDescription>
               Top 20% dos clientes detém {summary.pareto_80_20_clv_pct.toFixed(1)}% de todo o CLV da companhia.

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { BannerSynthetic } from "@/components/branding/banner-synthetic";
 
 export const metadata: Metadata = {
   title: "PROJETO AURA 2.0 | Da Milha ao Cuidado - Azul Fidelidade",
@@ -14,9 +13,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
-      <body className="min-h-screen bg-canvas text-text-primary antialiased">
-        <BannerSynthetic />
+    <html lang="pt-BR" className="h-full overflow-hidden">
+      <body className="h-full min-h-screen flex flex-col overflow-hidden bg-canvas text-text-primary antialiased">
         {children}
       </body>
     </html>

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { AlertOctagon, Info, TrendingDown, Layers, Calendar, Flame } from "lucide-react";
+import { AlertOctagon, Info, Layers, Calendar, Flame } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -25,33 +25,70 @@ const aspectLabels: Record<string, string> = {
   conforto: "Conforto a Bordo",
 };
 
-const canonicalAspectWeights = [
-  { key: "atraso", name: "Atraso de Voo", weight: 0.1965, mentions: 366, negativeRate: 0.724 },
-  { key: "atendimento", name: "Atendimento", weight: 0.1770, mentions: 371, negativeRate: 0.681 },
-  { key: "bagagem", name: "Bagagem / Extravio", weight: 0.1666, mentions: 305, negativeRate: 0.653 },
-  { key: "resgate_milhas", name: "Resgate de Milhas", weight: 0.1660, mentions: 313, negativeRate: 0.748 },
-  { key: "app_checkin", name: "App & Check-in", weight: 0.1411, mentions: 353, negativeRate: 0.592 },
-  { key: "preco", name: "Preço & Tarifas", weight: 0.1026, mentions: 222, negativeRate: 0.615 },
-  { key: "conforto", name: "Conforto a Bordo", weight: 0.0502, mentions: 144, negativeRate: 0.440 },
-];
+interface AggregatedAspect {
+  key: string;
+  name: string;
+  weight: number;
+  mentions: number;
+  negativeCount: number;
+  negativeRate: number;
+}
 
 export default async function AtritosPage() {
   const frictionMap = await getFrictionMap();
 
-  // Semestres únicos ordenados
-  const semesters = Array.from(new Set(frictionMap.map((f) => f.semester))).sort();
+  // Semestres únicos ordenados decrescentemente (mais recente primeiro - P3-10)
+  const semesters = Array.from(new Set(frictionMap.map((f) => f.semester))).sort().reverse();
 
   // Dicionário aspecto -> semestre -> negative_rate
   const matrix: Record<string, Record<string, number>> = {};
+  // Mapa de agregação dinâmica dos registros (P1-6)
+  const aspectsMap: Record<
+    string,
+    { weight: number; mentions: number; negativeCount: number }
+  > = {};
+
   for (const f of frictionMap) {
     if (!matrix[f.aspect]) {
       matrix[f.aspect] = {};
     }
     matrix[f.aspect][f.semester] = f.negative_rate;
+
+    if (!aspectsMap[f.aspect]) {
+      aspectsMap[f.aspect] = {
+        weight: Number(f.aspect_weight) || 0,
+        mentions: 0,
+        negativeCount: 0,
+      };
+    }
+    aspectsMap[f.aspect].mentions += Number(f.mention_count);
+    aspectsMap[f.aspect].negativeCount += Number(f.negative_count);
   }
 
-  const totalMentions = canonicalAspectWeights.reduce((acc, a) => acc + a.mentions, 0);
-  const totalWeight = canonicalAspectWeights.reduce((acc, a) => acc + a.weight, 0);
+  // Lista agregada de aspectos baseada nos registros reais
+  const aspectKeys = Object.keys(aspectLabels);
+  const derivedAspects: AggregatedAspect[] = aspectKeys.map((key) => {
+    const data = aspectsMap[key] || { weight: 0, mentions: 0, negativeCount: 0 };
+    const negativeRate = data.mentions > 0 ? data.negativeCount / data.mentions : 0;
+    return {
+      key,
+      name: aspectLabels[key] || key,
+      weight: data.weight,
+      mentions: data.mentions,
+      negativeCount: data.negativeCount,
+      negativeRate,
+    };
+  });
+
+  const maxNegativeRate = Math.max(...derivedAspects.map((a) => a.negativeRate), 0);
+  const totalMentions = derivedAspects.reduce((acc, a) => acc + a.mentions, 0);
+  const totalWeight = derivedAspects.reduce((acc, a) => acc + a.weight, 0);
+
+  // Cálculo ponderado real da taxa agregada (P1-6)
+  const weightedNegativeRate =
+    totalWeight > 0
+      ? derivedAspects.reduce((acc, a) => acc + a.weight * a.negativeRate, 0) / totalWeight
+      : 0;
 
   return (
     <div className="space-y-6">
@@ -64,14 +101,14 @@ export default async function AtritosPage() {
             </span>
             <span className="text-border-dark">•</span>
             <Badge variant="outline" className="text-[11px] font-mono">
-              7 Aspectos • 7 Semestres ({frictionMap.length} Registros)
+              7 Aspectos • {semesters.length} Semestres ({frictionMap.length} Registros)
             </Badge>
           </div>
           <h1 className="text-2xl font-extrabold text-azul-navy tracking-tight mt-0.5">
             Mapa de Atritos e Sentimento por Aspecto
           </h1>
           <p className="text-sm text-text-secondary">
-            Categorização de insatisfações de 2024-S1 a 2026-S2 e matriz de pesos ponderados.
+            Categorização de insatisfações de {semesters[semesters.length - 1]} a {semesters[0]} e matriz de pesos ponderados.
           </p>
         </div>
       </div>
@@ -102,8 +139,8 @@ export default async function AtritosPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            {canonicalAspectWeights.map((asp) => {
-              const isWorst = asp.key === "resgate_milhas";
+            {derivedAspects.map((asp) => {
+              const isWorst = asp.negativeRate === maxNegativeRate && maxNegativeRate > 0;
               const pct = (asp.negativeRate * 100).toFixed(1);
 
               return (
@@ -149,32 +186,34 @@ export default async function AtritosPage() {
               <table className="w-full text-xs text-left">
                 <thead className="bg-muted text-azul-navy font-semibold uppercase">
                   <tr>
-                    <th className="p-2.5">Aspecto</th>
-                    <th className="p-2.5">Peso ($W_j$)</th>
-                    <th className="p-2.5">Menções</th>
-                    <th className="p-2.5">Negatividade</th>
+                    <th className="p-2.5 sticky left-0 bg-muted z-10 whitespace-nowrap">Aspecto</th>
+                    <th className="p-2.5 whitespace-nowrap">Peso Ponderado (W)</th>
+                    <th className="p-2.5 whitespace-nowrap">Menções</th>
+                    <th className="p-2.5 whitespace-nowrap">Negatividade</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border-subtle">
-                  {canonicalAspectWeights.map((row) => (
+                  {derivedAspects.map((row) => (
                     <tr key={row.key} className="hover:bg-muted/40 font-mono">
-                      <td className="p-2.5 font-sans font-medium text-text-primary">
+                      <td className="p-2.5 font-sans font-medium text-text-primary sticky left-0 bg-surface shadow-xs z-10 whitespace-nowrap">
                         {row.name}
                       </td>
-                      <td className="p-2.5 font-bold text-azul-action">
+                      <td className="p-2.5 font-bold text-azul-action whitespace-nowrap">
                         {row.weight.toFixed(4)} ({(row.weight * 100).toFixed(2)}%)
                       </td>
-                      <td className="p-2.5">{row.mentions}</td>
-                      <td className="p-2.5 font-bold text-magenta-cta">
+                      <td className="p-2.5 whitespace-nowrap">{row.mentions.toLocaleString("pt-BR")}</td>
+                      <td className="p-2.5 font-bold text-magenta-text whitespace-nowrap">
                         {(row.negativeRate * 100).toFixed(1)}%
                       </td>
                     </tr>
                   ))}
                   <tr className="bg-muted/60 font-bold font-mono border-t-2 border-border-dark">
-                    <td className="p-2.5 font-sans">Total Consolidado</td>
-                    <td className="p-2.5 text-azul-navy">{totalWeight.toFixed(4)} (100,00%)</td>
-                    <td className="p-2.5">{totalMentions}</td>
-                    <td className="p-2.5 text-azul-navy">66,2%</td>
+                    <td className="p-2.5 font-sans sticky left-0 bg-muted/60 shadow-xs z-10 whitespace-nowrap">Total Consolidado</td>
+                    <td className="p-2.5 text-azul-navy whitespace-nowrap">{totalWeight.toFixed(4)} (100,00%)</td>
+                    <td className="p-2.5 whitespace-nowrap">{totalMentions.toLocaleString("pt-BR")}</td>
+                    <td className="p-2.5 text-azul-navy whitespace-nowrap">
+                      {(weightedNegativeRate * 100).toFixed(1)}%
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -188,10 +227,10 @@ export default async function AtritosPage() {
         <CardHeader>
           <CardTitle className="text-base font-bold text-azul-navy flex items-center gap-2">
             <Calendar className="h-4 w-4 text-azul-action" />
-            Matriz Semestral de Sentimento Negativo (2024-S1 a 2026-S2)
+            Matriz Semestral de Sentimento Negativo ({semesters[semesters.length - 1]} a {semesters[0]})
           </CardTitle>
           <CardDescription>
-            49 medições semestrais dos índices de insatisfação monitorados continuamente no programa.
+            {frictionMap.length} medições semestrais dos índices de insatisfação monitorados continuamente no programa.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -199,20 +238,27 @@ export default async function AtritosPage() {
             <table className="w-full text-xs text-center border-collapse">
               <thead>
                 <tr className="bg-muted text-azul-navy font-semibold uppercase">
-                  <th className="p-2.5 text-left">Aspecto</th>
+                  <th className="p-2.5 text-left sticky left-0 bg-muted z-10 whitespace-nowrap">Aspecto</th>
                   {semesters.map((s) => (
-                    <th key={s} className="p-2.5">{s}</th>
+                    <th key={s} className="p-2.5 whitespace-nowrap">{s}</th>
                   ))}
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle">
                 {Object.keys(aspectLabels).map((key) => (
                   <tr key={key} className="hover:bg-muted/40">
-                    <td className="p-2.5 text-left font-semibold text-azul-navy">
-                      {aspectLabels[key]}
+                    <td className="p-2.5 text-left font-semibold text-azul-navy sticky left-0 bg-surface shadow-xs z-10 whitespace-nowrap">
+                      {aspectLabels[key] || key}
                     </td>
                     {semesters.map((sem) => {
-                      const rate = matrix[key]?.[sem] ?? 0.6;
+                      const rate = matrix[key]?.[sem];
+                      if (rate === undefined || rate === null) {
+                        return (
+                          <td key={sem} className="p-2.5 font-mono text-text-muted">
+                            -
+                          </td>
+                        );
+                      }
                       const pct = (rate * 100).toFixed(1);
                       const isHigh = rate >= 0.70;
 

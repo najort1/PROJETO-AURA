@@ -8,6 +8,7 @@
   --color-azul-deep: #033774;
   --color-azul-navy: #0B3558;
   --color-magenta-cta: #E832A5;
+  --color-magenta-text: #B81D7D;
   --color-lime-campaign: #D8ED00;
 
   /* Superfícies e Canvas */
@@ -19,7 +20,7 @@
   /* Tipografia */
   --color-text-primary: #1E2A30;
   --color-text-secondary: #5E6F7A;
-  --color-text-muted: #8A99A2;
+  --color-text-muted: #657782;
 
   /* Tiers Oficiais Azul */
   --color-tier-azul-bg: #9AE0E8;
@@ -28,7 +29,7 @@
   --color-tier-topazio-bg: #39B4DB;
   --color-tier-topazio-text: #073C62;
   --color-tier-topazio-border: #2DA6D4;
-  --color-tier-safira-bg: #147FB8;
+  --color-tier-safira-bg: #0F74A8;
   --color-tier-safira-text: #FFFFFF;
   --color-tier-safira-border: #08648F;
   --color-tier-diamante-bg: #064C82;

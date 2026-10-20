@@ -192,7 +192,7 @@ export function CommandMenu({ open: externalOpen, onOpenChange }: CommandMenuPro
                   <TierBadge tier={c.tier} showNewBadge={false} className="text-[10px] py-0 px-1" />
                   <span className="text-xs text-text-secondary">{c.persona}</span>
                 </div>
-                <span className="font-mono text-xs font-bold text-magenta-cta">
+                <span className="font-mono text-xs font-bold text-magenta-text">
                   VaR R${" "}
                   {c.valor_em_risco.toLocaleString("pt-BR", {
                     minimumFractionDigits: 2,
@@ -278,7 +278,7 @@ export function CommandMenu({ open: externalOpen, onOpenChange }: CommandMenuPro
           <CommandItem
             onSelect={() => runCommand(() => router.push("/cliente-360?id=C038454"))}
           >
-            <span className="font-mono text-xs font-bold text-magenta-cta mr-2">C038454</span>
+            <span className="font-mono text-xs font-bold text-magenta-text mr-2">C038454</span>
             <span>Topázio • Top 1 VaR (R$ 3.109,29) • Eventual Ascendente</span>
             <CommandShortcut>Enter</CommandShortcut>
           </CommandItem>
@@ -291,7 +291,7 @@ export function CommandMenu({ open: externalOpen, onOpenChange }: CommandMenuPro
           <CommandItem
             onSelect={() => runCommand(() => router.push("/cliente-360?id=C044129"))}
           >
-            <span className="font-mono text-xs font-bold text-azul-primary mr-2">C044129</span>
+            <span className="font-mono text-xs font-bold text-azul-action mr-2">C044129</span>
             <span>Topázio • Eventual Ascendente • CLV R$ 1.214,15</span>
           </CommandItem>
         </CommandGroup>

@@ -8,7 +8,9 @@ export type GlossaryTermKey =
   | 'regra_4_5'
   | 'hitl'
   | 'art_20_lgpd'
-  | 'nba';
+  | 'nba'
+  | 'gini'
+  | 'lorenz';
 
 export interface GlossaryTerm {
   key: GlossaryTermKey;
@@ -83,7 +85,7 @@ export const GLOSSARY: Record<GlossaryTermKey, GlossaryTerm> = {
     shortDefinition:
       'Agrupamento analítico em 6 arquétipos com base em padrões de viagem, sensibilidade a preço e engajamento com o programa.',
     details:
-      'Segmenta os 50.000 clientes em: Executivo Frequente, Viajante a Lazer, Maximizador de Pontos, Conector Regional, Ascendente Oportunista e Sensível a Preço, orientando playbooks de intervenção customizados.',
+      'Segmenta os 50.000 clientes em: Executivo Recorrente, Lazer Premium, Maximizador de Milhas, Regional Dependente, Eventual Ascendente e Eventual Promocional, orientando playbooks de intervenção customizados.',
     link: '/personas',
   },
   regra_4_5: {
@@ -126,6 +128,28 @@ export const GLOSSARY: Record<GlossaryTermKey, GlossaryTerm> = {
     details:
       'Cada ação gerada possui ID rastreável, probabilidade de aceitação calculada, canal ótimo (WhatsApp, e-mail, push, telefone), cálculo de custo unitário e verificação factual ancorada nas regras do programa (RAG Fact-Checking).',
     link: '/agente',
+  },
+  gini: {
+    key: 'gini',
+    title: 'Coeficiente de Gini (Concentração de Receita)',
+    category: 'Métricas Financeiras & Desigualdade',
+    shortDefinition:
+      'Medida estatística de assimetria e concentração da receita de CLV entre os clientes da carteira (varia de 0 a 1).',
+    details:
+      'Um índice de 0 representa perfeita igualdade distributiva (cada cliente contribui identicamente para o CLV), enquanto 1 indica concentração máxima em um único cliente. Calculado numericamente pela área entre a reta de 45° e a Curva de Lorenz via regra do trapézio.',
+    formula: 'Gini = 1 - 2 × ∫_0^1 L(p) dp = 1 - 2 × Área(Lorenz)',
+    link: '/carteira',
+  },
+  lorenz: {
+    key: 'lorenz',
+    title: 'Curva de Lorenz (Curva de Pareto da Carteira)',
+    category: 'Distribuição & Concentração',
+    shortDefinition:
+      'Representação gráfica da fração acumulada de receita de CLV em função do percentil acumulado de clientes.',
+    details:
+      'Ordena os clientes do menor ao maior CLV para evidenciar a assimetria da carteira. Permite visualizar diretamente o princípio de Pareto (onde o Top 20% mais valioso concentra a vasta maioria do valor gerado).',
+    formula: 'L(p) = (∫_0^p Q(t) dt) / (∫_0^1 Q(t) dt)',
+    link: '/carteira',
   },
 };
 
