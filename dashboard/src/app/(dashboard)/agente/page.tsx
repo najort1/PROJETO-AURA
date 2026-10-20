@@ -1,13 +1,9 @@
 import * as React from "react";
 import {
   Bot,
-  ShieldCheck,
   ShieldAlert,
-  Sparkles,
   Send,
   Layers,
-  BookOpen,
-  CheckCircle2,
   Phone,
   Mail,
   MessageSquare,
@@ -22,7 +18,6 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import {
   getKanbanBoard,
   getAgentRecommendations,
@@ -35,11 +30,24 @@ export const metadata = {
   description: "Recomendações NBA, citações formais RAG e esteira de retenção Kanban",
 };
 
-export default async function AgentePage() {
+interface AgentePageProps {
+  searchParams?: Promise<{ customer_id?: string; filter?: string }>;
+}
+
+export default async function AgentePage({ searchParams }: AgentePageProps) {
+  const resolvedParams = searchParams ? await searchParams : {};
+  const targetCustomerId = resolvedParams.customer_id?.trim();
   const [kanbanBoard, recommendations] = await Promise.all([
-    getKanbanBoard(),
+    getKanbanBoard(targetCustomerId),
     getAgentRecommendations(),
   ]);
+
+  const targetUpper = targetCustomerId ? targetCustomerId.toUpperCase() : null;
+  const hasTargetCard = targetUpper
+    ? Object.values(kanbanBoard.columns).some((col) =>
+        col.some((c) => c.customer_id.toUpperCase() === targetUpper)
+      )
+    : false;
 
   // Exemplo em destaque de NBA com citação de regulamento
   const featuredRec =
@@ -201,8 +209,23 @@ export default async function AgentePage() {
           </div>
         </div>
 
-        {/* Quadro Interativo */}
-        <KanbanBoard initialState={kanbanBoard} />
+        {/* Banner Informativo honesto quando o cliente pesquisado não possuir recomendação ativa */}
+        {targetCustomerId && !hasTargetCard && (
+          <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-amber-50 border border-amber-300 text-xs text-amber-900 shadow-xs">
+            <ShieldAlert className="size-4 text-amber-700 shrink-0" aria-hidden="true" />
+            <span>
+              Cliente <strong>{targetCustomerId}</strong> não possui recomendação ativa na esteira de retenção.
+            </span>
+          </div>
+        )}
+
+        {/* Quadro Interativo com chave estável para sincronização imediata de deep link/filtro (B4 & B9) */}
+        <KanbanBoard
+          key={`${resolvedParams.filter || ""}_${hasTargetCard ? resolvedParams.customer_id || "" : "sem_card"}`}
+          initialState={kanbanBoard}
+          initialCustomerId={hasTargetCard ? resolvedParams.customer_id : ""}
+          initialFilter={resolvedParams.filter}
+        />
       </div>
     </div>
   );

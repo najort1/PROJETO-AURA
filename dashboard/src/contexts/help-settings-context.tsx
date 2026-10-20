@@ -51,14 +51,17 @@ export function HelpSettingsProvider({ children }: { children: React.ReactNode }
     });
   }, []);
 
+  const value = React.useMemo(
+    () => ({
+      showTooltips: isMounted ? showTooltips : true,
+      toggleTooltips,
+      setShowTooltips,
+    }),
+    [isMounted, showTooltips, toggleTooltips, setShowTooltips]
+  );
+
   return (
-    <HelpSettingsContext.Provider
-      value={{
-        showTooltips: isMounted ? showTooltips : true,
-        toggleTooltips,
-        setShowTooltips,
-      }}
-    >
+    <HelpSettingsContext.Provider value={value}>
       {children}
     </HelpSettingsContext.Provider>
   );

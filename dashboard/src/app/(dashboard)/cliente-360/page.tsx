@@ -1,19 +1,22 @@
 import * as React from "react";
 import Link from "next/link";
 import {
-  UserCheck,
   Search,
-  ShieldAlert,
+  ShieldCheck,
   Calendar,
-  BarChart2,
   Plane,
   AlertTriangle,
   Coins,
   Award,
   ArrowRight,
+  ArrowLeft,
+  UserX,
+  Info,
+  Clock,
+  Sparkles,
+  Compass,
+  AlertCircle,
   TrendingUp,
-  TrendingDown,
-  DollarSign,
 } from "lucide-react";
 import {
   Card,
@@ -26,12 +29,19 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { TierBadge } from "@/components/branding/tier-badge";
 import {
-  getCustomersScores,
-  getCustomerTimeline,
-  getClvShap,
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import {
+  getCustomerById,
+  getTopCustomersByVar,
+  getTimelineByCustomerId,
+  getClvShapById,
 } from "@/lib/data/reader";
 import { formatShapFactor } from "@/lib/data/shap-translations";
 import { ShapWaterfall } from "@/components/charts/shap-waterfall";
+import { CustomerSearchCombobox } from "@/components/customers/customer-search-combobox";
 import type { ShapFactorTranslated } from "@/types/analytics";
 import { TermHelp } from "@/components/help/term-help";
 
@@ -41,35 +51,133 @@ export const metadata = {
 };
 
 interface PageProps {
-  searchParams: Promise<{ id?: string; persona?: string }>;
+  searchParams: Promise<{ id?: string }>;
 }
 
 export default async function Cliente360Page({ searchParams }: PageProps) {
   const resolvedParams = await searchParams;
-  const requestedId = resolvedParams.id?.trim().toUpperCase();
+  const rawId = resolvedParams.id?.trim();
+  const requestedId = rawId ? rawId.toUpperCase() : undefined;
 
-  const [allCustomers, allShap] = await Promise.all([
-    getCustomersScores(),
-    getClvShap(),
-  ]);
+  // Top 5 Clientes Prioritários para atalhos do Combobox (cache O(1))
+  const top5VarShortcuts = await getTopCustomersByVar(5);
+  const fallbackCustomer = top5VarShortcuts[0];
 
-  // Ordena por maior VaR por padrão
-  const sortedByVar = [...allCustomers].sort(
-    (a, b) => b.valor_em_risco - a.valor_em_risco
-  );
+  // Caso 1: ID requisitado na URL, mas não existe na base analítica (P0-3)
+  if (requestedId) {
+    const customerMatch = await getCustomerById(requestedId);
 
-  // Cliente selecionado (padrão C038454 - Top 1 VaR)
-  const currentCustomer =
-    (requestedId && allCustomers.find((c) => c.customer_id === requestedId)) ||
-    sortedByVar[0];
+    if (!customerMatch) {
+      return (
+        <div className="space-y-6">
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-subtle pb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-azul-primary">
+                  Módulo 03
+                </span>
+                <span className="text-border-dark">•</span>
+                <Badge variant="outline" className="text-[11px] font-mono">
+                  Auditoria Granular 50k
+                </Badge>
+              </div>
+              <h1 className="text-2xl font-extrabold text-azul-navy tracking-tight mt-0.5 flex items-center gap-2">
+                <span>Cliente 360 e Explicabilidade SHAP</span>
+                <TermHelp term="shap" />
+              </h1>
+              <p className="text-sm text-text-secondary">
+                Decomposição de fatores preditivos LightGBM e linha do tempo com guardrail anti-vazamento.
+              </p>
+            </div>
+          </div>
 
-  const customerId = currentCustomer?.customer_id || "C038454";
+          {/* Combobox de Busca Rápida Funcional */}
+          <Card className="shadow-2xs border-border-subtle">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-bold text-azul-navy flex items-center justify-between">
+                <span className="flex items-center gap-2">
+                  <Search className="h-4 w-4 text-azul-action" />
+                  Pesquisa de Clientes no Cockpit
+                </span>
+                <span className="text-xs text-text-muted font-normal">
+                  50.000 clientes na base
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CustomerSearchCombobox topCustomers={top5VarShortcuts} />
+            </CardContent>
+          </Card>
 
-  // Busca timeline com guardrail <= 2025-08-31
-  const timeline = await getCustomerTimeline(customerId);
+          {/* Estado Explícito de Cliente Não Localizado (P0-3) */}
+          <Card className="border-border-subtle shadow-xs">
+            <CardContent className="p-12 text-center">
+              <div className="flex flex-col items-center justify-center gap-4 max-w-lg mx-auto">
+                <div className="p-4 bg-muted/70 text-text-secondary rounded-full border border-border-subtle">
+                  <UserX className="h-10 w-10 text-azul-navy" />
+                </div>
+                <div className="space-y-2">
+                  <Badge
+                    variant="outline"
+                    className="text-xs font-mono text-text-muted border-border-subtle"
+                  >
+                    Identificador Não Encontrado
+                  </Badge>
+                  <h2 className="text-xl font-bold text-azul-navy">
+                    Cliente &quot;{requestedId}&quot; não localizado na base
+                  </h2>
+                  <p className="text-xs text-text-secondary leading-relaxed">
+                    O identificador <strong className="font-mono text-azul-navy">{requestedId}</strong> não corresponde a nenhum dos 50.000 clientes da coorte calibrada ativa. Por segurança regulatória e privacidade LGPD, nenhum dado de terceiro é exibido.
+                  </p>
+                </div>
 
-  // Busca SHAP do cliente
-  const shapRecord = allShap.find((s) => s.customer_id === customerId);
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="text-xs gap-1.5 cursor-pointer text-azul-navy"
+                  >
+                    <Link href="/clientes">
+                      <ArrowLeft className="h-3.5 w-3.5" />
+                      <span>Voltar para a Base de Clientes</span>
+                    </Link>
+                  </Button>
+                  {fallbackCustomer && (
+                    <Button
+                      asChild
+                      variant="primary"
+                      size="sm"
+                      className="text-xs gap-1.5 cursor-pointer"
+                    >
+                      <Link href={`/cliente-360?id=${fallbackCustomer.customer_id}`}>
+                        <span>Ver Top 1 Risco ({fallbackCustomer.customer_id})</span>
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+  }
+
+  // Caso 2: Cliente encontrado ou acesso sem parâmetro id (Top 1 VaR por padrão)
+  const currentCustomer = requestedId
+    ? (await getCustomerById(requestedId))!
+    : fallbackCustomer;
+
+  const customerId = currentCustomer.customer_id;
+
+  // Busca timeline com guardrail <= 2025-08-31 via Map indexado O(1)
+  const timeline = await getTimelineByCustomerId(customerId);
+
+  // Busca SHAP do cliente via Map indexado O(1)
+  const shapRecord = await getClvShapById(customerId);
   const shapFactors: ShapFactorTranslated[] = [];
 
   if (shapRecord) {
@@ -102,9 +210,6 @@ export default async function Cliente360Page({ searchParams }: PageProps) {
     }
   }
 
-  // Top 10 Clientes Prioritários para Seleção Rápida
-  const top10Var = sortedByVar.slice(0, 10);
-
   // Formatação de valores
   const varFormatted = currentCustomer.valor_em_risco.toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
@@ -114,6 +219,19 @@ export default async function Cliente360Page({ searchParams }: PageProps) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
+
+  // Oportunidades & Alavancas CRM (P2-10)
+  const hasExpiringPoints = currentCustomer.pontos_expirando_30d > 0;
+  const hasGoalProgress = currentCustomer.meta_proximo_nivel_pct > 0;
+  const hasUnusedBenefit = Boolean(currentCustomer.beneficio_nao_utilizado);
+  const hasFavoriteRoute = Boolean(currentCustomer.rota_favorita);
+  const hasFriction = Boolean(currentCustomer.atritos_dominantes);
+  const hasAnyOpportunity =
+    hasExpiringPoints ||
+    hasGoalProgress ||
+    hasUnusedBenefit ||
+    hasFavoriteRoute ||
+    hasFriction;
 
   return (
     <div className="space-y-6">
@@ -139,41 +257,39 @@ export default async function Cliente360Page({ searchParams }: PageProps) {
         </div>
       </div>
 
-      {/* Seletor Rápido de Clientes em Risco Crítico */}
-      <Card>
+      {/* Seletor Rápido de Clientes via Combobox Funcional (P1-3) */}
+      <Card className="shadow-2xs border-border-subtle">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-bold text-azul-navy flex items-center justify-between">
             <span className="flex items-center gap-2">
               <Search className="h-4 w-4 text-azul-action" />
-              Seleção Rápida de Clientes Prioritários (Top Valor em Risco)
+              Seleção Rápida e Busca no Cockpit 360°
             </span>
             <span className="text-xs text-text-muted font-normal">
-              Mostrando os 10 maiores riscos da carteira
+              50.000 clientes calibrados
             </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-2">
-            {top10Var.map((c, idx) => (
-              <Link
-                key={c.customer_id}
-                href={`/cliente-360?id=${c.customer_id}`}
-                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-mono transition-all ${
-                  c.customer_id === customerId
-                    ? "border-azul-action bg-azul-action text-white font-bold shadow-xs"
-                    : "border-border-subtle bg-muted/40 hover:bg-muted text-azul-navy"
-                }`}
-              >
-                <span>{c.customer_id}</span>
-                <span className={c.customer_id === customerId ? "text-lime-campaign" : "text-magenta-cta"}>
-                  R$ {c.valor_em_risco.toLocaleString("pt-BR", { maximumFractionDigits: 0 })}
-                </span>
-                {idx === 0 && <span className="text-[10px] bg-magenta-cta text-white px-1 rounded">Top 1</span>}
-              </Link>
-            ))}
-          </div>
+          <CustomerSearchCombobox
+            currentCustomerId={currentCustomer.customer_id}
+            topCustomers={top5VarShortcuts}
+          />
         </CardContent>
       </Card>
+
+      {/* Nota Contextual quando acessado sem ?id (P0-3) */}
+      {!requestedId && (
+        <div className="flex items-center gap-2.5 p-3 rounded-lg border border-azul-action/25 bg-azul-action/5 text-xs text-azul-navy shadow-2xs">
+          <Info className="h-4 w-4 text-azul-action shrink-0" />
+          <span>
+            <strong>Exibindo cliente com maior Valor em Risco por padrão</strong> (
+            <span className="font-mono font-bold">{currentCustomer.customer_id}</span> •
+            VaR: <span className="font-mono font-bold text-magenta-text">R$ {varFormatted}</span>
+            ). Para inspecionar outro perfil, digite o ID no campo de busca acima.
+          </span>
+        </div>
+      )}
 
       {/* Cartão Principal do Cliente 360 */}
       <Card className="border-t-4 border-t-azul-action shadow-xs">
@@ -184,7 +300,8 @@ export default async function Cliente360Page({ searchParams }: PageProps) {
                 {currentCustomer.customer_id}
               </span>
               <TierBadge tier={currentCustomer.tier} />
-              {currentCustomer.customer_id === "C038454" && (
+              {/* Badge Top 1 VaR Dinâmico (P3-7) */}
+              {currentCustomer.customer_id === fallbackCustomer?.customer_id && (
                 <Badge variant="destructive" className="font-bold">
                   Top 1 VaR da Carteira
                 </Badge>
@@ -204,7 +321,7 @@ export default async function Cliente360Page({ searchParams }: PageProps) {
                 <span>Valor em Risco (VaR)</span>
                 <TermHelp term="var" />
               </span>
-              <span className="font-mono text-xl font-extrabold text-magenta-cta">
+              <span className="font-mono text-xl font-extrabold text-magenta-text">
                 R$ {varFormatted}
               </span>
             </div>
@@ -252,6 +369,122 @@ export default async function Cliente360Page({ searchParams }: PageProps) {
             </div>
           </div>
 
+          {/* Bloco Oportunidades de Retenção & Alavancas CRM (P2-10) */}
+          <div className="rounded-lg border border-border-subtle bg-surface p-4 shadow-2xs space-y-3">
+            <div className="flex items-center justify-between border-b border-border-subtle pb-2">
+              <h3 className="text-sm font-bold text-azul-navy flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-azul-action" />
+                <span>Oportunidades de Retenção &amp; Alavancas CRM</span>
+              </h3>
+              <Badge variant="outline" className="text-[10px] font-sans">
+                Insights Acionáveis
+              </Badge>
+            </div>
+
+            {!hasAnyOpportunity ? (
+              <div className="py-4 text-center text-xs text-text-muted">
+                Nenhuma pendência crítica ou benefício desativado para este cliente no momento.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
+                {/* Alerta de Pontos Expirando */}
+                {hasExpiringPoints && (
+                  <div className="rounded-md border border-magenta-cta/30 bg-magenta-cta/5 p-3 space-y-1">
+                    <div className="flex items-center gap-1.5 text-magenta-text font-bold">
+                      <Clock className="h-3.5 w-3.5" />
+                      <span>Pontos Expirando (30 dias)</span>
+                    </div>
+                    <p className="font-mono text-base font-extrabold text-magenta-text">
+                      {currentCustomer.pontos_expirando_30d.toLocaleString("pt-BR")}{" "}
+                      <span className="text-xs font-normal font-sans">pts</span>
+                    </p>
+                    <p className="text-[11px] text-text-secondary leading-tight">
+                      Recomenda-se oferta imediata de resgate ou upgrade para evitar atrito de perda de saldo.
+                    </p>
+                  </div>
+                )}
+
+                {/* Progresso de Nível de Categoria */}
+                {hasGoalProgress && (
+                  <div className="rounded-md border border-azul-action/30 bg-azul-action/5 p-3 space-y-1.5">
+                    <div className="flex items-center justify-between text-azul-navy font-bold">
+                      <span className="flex items-center gap-1.5">
+                        <TrendingUp className="h-3.5 w-3.5 text-azul-action" />
+                        <span>Meta Próximo Nível</span>
+                      </span>
+                      <span className="font-mono text-azul-action">
+                        {(currentCustomer.meta_proximo_nivel_pct * 100).toFixed(0)}%
+                      </span>
+                    </div>
+                    {/* Barra de Progresso */}
+                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-azul-action rounded-full transition-all"
+                        style={{
+                          width: `${Math.min(
+                            100,
+                            currentCustomer.meta_proximo_nivel_pct * 100
+                          )}%`,
+                        }}
+                      />
+                    </div>
+                    <p className="text-[11px] text-text-secondary leading-tight">
+                      Saldo atual de {currentCustomer.saldo_pontos.toLocaleString("pt-BR")} pontos. Faltam poucos trechos para avançar de tier.
+                    </p>
+                  </div>
+                )}
+
+                {/* Benefício Não Utilizado */}
+                {hasUnusedBenefit && (
+                  <div className="rounded-md border border-border-subtle bg-muted/30 p-3 space-y-1">
+                    <div className="flex items-center gap-1.5 text-azul-navy font-bold">
+                      <Award className="h-3.5 w-3.5 text-amber-500" />
+                      <span>Benefício Não Utilizado</span>
+                    </div>
+                    <p className="font-semibold text-text-primary">
+                      {currentCustomer.beneficio_nao_utilizado}
+                    </p>
+                    <p className="text-[11px] text-text-secondary leading-tight">
+                      Alavanca de ativação: incentivar o uso do benefício para fortalecer percepção de valor.
+                    </p>
+                  </div>
+                )}
+
+                {/* Rota Preferencial */}
+                {hasFavoriteRoute && (
+                  <div className="rounded-md border border-border-subtle bg-muted/30 p-3 space-y-1">
+                    <div className="flex items-center gap-1.5 text-azul-navy font-bold">
+                      <Compass className="h-3.5 w-3.5 text-azul-action" />
+                      <span>Rota Preferencial</span>
+                    </div>
+                    <p className="font-mono font-bold text-azul-navy">
+                      {currentCustomer.rota_favorita}
+                    </p>
+                    <p className="text-[11px] text-text-secondary leading-tight">
+                      Canal ótimo para campanhas personalizadas de assento Espaço Azul e antecipação de voo.
+                    </p>
+                  </div>
+                )}
+
+                {/* Atrito Dominante */}
+                {hasFriction && (
+                  <div className="rounded-md border border-border-subtle bg-muted/30 p-3 space-y-1">
+                    <div className="flex items-center gap-1.5 text-azul-navy font-bold">
+                      <AlertCircle className="h-3.5 w-3.5 text-magenta-text" />
+                      <span>Atrito Dominante</span>
+                    </div>
+                    <p className="font-semibold text-text-primary">
+                      {currentCustomer.atritos_dominantes}
+                    </p>
+                    <p className="text-[11px] text-text-secondary leading-tight">
+                      Atenção especial no atendimento para neutralizar atritos passados nesta dimensão.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Gráfico Waterfall SHAP */}
           <div className="rounded-lg border border-border-subtle bg-surface p-4 shadow-2xs">
             <ShapWaterfall
@@ -261,17 +494,28 @@ export default async function Cliente360Page({ searchParams }: PageProps) {
             />
           </div>
 
-          {/* Linha do Tempo com Guardrail Temporal Estrito */}
+          {/* Linha do Tempo com Guardrail Temporal Estrito Reformulado (P2-9) */}
           <div className="space-y-3 pt-2">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border-subtle pb-2">
               <h3 className="text-sm font-bold text-azul-navy flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-azul-action" />
                 Linha do Tempo de Relacionamento (Histórico Auditado)
               </h3>
-              <div className="flex items-center gap-1.5 text-xs text-amber-800 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded">
-                <ShieldAlert className="h-3.5 w-3.5 text-amber-600" />
-                <span>Guardrail Ativo: Eventos estritamente &le; 2025-08-31</span>
-              </div>
+              {/* Badge Neutro Informativo com Tooltip de Conformidade (P2-9) */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="inline-flex items-center gap-1.5 text-xs text-text-secondary bg-muted/60 border border-border-subtle px-2.5 py-1 rounded-md cursor-help hover:bg-muted/90 transition-colors">
+                    <ShieldCheck className="h-3.5 w-3.5 text-azul-action shrink-0" />
+                    <span className="font-medium">
+                      Guardrail Temporal: Eventos até 31/08/2025
+                    </span>
+                    <Info className="h-3 w-3 text-text-muted" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs text-xs">
+                  Data de corte amostral estrito (31/08/2025) para conformidade algorítmica: garante a separação rigorosa entre treino e teste para prevenção de vazamento de dados futuros (anti-data leakage).
+                </TooltipContent>
+              </Tooltip>
             </div>
 
             {timeline.length === 0 ? (
@@ -286,7 +530,7 @@ export default async function Cliente360Page({ searchParams }: PageProps) {
                       case "voo":
                         return <Plane className="h-3.5 w-3.5 text-azul-action" />;
                       case "atrito":
-                        return <AlertTriangle className="h-3.5 w-3.5 text-magenta-cta" />;
+                        return <AlertTriangle className="h-3.5 w-3.5 text-magenta-text" />;
                       case "resgate":
                         return <Coins className="h-3.5 w-3.5 text-amber-500" />;
                       case "tier":

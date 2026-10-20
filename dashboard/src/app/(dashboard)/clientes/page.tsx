@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   Search,
+  Loader2,
   X,
   ArrowUpDown,
   ArrowUp,
@@ -28,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { TierBadge } from "@/components/branding/tier-badge";
 import { TermHelp } from "@/components/help/term-help";
 import { cn } from "@/lib/utils";
+import { formatDecimalBRL, formatIntegerBRL } from "@/lib/format";
 import type { CustomerScore } from "@/types/analytics";
 
 const PERSONA_LABELS: Record<string, { label: string; color: string }> = {
@@ -58,6 +60,28 @@ const PERSONA_OPTIONS = [
   { value: "eventual_promocional", label: "Eventual Promocional" },
 ];
 
+// Mapeamento bidirecional para normalização do filtro de Persona (Contrato P3 -> P2)
+const PERSONA_SLUG_MAP: Record<string, string> = {
+  executivo_recorrente: "executivo_recorrente",
+  lazer_premium: "lazer_premium",
+  maximizador_milhas: "maximizador_milhas",
+  regional_dependente: "regional_dependente",
+  eventual_ascendente: "eventual_ascendente",
+  eventual_promocional: "eventual_promocional",
+  "executivo recorrente": "executivo_recorrente",
+  "lazer premium": "lazer_premium",
+  "maximizador de milhas": "maximizador_milhas",
+  "regional dependente": "regional_dependente",
+  "eventual ascendente": "eventual_ascendente",
+  "eventual promocional": "eventual_promocional",
+};
+
+function normalizePersona(value?: string | null): string {
+  if (!value) return "";
+  const cleaned = value.trim().toLowerCase();
+  return PERSONA_SLUG_MAP[cleaned] || cleaned;
+}
+
 type SortField =
   | "customer_id"
   | "valor_em_risco"
@@ -80,18 +104,28 @@ function ClientesTableContent() {
     searchParams.get("tier") || ""
   );
   const [personaFilter, setPersonaFilter] = React.useState<string>(
-    searchParams.get("persona") || ""
+    normalizePersona(searchParams.get("persona"))
   );
   const [altoValorFilter, setAltoValorFilter] = React.useState<boolean>(
     searchParams.get("alto_valor") === "true"
   );
 
+  // Auxiliares defensivos de paginação contra NaN / valores não positivos (B1)
+  const parsePage = (val: string | null) => {
+    const parsed = parseInt(val || "1", 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+  };
+  const parsePageSize = (val: string | null) => {
+    const parsed = parseInt(val || "20", 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 20;
+  };
+
   // Estados da paginação e ordenação
   const [page, setPage] = React.useState<number>(
-    parseInt(searchParams.get("page") || "1", 10)
+    parsePage(searchParams.get("page"))
   );
   const [pageSize, setPageSize] = React.useState<number>(
-    parseInt(searchParams.get("page_size") || "20", 10)
+    parsePageSize(searchParams.get("page_size"))
   );
   const [sortBy, setSortBy] = React.useState<SortField>(
     (searchParams.get("sort_by") as SortField) || "valor_em_risco"
@@ -108,21 +142,73 @@ function ClientesTableContent() {
   const [error, setError] = React.useState<string | null>(null);
   const [retryTrigger, setRetryTrigger] = React.useState<number>(0);
 
-  // Debounce da busca textual (~300ms)
+  // Rastreamento para evitar reset espúrio de página no mount e back/forward (B8)
+  const isFirstSearchRender = React.useRef(true);
+  const prevDebouncedSearchRef = React.useRef(searchParams.get("search") || "");
+  const lastPushedQueryRef = React.useRef<string | null>(null);
+
+  // Sincronização estrita de estados com o histórico de navegação (P1-4: Back/Forward do browser)
   React.useEffect(() => {
+    const currentQuery = searchParams.toString();
+    // Se a alteração na URL foi disparada pelo próprio Effect #2 (local -> URL),
+    // o estado local já é a fonte da verdade: ignora para evitar ping-pong e re-renders espúrios.
+    if (lastPushedQueryRef.current !== null && lastPushedQueryRef.current === currentQuery) {
+      lastPushedQueryRef.current = null;
+      return;
+    }
+    lastPushedQueryRef.current = null;
+
+    const urlSearch = searchParams.get("search") || "";
+    const urlTier = searchParams.get("tier") || "";
+    const urlPersona = normalizePersona(searchParams.get("persona"));
+    const urlAltoValor = searchParams.get("alto_valor") === "true";
+    const urlPage = parsePage(searchParams.get("page"));
+    const urlPageSize = parsePageSize(searchParams.get("page_size"));
+    const urlSortBy =
+      (searchParams.get("sort_by") as SortField) || "valor_em_risco";
+    const urlSortOrder =
+      searchParams.get("sort_order") === "asc" ? "asc" : "desc";
+
+    setSearchInput((prev) => (prev !== urlSearch ? urlSearch : prev));
+    setDebouncedSearch((prev) => {
+      if (prev !== urlSearch) {
+        prevDebouncedSearchRef.current = urlSearch;
+        return urlSearch;
+      }
+      return prev;
+    });
+    setTierFilter((prev) => (prev !== urlTier ? urlTier : prev));
+    setPersonaFilter((prev) => (prev !== urlPersona ? urlPersona : prev));
+    setAltoValorFilter((prev) => (prev !== urlAltoValor ? urlAltoValor : prev));
+    setPage((prev) => (prev !== urlPage ? urlPage : prev));
+    setPageSize((prev) => (prev !== urlPageSize ? urlPageSize : prev));
+    setSortBy((prev) => (prev !== urlSortBy ? urlSortBy : prev));
+    setSortOrder((prev) => (prev !== urlSortOrder ? urlSortOrder : prev));
+  }, [searchParams]);
+
+  // Debounce da busca textual (~300ms) - apenas reseta página se o texto mudar de fato (B8)
+  React.useEffect(() => {
+    if (isFirstSearchRender.current) {
+      isFirstSearchRender.current = false;
+      return;
+    }
     const timer = setTimeout(() => {
-      setDebouncedSearch(searchInput.trim());
-      setPage(1); // Retorna à primeira página em nova busca
+      const trimmed = searchInput.trim();
+      setDebouncedSearch(trimmed);
+      if (trimmed !== prevDebouncedSearchRef.current) {
+        prevDebouncedSearchRef.current = trimmed;
+        setPage(1); // Retorna à primeira página somente quando a busca muda de fato
+      }
     }, 300);
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  // Clamp defensivo de página
+  // Clamp defensivo de página - apenas após carga da API para não resetar deep links válidos
   React.useEffect(() => {
-    if (totalPages > 0 && page > totalPages) {
+    if (!isLoading && totalPages > 0 && page > totalPages) {
       setPage(1);
     }
-  }, [totalPages, page]);
+  }, [isLoading, totalPages, page]);
 
   // Busca dados na API ao alterar filtros, ordenação ou página, com AbortController e Sincronização de URL
   React.useEffect(() => {
@@ -140,10 +226,20 @@ function ClientesTableContent() {
     params.set("sort_by", sortBy);
     params.set("sort_order", sortOrder);
 
-    // Sincroniza parâmetros na URL do navegador
-    router.replace(`?${params.toString()}`, { scroll: false });
+    const newQuery = params.toString();
+    const currentQuery =
+      typeof window !== "undefined"
+        ? window.location.search.replace(/^\?/, "")
+        : "";
 
-    fetch(`/api/customers?${params.toString()}`, { signal: controller.signal })
+    // Sincroniza parâmetros na URL apenas se houver diferença real,
+    // registrando no ref para que o Effect #1 ignore o evento subsequente
+    if (newQuery !== currentQuery) {
+      lastPushedQueryRef.current = newQuery;
+      router.replace(`?${newQuery}`, { scroll: false });
+    }
+
+    fetch(`/api/customers?${newQuery}`, { signal: controller.signal })
       .then((res) => {
         if (!res.ok) throw new Error("Falha ao buscar dados de clientes na API");
         return res.json();
@@ -165,7 +261,9 @@ function ClientesTableContent() {
       .catch((err) => {
         if (err.name !== "AbortError") {
           console.error("Erro na busca de clientes:", err);
-          setError(err.message || "Erro inesperado ao consultar a base de clientes.");
+          setError(
+            err.message || "Erro inesperado ao consultar a base de clientes."
+          );
         }
       })
       .finally(() => {
@@ -219,7 +317,9 @@ function ClientesTableContent() {
 
   const renderSortIcon = (field: SortField) => {
     if (sortBy !== field) {
-      return <ArrowUpDown className="h-3 w-3 opacity-30 group-hover:opacity-70 transition-opacity" />;
+      return (
+        <ArrowUpDown className="h-3 w-3 opacity-30 group-hover:opacity-70 transition-opacity" />
+      );
     }
     return sortOrder === "asc" ? (
       <ArrowUp className="h-3.5 w-3.5 text-azul-action font-bold" />
@@ -227,6 +327,8 @@ function ClientesTableContent() {
       <ArrowDown className="h-3.5 w-3.5 text-azul-action font-bold" />
     );
   };
+
+  const isDebouncing = searchInput.trim() !== debouncedSearch;
 
   return (
     <div className="space-y-6">
@@ -239,7 +341,7 @@ function ClientesTableContent() {
             </span>
             <span className="text-border-dark">•</span>
             <Badge variant="outline" className="text-[11px] font-mono bg-muted/50">
-              50.000 Registros Coorte Calibrada
+              Base Homologada
             </Badge>
           </div>
           <h1 className="text-2xl font-extrabold text-azul-navy tracking-tight mt-0.5 flex items-center gap-2">
@@ -247,7 +349,7 @@ function ClientesTableContent() {
             <span>Base Completa de Clientes</span>
           </h1>
           <p className="text-sm text-text-secondary">
-            Visão granular dos 50k clientes com filtros multicritério, ordenação por risco e acesso direto ao Cliente 360°.
+            Visão granular da carteira de clientes com filtros multicritério, ordenação por risco e acesso direto ao Cliente 360°.
           </p>
         </div>
 
@@ -258,7 +360,7 @@ function ClientesTableContent() {
               Total Encontrado
             </span>
             <span className="text-lg font-bold font-mono text-azul-navy">
-              {total.toLocaleString("pt-BR")}
+              {formatIntegerBRL(total)}
             </span>
           </div>
         </div>
@@ -268,10 +370,18 @@ function ClientesTableContent() {
       <Card className="shadow-xs border border-border-subtle">
         <CardContent className="p-4 space-y-3">
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
-            {/* Input de Busca Textual por ID */}
+            {/* Input de Busca Textual por ID com Micro-Feedback (P2-7 & P2-11) */}
             <div className="relative flex-1 min-w-[240px]">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted pointer-events-none" />
+              <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted">
+                {isDebouncing ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-azul-action" />
+                ) : (
+                  <Search className="h-4 w-4" />
+                )}
+              </div>
               <input
+                id="cliente-search-input"
+                name="search"
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
@@ -292,9 +402,11 @@ function ClientesTableContent() {
               )}
             </div>
 
-            {/* Dropdown de Categoria / Tier */}
+            {/* Dropdown de Categoria / Tier (P2-11) */}
             <div className="w-full sm:w-52">
               <select
+                id="cliente-tier-select"
+                name="tier"
                 value={tierFilter}
                 onChange={(e) => {
                   setTierFilter(e.target.value);
@@ -311,9 +423,11 @@ function ClientesTableContent() {
               </select>
             </div>
 
-            {/* Dropdown de Persona */}
+            {/* Dropdown de Persona Normalizado (P2-11 & Contrato P3 -> P2) */}
             <div className="w-full sm:w-56">
               <select
+                id="cliente-persona-select"
+                name="persona"
                 value={personaFilter}
                 onChange={(e) => {
                   setPersonaFilter(e.target.value);
@@ -354,14 +468,14 @@ function ClientesTableContent() {
               <span>Apenas Alto Valor (P90)</span>
             </button>
 
-            {/* Botão Limpar Filtros */}
+            {/* Botão Limpar Filtros com cor de alto contraste (P2-5) */}
             {hasActiveFilters && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={resetFilters}
                 aria-label="Limpar todos os filtros ativos"
-                className="h-9 px-2.5 text-xs text-magenta-cta hover:bg-magenta-cta/10 hover:text-magenta-cta cursor-pointer gap-1"
+                className="h-9 px-2.5 text-xs text-magenta-text hover:bg-magenta-cta/10 hover:text-magenta-text cursor-pointer gap-1"
               >
                 <X className="h-3.5 w-3.5" />
                 <span>Limpar</span>
@@ -377,8 +491,9 @@ function ClientesTableContent() {
           <table className="w-full text-xs text-left border-collapse">
             <thead className="bg-muted text-azul-navy font-semibold uppercase tracking-wider text-[11px] border-b border-border-subtle select-none">
               <tr>
+                {/* Coluna 1 Sticky com Fundo Sólido (P2-11) */}
                 <th
-                  className="p-3.5"
+                  className="p-3.5 sticky left-0 bg-muted z-20 border-r border-border-subtle shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)]"
                   aria-sort={
                     sortBy === "customer_id"
                       ? sortOrder === "asc"
@@ -409,6 +524,7 @@ function ClientesTableContent() {
                   </div>
                 </th>
 
+                {/* TermHelp à esquerda para preservar alinhamento numérico à direita (P3-5) */}
                 <th
                   className="p-3.5 text-right"
                   aria-sort={
@@ -420,6 +536,7 @@ function ClientesTableContent() {
                   }
                 >
                   <div className="flex items-center justify-end gap-1.5">
+                    <TermHelp term="var" />
                     <button
                       type="button"
                       onClick={() => handleSort("valor_em_risco")}
@@ -429,7 +546,6 @@ function ClientesTableContent() {
                       <span>VaR Total</span>
                       {renderSortIcon("valor_em_risco")}
                     </button>
-                    <TermHelp term="var" />
                   </div>
                 </th>
 
@@ -444,6 +560,7 @@ function ClientesTableContent() {
                   }
                 >
                   <div className="flex items-center justify-end gap-1.5">
+                    <TermHelp term="clv" />
                     <button
                       type="button"
                       onClick={() => handleSort("clv_12m_previsto")}
@@ -453,7 +570,6 @@ function ClientesTableContent() {
                       <span>CLV 12M</span>
                       {renderSortIcon("clv_12m_previsto")}
                     </button>
-                    <TermHelp term="clv" />
                   </div>
                 </th>
 
@@ -468,6 +584,7 @@ function ClientesTableContent() {
                   }
                 >
                   <div className="flex items-center justify-end gap-1.5">
+                    <TermHelp term="churn" />
                     <button
                       type="button"
                       onClick={() => handleSort("churn_prob")}
@@ -477,7 +594,6 @@ function ClientesTableContent() {
                       <span>Prob. Churn</span>
                       {renderSortIcon("churn_prob")}
                     </button>
-                    <TermHelp term="churn" />
                   </div>
                 </th>
 
@@ -492,6 +608,7 @@ function ClientesTableContent() {
                   }
                 >
                   <div className="flex items-center justify-end gap-1.5">
+                    <TermHelp term="score_av" />
                     <button
                       type="button"
                       onClick={() => handleSort("score_av")}
@@ -501,7 +618,6 @@ function ClientesTableContent() {
                       <span>Score AV</span>
                       {renderSortIcon("score_av")}
                     </button>
-                    <TermHelp term="score_av" />
                   </div>
                 </th>
 
@@ -511,10 +627,10 @@ function ClientesTableContent() {
 
             <tbody className="divide-y divide-border-subtle bg-surface">
               {isLoading ? (
-                // Skeleton Rows durante carregamento
-                Array.from({ length: Math.min(10, pageSize) }).map((_, idx) => (
+                // Skeleton Rows com pageSize linhas exatas (P3-4)
+                Array.from({ length: pageSize }).map((_, idx) => (
                   <tr key={idx} className="animate-pulse">
-                    <td className="p-3.5">
+                    <td className="p-3.5 sticky left-0 bg-surface z-10 border-r border-border-subtle">
                       <div className="h-4 w-20 bg-muted rounded" />
                     </td>
                     <td className="p-3.5">
@@ -545,7 +661,7 @@ function ClientesTableContent() {
                 <tr>
                   <td colSpan={8} className="p-12 text-center">
                     <div className="flex flex-col items-center justify-center gap-3 max-w-md mx-auto">
-                      <div className="p-3 bg-magenta-cta/10 text-magenta-cta rounded-full">
+                      <div className="p-3 bg-magenta-cta/10 text-magenta-text rounded-full">
                         <AlertCircle className="h-7 w-7" />
                       </div>
                       <div className="space-y-1">
@@ -596,9 +712,10 @@ function ClientesTableContent() {
                   </td>
                 </tr>
               ) : (
-                // Linhas da Tabela
+                // Linhas da Tabela Clicáveis com Acessibilidade (P2-8)
                 customers.map((c) => {
-                  const personaInfo = PERSONA_LABELS[c.persona] || {
+                  const normalizedCustomerPersona = normalizePersona(c.persona);
+                  const personaInfo = PERSONA_LABELS[normalizedCustomerPersona] || {
                     label: c.persona,
                     color: "#5E6F7A",
                   };
@@ -606,13 +723,34 @@ function ClientesTableContent() {
                   return (
                     <tr
                       key={c.customer_id}
-                      className="hover:bg-muted/40 transition-colors group"
+                      tabIndex={0}
+                      role="row"
+                      aria-label={`Inspecionar cliente ${c.customer_id}`}
+                      onClick={() =>
+                        router.push(
+                          `/cliente-360?id=${encodeURIComponent(c.customer_id)}`
+                        )
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          router.push(
+                            `/cliente-360?id=${encodeURIComponent(
+                              c.customer_id
+                            )}`
+                          );
+                        }
+                      }}
+                      className="hover:bg-muted/40 transition-colors group cursor-pointer focus:outline-none focus-visible:bg-muted/60 focus-visible:ring-1 focus-visible:ring-azul-action"
                     >
-                      {/* ID do Cliente */}
-                      <td className="p-3.5 font-mono">
+                      {/* ID do Cliente Sticky Left-0 com Fundo Sólido (P2-11) */}
+                      <td className="p-3.5 font-mono sticky left-0 bg-surface group-hover:bg-muted/40 z-10 border-r border-border-subtle shadow-[2px_0_4px_-2px_rgba(0,0,0,0.06)] transition-colors">
                         <div className="flex items-center gap-1.5">
                           <Link
-                            href={`/cliente-360?id=${c.customer_id}`}
+                            href={`/cliente-360?id=${encodeURIComponent(
+                              c.customer_id
+                            )}`}
+                            onClick={(e) => e.stopPropagation()}
                             className="font-bold text-azul-navy group-hover:text-azul-action transition-colors hover:underline"
                           >
                             {c.customer_id}
@@ -646,30 +784,22 @@ function ClientesTableContent() {
                         </div>
                       </td>
 
-                      {/* VaR Total */}
-                      <td className="p-3.5 text-right font-mono font-bold text-magenta-cta">
-                        R${" "}
-                        {c.valor_em_risco.toLocaleString("pt-BR", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
+                      {/* VaR Total com text-magenta-text de alto contraste (P2-5) */}
+                      <td className="p-3.5 text-right font-mono font-bold text-magenta-text">
+                        R$ {formatDecimalBRL(c.valor_em_risco)}
                       </td>
 
                       {/* CLV 12M */}
                       <td className="p-3.5 text-right font-mono font-semibold text-azul-action">
-                        R${" "}
-                        {c.clv_12m_previsto.toLocaleString("pt-BR", {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        })}
+                        R$ {formatDecimalBRL(c.clv_12m_previsto)}
                       </td>
 
-                      {/* Probabilidade de Churn */}
+                      {/* Probabilidade de Churn com text-magenta-text (P2-5) */}
                       <td className="p-3.5 text-right font-mono font-semibold">
                         <span
                           className={
                             c.churn_prob >= 0.5
-                              ? "text-magenta-cta"
+                              ? "text-magenta-text font-bold"
                               : c.churn_prob >= 0.3
                               ? "text-amber-600"
                               : "text-emerald-700"
@@ -687,7 +817,10 @@ function ClientesTableContent() {
                       {/* Ações */}
                       <td className="p-3.5 text-center">
                         <Link
-                          href={`/cliente-360?id=${c.customer_id}`}
+                          href={`/cliente-360?id=${encodeURIComponent(
+                            c.customer_id
+                          )}`}
+                          onClick={(e) => e.stopPropagation()}
                           className="inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-[11px] font-semibold text-azul-action hover:bg-accent transition-colors"
                         >
                           <span>Ver 360</span>
@@ -704,17 +837,21 @@ function ClientesTableContent() {
 
         {/* Rodapé de Paginação */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3.5 border-t border-border-subtle bg-muted/20 text-xs">
-          {/* Lado Esquerdo: Intervalo exibido e seletor de itens */}
+          {/* Lado Esquerdo: Intervalo exibido e seletor de itens com id/name (P2-11) */}
           <div className="flex items-center gap-4 text-text-secondary">
             <span>
               Mostrando <strong className="font-mono text-azul-navy">{total > 0 ? startIndex + 1 : 0}</strong> a{" "}
               <strong className="font-mono text-azul-navy">{endIndex}</strong> de{" "}
-              <strong className="font-mono text-azul-navy">{total.toLocaleString("pt-BR")}</strong> registros
+              <strong className="font-mono text-azul-navy">{formatIntegerBRL(total)}</strong> registros
             </span>
 
             <div className="flex items-center gap-1.5">
-              <span className="text-text-muted">Por página:</span>
+              <label htmlFor="cliente-pagesize-select" className="text-text-muted">
+                Por página:
+              </label>
               <select
+                id="cliente-pagesize-select"
+                name="page_size"
                 value={pageSize}
                 onChange={(e) => {
                   setPageSize(Number(e.target.value));
