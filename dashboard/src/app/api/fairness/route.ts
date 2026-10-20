@@ -20,17 +20,24 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({
-      data: metrics,
-      count: metrics.length,
-      compliance_summary: {
-        compliant_groups: compliantCount,
-        non_compliant_groups: nonCompliantCount,
-        excluded_groups: excludedFromDenomCount,
-        rule_threshold: 0.8,
-        disparity_rule: 'EEOC Four-Fifths Rule (29 CFR § 1607.4) / Art. 20 LGPD',
+    return NextResponse.json(
+      {
+        data: metrics,
+        count: metrics.length,
+        compliance_summary: {
+          compliant_groups: compliantCount,
+          non_compliant_groups: nonCompliantCount,
+          excluded_groups: excludedFromDenomCount,
+          rule_threshold: 0.8,
+          disparity_rule: 'EEOC Four-Fifths Rule (29 CFR § 1607.4) / Art. 20 LGPD',
+        },
       },
-    });
+      {
+        headers: {
+          'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+        },
+      }
+    );
   } catch (error: any) {
     console.error('Erro em /api/fairness:', error);
     return NextResponse.json(

@@ -103,7 +103,7 @@ async function runRouteTests() {
 
   // 9. Kanban Board
   console.log('\n--- Teste: GET /api/agent/kanban ---');
-  const resKanban = await getKanban();
+  const resKanban = await getKanban(createMockRequest('http://localhost:3000/api/agent/kanban'));
   const dataKanban = await resKanban.json();
   assert.ok(dataKanban.total_cards > 0);
   console.log('✅ /api/agent/kanban OK');

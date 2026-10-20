@@ -42,14 +42,21 @@ export async function GET() {
           : 0;
     }
 
-    return NextResponse.json({
-      data: rawList,
-      count: rawList.length,
-      aspect_weights: aspectWeights,
-      summary_by_aspect: summaryByAspect,
-      methodology_declaration:
-        'DECLARAÇÃO METODOLÓGICA — CORPUS SINTÉTICO (LGPD / TERMOS DE USO): As avaliações e menções analisadas foram geradas sinteticamente com calibração semântica e rotulagem por aspecto em PT-BR. Nenhum dado pessoal, perfil ou avaliação extraída sem autorização de plataformas terceiras é armazenado neste repositório.',
-    });
+    return NextResponse.json(
+      {
+        data: rawList,
+        count: rawList.length,
+        aspect_weights: aspectWeights,
+        summary_by_aspect: summaryByAspect,
+        methodology_declaration:
+          'DECLARAÇÃO METODOLÓGICA — CORPUS SINTÉTICO (LGPD / TERMOS DE USO): As avaliações e menções analisadas foram geradas sinteticamente com calibração semântica e rotulagem por aspecto em PT-BR. Nenhum dado pessoal, perfil ou avaliação extraída sem autorização de plataformas terceiras é armazenado neste repositório.',
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
+        },
+      }
+    );
   } catch (error: any) {
     console.error('Erro em /api/friction:', error);
     return NextResponse.json(

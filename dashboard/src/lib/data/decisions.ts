@@ -108,53 +108,145 @@ export async function recordDecision(input: {
     const filePath = getDecisionsFilePath();
     const dir = path.dirname(filePath);
     if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
+      await fs.promises.mkdir(dir, { recursive: true });
     }
 
     const line = JSON.stringify(validated) + '\n';
-    // Append síncrono atômico
-    fs.appendFileSync(filePath, line, { encoding: 'utf8' });
+    await fs.promises.appendFile(filePath, line, { encoding: 'utf8' });
+
+    // Coordenação cache/append: a leitura inicial de decisions.jsonl pode estar em voo
+    // com um snapshot capturado ANTES deste append. Aguardamos a MESMA promise de carga
+    // (loadDecisionsCache reutiliza loadPromise em voo; nunca dispara uma segunda leitura
+    // concorrente), garantindo que o cache exista ao final da gravação. Se o snapshot em
+    // voo for anterior ao append, o registro ainda não estará no cache e é inserido abaixo;
+    // se o snapshot já o incluir (leitura pós-append), a checagem de identidade da cabeça
+    // evita a inserção duplicada.
+    await loadDecisionsCache();
+
+    if (decisionsCache) {
+      const cleanId = fullRecord.customer_id.trim().toUpperCase();
+      const decisionsList = decisionsCache.decisions;
+      const head = decisionsList.length > 0 ? decisionsList[0] : null;
+      const alreadyAtHead =
+        head !== null &&
+        head.timestamp === fullRecord.timestamp &&
+        head.customer_id === fullRecord.customer_id &&
+        head.hash_signature === fullRecord.hash_signature;
+
+      if (!alreadyAtHead) {
+        decisionsList.unshift(fullRecord);
+        const list = decisionsCache.byCustomer.get(cleanId) || [];
+        list.unshift(fullRecord);
+        decisionsCache.byCustomer.set(cleanId, list);
+        if (cleanId !== fullRecord.customer_id) {
+          const rawList = decisionsCache.byCustomer.get(fullRecord.customer_id) || [];
+          rawList.unshift(fullRecord);
+          decisionsCache.byCustomer.set(fullRecord.customer_id, rawList);
+        }
+      }
+    }
 
     return fullRecord;
   });
 }
 
+// Cache em memória para evitar releitura e re-parse contínuos de decisions.jsonl
+interface DecisionsCache {
+  decisions: DecisionRecord[];
+  corrupted_lines: number[];
+  byCustomer: Map<string, DecisionRecord[]>;
+}
+
+let decisionsCache: DecisionsCache | null = null;
+let loadPromise: Promise<DecisionsCache> | null = null;
+
+export function _clearDecisionsCacheForTesting(): void {
+  decisionsCache = null;
+  loadPromise = null;
+}
+
+async function loadDecisionsCache(): Promise<DecisionsCache> {
+  if (decisionsCache) return decisionsCache;
+  if (loadPromise) return loadPromise;
+
+  loadPromise = (async () => {
+    const filePath = getDecisionsFilePath();
+    const decisions: DecisionRecord[] = [];
+    const corrupted_lines: number[] = [];
+    const byCustomer = new Map<string, DecisionRecord[]>();
+
+    try {
+      const content = await fs.promises.readFile(filePath, 'utf8');
+      const lines = content.split('\n');
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line) continue;
+        try {
+          const parsed = JSON.parse(line) as DecisionRecord;
+          decisions.push(parsed);
+        } catch (err) {
+          console.warn(`[WARN decisions.jsonl] Linha ${i + 1} corrompida ignorada na leitura:`, err);
+          corrupted_lines.push(i + 1);
+        }
+      }
+
+      // Ordena por data decrescente (mais recente primeiro) UMA VEZ no parse inicial
+      decisions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+      for (const d of decisions) {
+        const cleanId = d.customer_id.trim().toUpperCase();
+        let list = byCustomer.get(cleanId);
+        if (!list) {
+          list = [];
+          byCustomer.set(cleanId, list);
+        }
+        list.push(d);
+
+        if (d.customer_id !== cleanId) {
+          let rawList = byCustomer.get(d.customer_id);
+          if (!rawList) {
+            rawList = [];
+            byCustomer.set(d.customer_id, rawList);
+          }
+          rawList.push(d);
+        }
+      }
+    } catch (err: any) {
+      if (err.code !== 'ENOENT') {
+        console.error('Erro ao ler decisions.jsonl:', err);
+      }
+    }
+
+    decisionsCache = { decisions, corrupted_lines, byCustomer };
+    loadPromise = null;
+    return decisionsCache;
+  })();
+
+  return loadPromise;
+}
+
 /**
- * Lê o histórico de decisões em decisions.jsonl.
+ * Lê o histórico de decisões em decisions.jsonl com cache assíncrono em memória.
  * Protocolo Fail Loud: linhas corrompidas geram log explícito com número da linha.
  */
 export async function getRecordedDecisions(customerId?: string): Promise<{
   decisions: DecisionRecord[];
   corrupted_lines: number[];
 }> {
-  const filePath = getDecisionsFilePath();
-  const decisions: DecisionRecord[] = [];
-  const corrupted_lines: number[] = [];
+  const cached = await loadDecisionsCache();
 
-  if (!fs.existsSync(filePath)) {
-    return { decisions, corrupted_lines };
+  if (customerId) {
+    const cleanId = customerId.trim().toUpperCase();
+    const list = cached.byCustomer.get(cleanId) || cached.byCustomer.get(customerId) || [];
+    return {
+      decisions: [...list],
+      corrupted_lines: cached.corrupted_lines,
+    };
   }
 
-  const content = fs.readFileSync(filePath, 'utf8');
-  const lines = content.split('\n');
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    try {
-      const parsed = JSON.parse(line);
-      if (customerId && parsed.customer_id !== customerId) {
-        continue;
-      }
-      decisions.push(parsed as DecisionRecord);
-    } catch (err) {
-      console.warn(`[WARN decisions.jsonl] Linha ${i + 1} corrompida ignorada na leitura:`, err);
-      corrupted_lines.push(i + 1);
-    }
-  }
-
-  // Ordena por data decrescente (mais recente primeiro)
-  decisions.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-
-  return { decisions, corrupted_lines };
+  return {
+    decisions: [...cached.decisions],
+    corrupted_lines: cached.corrupted_lines,
+  };
 }

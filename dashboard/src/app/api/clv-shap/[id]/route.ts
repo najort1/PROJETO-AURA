@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getClvShap } from '@/lib/data/reader';
+import { getClvShapById } from '@/lib/data/reader';
 import { formatShapFactor } from '@/lib/data/shap-translations';
 
 export async function GET(
@@ -10,8 +10,7 @@ export async function GET(
     const { id } = await params;
     const customerId = id.toUpperCase();
 
-    const shapList = await getClvShap();
-    const record = shapList.find((s) => s.customer_id.toUpperCase() === customerId);
+    const record = await getClvShapById(customerId);
 
     if (!record) {
       return NextResponse.json(

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCustomersScores } from '@/lib/data/reader';
+import { getSortedCustomersByVar } from '@/lib/data/reader';
 
 export async function POST(request: NextRequest) {
   try {
@@ -10,10 +10,7 @@ export async function POST(request: NextRequest) {
     const efeitoAcao = Number(body.efeito_acao ?? 0.25);
     const margem = Number(body.margem ?? 0.22);
 
-    const customers = await getCustomersScores();
-    const sorted = [...customers].sort(
-      (a, b) => Number(b.valor_em_risco || 0) - Number(a.valor_em_risco || 0)
-    );
+    const sorted = await getSortedCustomersByVar();
 
     const nAlvo = Math.min(sorted.length, Math.floor(orcamento / Math.max(1, custoAcao)));
     const targetSlice = sorted.slice(0, nAlvo);

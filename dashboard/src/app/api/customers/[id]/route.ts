@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  getCustomersScores,
-  getAgentRecommendations,
-  getClvShap,
-  getCustomerTimeline,
+  getCustomerById,
+  getRecommendationByCustomerId,
+  getClvShapById,
+  getTimelineByCustomerId,
 } from '@/lib/data/reader';
 import { formatShapFactor } from '@/lib/data/shap-translations';
 
@@ -15,23 +15,19 @@ export async function GET(
     const { id } = await params;
     const customerId = id.toUpperCase();
 
-    const [customers, recommendations, shapList, timeline] = await Promise.all([
-      getCustomersScores(),
-      getAgentRecommendations(),
-      getClvShap(),
-      getCustomerTimeline(customerId),
+    const [customer, recommendation, shapRecord, timeline] = await Promise.all([
+      getCustomerById(customerId),
+      getRecommendationByCustomerId(customerId),
+      getClvShapById(customerId),
+      getTimelineByCustomerId(customerId),
     ]);
 
-    const customer = customers.find((c) => c.customer_id.toUpperCase() === customerId);
     if (!customer) {
       return NextResponse.json(
         { error: `Cliente não encontrado: ${customerId}` },
         { status: 404 }
       );
     }
-
-    const recommendation = recommendations.find((r) => r.customer_id.toUpperCase() === customerId) || null;
-    const shapRecord = shapList.find((s) => s.customer_id.toUpperCase() === customerId);
 
     const shapFactors = shapRecord
       ? [

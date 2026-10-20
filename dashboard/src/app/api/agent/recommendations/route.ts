@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAgentRecommendations } from '@/lib/data/reader';
+import {
+  getAgentRecommendations,
+  getAgentRecommendationsByHumanReview,
+} from '@/lib/data/reader';
+import type { AgentRecommendation } from '@/types/actions';
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,17 +14,20 @@ export async function GET(request: NextRequest) {
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const pageSize = Math.min(500, Math.max(1, parseInt(searchParams.get('page_size') || '50', 10)));
 
-    let list = await getAgentRecommendations();
+    let list: AgentRecommendation[];
+
+    if (humanReview !== null && humanReview !== undefined && humanReview !== '') {
+      const isHr = humanReview.toLowerCase() === 'true';
+      list = await getAgentRecommendationsByHumanReview(isHr);
+    } else {
+      list = await getAgentRecommendations();
+    }
 
     if (customerId) {
       list = list.filter((r) => r.customer_id.toUpperCase().includes(customerId));
     }
     if (actionId) {
       list = list.filter((r) => r.action_id === actionId);
-    }
-    if (humanReview !== null && humanReview !== undefined && humanReview !== '') {
-      const isHr = humanReview.toLowerCase() === 'true';
-      list = list.filter((r) => r.human_review === isHr);
     }
 
     const total = list.length;

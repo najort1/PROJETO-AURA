@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCustomersScores } from '@/lib/data/reader';
+import { getCustomersScores, getSortedCustomersByVar } from '@/lib/data/reader';
 import { CustomerScore } from '@/types/analytics';
 
 export async function GET(request: NextRequest) {
@@ -14,7 +14,11 @@ export async function GET(request: NextRequest) {
     const sortBy = (searchParams.get('sort_by') || 'valor_em_risco') as keyof CustomerScore;
     const sortOrder = searchParams.get('sort_order') === 'asc' ? 'asc' : 'desc';
 
-    let list = await getCustomersScores();
+    const isDefaultSort = sortBy === 'valor_em_risco' && sortOrder === 'desc';
+
+    let list = isDefaultSort
+      ? await getSortedCustomersByVar()
+      : await getCustomersScores();
 
     // Filtros
     if (search) {
@@ -39,19 +43,29 @@ export async function GET(request: NextRequest) {
       list = list.filter((c) => c.alto_valor === isAltoValor);
     }
 
-    // Ordenação
-    list = [...list].sort((a, b) => {
-      const valA = a[sortBy] ?? 0;
-      const valB = b[sortBy] ?? 0;
-      if (typeof valA === 'number' && typeof valB === 'number') {
-        return sortOrder === 'asc' ? valA - valB : valB - valA;
-      }
-      const strA = String(valA);
-      const strB = String(valB);
-      if (strA < strB) return sortOrder === 'asc' ? -1 : 1;
-      if (strA > strB) return sortOrder === 'asc' ? 1 : -1;
-      return 0;
-    });
+    // Ordenação dinâmica apenas quando diferente do default pré-ordenado em cache
+    if (!isDefaultSort) {
+      const sampleVal = list.length > 0 ? list[0][sortBy] : undefined;
+      const isNumeric = typeof sampleVal === 'number';
+
+      list = [...list].sort((a, b) => {
+        const valA = a[sortBy] ?? 0;
+        const valB = b[sortBy] ?? 0;
+        if (isNumeric) {
+          return sortOrder === 'asc'
+            ? (valA as number) - (valB as number)
+            : (valB as number) - (valA as number);
+        }
+        if (typeof valA === 'number' && typeof valB === 'number') {
+          return sortOrder === 'asc' ? valA - valB : valB - valA;
+        }
+        const strA = String(valA);
+        const strB = String(valB);
+        if (strA < strB) return sortOrder === 'asc' ? -1 : 1;
+        if (strA > strB) return sortOrder === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
 
     const total = list.length;
     const totalPages = Math.ceil(total / pageSize);

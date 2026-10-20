@@ -1,13 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCustomerTimeline } from '@/lib/data/reader';
+import { getTimelineByCustomerId } from '@/lib/data/reader';
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const customerId = searchParams.get('customer_id')?.trim().toUpperCase();
 
-    // getCustomerTimeline aplica estritamente o guardrail data <= '2025-08-31'
-    const events = await getCustomerTimeline(customerId);
+    if (!customerId) {
+      return NextResponse.json(
+        { error: 'Parâmetro obrigatório ausente: customer_id' },
+        { status: 400 }
+      );
+    }
+
+    // getTimelineByCustomerId aplica estritamente o guardrail data <= '2025-08-31'
+    const events = await getTimelineByCustomerId(customerId);
 
     return NextResponse.json({
       data: events,

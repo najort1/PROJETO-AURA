@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAgentRecommendations } from '@/lib/data/reader';
+import { getRecommendationByCustomerId } from '@/lib/data/reader';
 
 export async function GET(
   _request: NextRequest,
@@ -9,8 +9,7 @@ export async function GET(
     const { id } = await params;
     const customerId = id.toUpperCase();
 
-    const list = await getAgentRecommendations();
-    const recommendation = list.find((r) => r.customer_id.toUpperCase() === customerId);
+    const recommendation = await getRecommendationByCustomerId(customerId);
 
     if (!recommendation) {
       return NextResponse.json(
