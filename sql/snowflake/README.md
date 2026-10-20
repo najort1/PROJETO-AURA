@@ -22,10 +22,11 @@ Cada tabela Snowflake criada em `ddl.sql` mapeia de forma exata as colunas, tipo
 ## 2. Estrutura dos Arquivos
 
 1. **`ddl.sql`**:
-   - Criação da infraestrutura lógica: Warehouse (`AURA_WH`), Database (`AURA_DB`), Schemas (`AURA_RAW`, `AURA_CURATED`, `AURA_ANALYTICS`).
+   - Criação da infraestrutura lógica: Warehouse (`AURA_WH`, `AUTO_SUSPEND = 60`), Database (`AURA_DB`), Schemas (`AURA_RAW`, `AURA_CURATED`, `AURA_ANALYTICS`).
    - Definição do formato de arquivo `AURA_PARQUET_FORMAT` (`TYPE = PARQUET`).
    - Criação do Named Stage `AURA_STAGE_CURATED_ANAC`.
    - DDL das três tabelas da camada curada com constraints de chave primária e comentários auditáveis.
+   - Clustering micro-partições por `CLUSTER BY (ano_mes)` em `ANAC_ROUTES_MONTHLY` e `ANAC_DELAYS_MONTHLY` para prunning nas consultas por janela temporal.
 
 2. **`carga.sql`**:
    - Instruções de upload via SnowSQL (`PUT`).
@@ -63,7 +64,8 @@ snowsql -f sql/snowflake/carga.sql
 
 1. **Tipos de Dados:**
    - Colunas textuais (OACI, rotas, códigos) são mapeadas para `VARCHAR` com limites definidos.
-   - Volumes e passageiros usam `FLOAT` ou `NUMBER` para suportar tanto os agregados locais quanto futuras cargas de eventos individuais sem truncamento.
+   - Métricas de contagem inteira usam `NUMBER(38,0)` (verificado integral nos parquet curados): `total_pax_pagos`, `total_assentos_ofertados`, `total_decolagens`, `azul_pax_pagos`, `azul_assentos_ofertados` e `azul_decolagens` em `ANAC_ROUTES_MONTHLY`. O parquet local permanece `float64` (contrato `schemas/anac_routes_monthly.yaml`); `NUMBER(38,0)` no Snowflake elimina ambiguidade de precisão de agregados de contagem.
+   - Métricas de razão/ocupação (`azul_share_pax`, `azul_share_decolagens`, `azul_load_factor`, `total_load_factor`, `taxa_atraso`) e coordenadas geográficas permanecem `FLOAT`.
    - Colunas temporais (`ano_mes`) usam formato ISO string `AAAA-MM` para compatibilidade cross-engine (DuckDB e Snowflake).
 
 2. **Limitações Declaradas:**

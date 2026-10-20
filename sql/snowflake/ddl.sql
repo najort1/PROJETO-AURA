@@ -8,7 +8,7 @@
 -- 1. Criação de Warehouse, Database e Schemas
 CREATE WAREHOUSE IF NOT EXISTS AURA_WH
     WITH WAREHOUSE_SIZE = 'XSMALL'
-    AUTO_SUSPEND = 180
+    AUTO_SUSPEND = 60
     AUTO_RESUME = TRUE
     INITIALLY_SUSPENDED = TRUE
     COMMENT = 'Warehouse analítico do Projeto Aura 2.0';
@@ -54,12 +54,12 @@ CREATE OR REPLACE TABLE AURA_CURATED.ANAC_ROUTES_MONTHLY (
     ano                         INTEGER         NOT NULL,
     mes                         INTEGER         NOT NULL,
     ano_mes                     VARCHAR(7)      NOT NULL,
-    total_pax_pagos             FLOAT           NOT NULL,
-    total_assentos_ofertados    FLOAT           NOT NULL,
-    total_decolagens            FLOAT           NOT NULL,
-    azul_pax_pagos              FLOAT           NOT NULL,
-    azul_assentos_ofertados     FLOAT           NOT NULL,
-    azul_decolagens             FLOAT           NOT NULL,
+    total_pax_pagos             NUMBER(38,0)    NOT NULL,
+    total_assentos_ofertados    NUMBER(38,0)    NOT NULL,
+    total_decolagens            NUMBER(38,0)    NOT NULL,
+    azul_pax_pagos              NUMBER(38,0)    NOT NULL,
+    azul_assentos_ofertados     NUMBER(38,0)    NOT NULL,
+    azul_decolagens             NUMBER(38,0)    NOT NULL,
     azul_share_pax              FLOAT           NOT NULL,
     azul_share_decolagens       FLOAT           NOT NULL,
     azul_load_factor            FLOAT           NOT NULL,
@@ -67,6 +67,7 @@ CREATE OR REPLACE TABLE AURA_CURATED.ANAC_ROUTES_MONTHLY (
     has_azul                    BOOLEAN         NOT NULL,
     CONSTRAINT pk_anac_routes_monthly PRIMARY KEY (id_rota_mes)
 )
+CLUSTER BY (ano_mes)
 COMMENT = 'Agregado mensal de rotas do mercado doméstico regular brasileiro (ANAC voos_basica) com métricas de mercado e Azul';
 
 -- Tabela 2: Cadastro de aeródromos e macrorregiões (schemas/anac_airports.yaml)
@@ -96,4 +97,5 @@ CREATE OR REPLACE TABLE AURA_CURATED.ANAC_DELAYS_MONTHLY (
     cobertura                   VARCHAR(64)     NOT NULL,
     CONSTRAINT pk_anac_delays_monthly PRIMARY KEY (id_ano_mes)
 )
+CLUSTER BY (ano_mes)
 COMMENT = 'Série histórica mensal da taxa de atraso (>15 minutos) do sistema aeroportuário nacional (ANAC movimentação)';
