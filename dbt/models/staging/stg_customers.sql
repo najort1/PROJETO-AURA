@@ -1,5 +1,3 @@
-{{ config(materialized='view') }}
-
 {#-
     Staging de clientes sintéticos.
     NOTA DE CONFORMIDADE LGPD E GOVERNANÇA:

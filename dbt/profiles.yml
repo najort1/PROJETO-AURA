@@ -4,4 +4,9 @@ aura:
     dev:
       type: duckdb
       path: "data/analytics/aura_analytics.duckdb"
-      threads: 4
+      # threads=1 obrigatório: DuckDB é single-writer e, com staging materializado como
+      # tabelas com post-hook de índice, o drop_indexes_on_relation do dbt-duckdb escaneia
+      # duckdb_indexes() na transação de cada modelo e colide com o ALTER TABLE ... RENAME
+      # ...__dbt_backup concorrente das outras tabelas indexadas (threads >= 2 falha do
+      # segundo run em diante). Staging é sub-segundo; serializar é desprezível.
+      threads: 1

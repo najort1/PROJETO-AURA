@@ -26,6 +26,13 @@ vars:
 models:
   aura_analytics:
     staging:
-      +materialized: view
+      +materialized: table
+      stg_transactions:
+        +post-hook:
+          - "CREATE INDEX IF NOT EXISTS idx_stg_transactions_customer_id ON {{ this }} (customer_id)"
+          - "CREATE INDEX IF NOT EXISTS idx_stg_transactions_flight_id ON {{ this }} (flight_id)"
+      stg_flights:
+        +post-hook:
+          - "CREATE INDEX IF NOT EXISTS idx_stg_flights_flight_id ON {{ this }} (flight_id)"
     marts:
       +materialized: table

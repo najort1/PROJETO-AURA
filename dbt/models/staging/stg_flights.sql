@@ -1,5 +1,3 @@
-{{ config(materialized='view') }}
-
 SELECT
     flight_id,
     flight_number,

@@ -1,5 +1,3 @@
-{{ config(materialized='view') }}
-
 SELECT
     transaction_id,
     customer_id,

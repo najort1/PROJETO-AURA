@@ -8,7 +8,7 @@ WITH base_customers AS (
         current_tier,
         status
     FROM {{ ref('stg_customers') }}
-    WHERE join_date <= DATE '{{ cutoff_date }}'
+    WHERE join_date < (DATE '{{ cutoff_date }}' + INTERVAL '1' DAY)
 ),
 
 historical_transactions AS (
@@ -34,7 +34,7 @@ historical_transactions AS (
     FROM {{ ref('stg_transactions') }} t
     LEFT JOIN {{ ref('stg_flights') }} f
         ON t.flight_id = f.flight_id
-    WHERE t.transaction_date <= DATE '{{ cutoff_date }}'
+    WHERE t.transaction_date < (DATE '{{ cutoff_date }}' + INTERVAL '1' DAY)
 ),
 
 agg_tx AS (
@@ -131,7 +131,7 @@ historical_interactions AS (
                     AND has_friction = 1 THEN 1 END) AS total_atritos_12m
 
     FROM {{ ref('stg_interactions') }}
-    WHERE interaction_date <= DATE '{{ cutoff_date }}'
+    WHERE interaction_date < (DATE '{{ cutoff_date }}' + INTERVAL '1' DAY)
     GROUP BY customer_id
 ),
 
@@ -142,7 +142,8 @@ future_performance AS (
         COUNT(*) AS future_tx_count,
         MIN(transaction_date) AS first_future_tx_date
     FROM {{ ref('stg_transactions') }}
-    WHERE transaction_date BETWEEN DATE '{{ target_start_date }}' AND DATE '{{ target_end_date }}'
+    WHERE transaction_date >= DATE '{{ target_start_date }}'
+      AND transaction_date < (DATE '{{ target_end_date }}' + INTERVAL '1' DAY)
     GROUP BY customer_id
 )
 

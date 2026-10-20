@@ -9,5 +9,5 @@ SELECT
     DATE '{{ var(cutoff_var) }}' AS data_limite_cutoff
 FROM {{ model }}
 WHERE {{ column_name }} IS NOT NULL
-  AND {{ column_name }} > DATE '{{ var(cutoff_var) }}'
+  AND {{ column_name }} >= (DATE '{{ var(cutoff_var) }}' + INTERVAL '1' DAY)
 {% endtest %}
