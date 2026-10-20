@@ -1,16 +1,30 @@
 "use client";
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import { Bot, User, ShieldAlert, AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { MarkdownRenderer } from "./markdown-renderer";
 import { ThoughtAccordion } from "./thought-accordion";
 import { ToolsAccordion } from "./tools-accordion";
 import { DecisionsList } from "./decisions-list";
 import type { ChatMessage, DecisionItem } from "@/types/concierge";
 
-// Rastreia mensagens cujo typewriter já foi concluído nesta sessão (evita re-animação em remounts sem re-escrever no state/storage)
-const completedStreamingIds = new Set<string>();
+// Fallback único compartilhado: idêntico durante SSR (Suspense) e no cliente (dynamic loading)
+function MarkdownFallback() {
+  return (
+    <div className="text-xs text-text-secondary animate-pulse" aria-hidden="true">
+      Carregando mensagem...
+    </div>
+  );
+}
+
+const MarkdownRenderer = dynamic(
+  () => import("./markdown-renderer").then((mod) => mod.MarkdownRenderer),
+  {
+    ssr: false,
+    loading: () => <MarkdownFallback />,
+  }
+);
 
 interface ChatMessageItemProps {
   message: ChatMessage;
@@ -25,58 +39,6 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
 }: ChatMessageItemProps) {
   const isUser = message.role === "user";
   const isSystem = message.role === "system";
-
-  const alreadyCompleted = completedStreamingIds.has(message.id);
-  const shouldAnimate = Boolean(message.isStreaming) && !alreadyCompleted && !isUser && !isSystem;
-
-  const [isTyping, setIsTyping] = React.useState<boolean>(() => {
-    if (!shouldAnimate) return false;
-    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      completedStreamingIds.add(message.id);
-      return false;
-    }
-    return true;
-  });
-
-  const [displayedContent, setDisplayedContent] = React.useState<string>(() => {
-    if (!shouldAnimate) return message.content;
-    if (typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      return message.content;
-    }
-    return "";
-  });
-
-  React.useEffect(() => {
-    if (!shouldAnimate) {
-      setDisplayedContent(message.content);
-      setIsTyping(false);
-      return;
-    }
-
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      completedStreamingIds.add(message.id);
-      setDisplayedContent(message.content);
-      setIsTyping(false);
-      return;
-    }
-
-    let i = 0;
-    const len = message.content.length;
-    const step = Math.max(1, Math.floor(len / 35));
-    const timer = setInterval(() => {
-      i += step;
-      if (i >= len) {
-        completedStreamingIds.add(message.id);
-        setDisplayedContent(message.content);
-        setIsTyping(false);
-        clearInterval(timer);
-      } else {
-        setDisplayedContent(message.content.slice(0, i));
-      }
-    }, 16);
-
-    return () => clearInterval(timer);
-  }, [shouldAnimate, message.content, message.id]);
 
   if (isSystem) {
     return (
@@ -131,7 +93,7 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
           )}
         </div>
 
-        {/* Bolha de Conteúdo Principal */}
+        {/* Bolha de Conteúdo Principal (Renderização direta sem falso efeito typewriter ou aria-hidden) */}
         <div
           className={`rounded-xl p-3.5 sm:p-4 text-xs leading-relaxed space-y-2 shadow-xs transition-colors ${
             isUser
@@ -143,15 +105,12 @@ export const ChatMessageItem = React.memo(function ChatMessageItem({
         >
           {isUser ? (
             <div className="whitespace-pre-wrap font-sans space-y-1.5 break-words">{message.content}</div>
-          ) : isTyping ? (
-            <>
-              <div aria-hidden="true">
-                <MarkdownRenderer content={displayedContent} />
-              </div>
-              <span className="sr-only">Aura Concierge gerando resposta...</span>
-            </>
           ) : (
-            <MarkdownRenderer content={message.content} />
+            // Suspense boundary absorve o bailout de SSR do next/dynamic (ssr:false)
+            // sem transformá-lo em erro 500 no render do servidor.
+            <React.Suspense fallback={<MarkdownFallback />}>
+              <MarkdownRenderer content={message.content} />
+            </React.Suspense>
           )}
 
           {/* Botão de retry caso seja erro com possibilidade de retentativa */}

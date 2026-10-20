@@ -5,7 +5,8 @@ import { Loader2, Square, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface LoadingIndicatorProps {
-  elapsedSeconds: number;
+  elapsedSeconds?: number;
+  initialSeconds?: number;
   onAbort?: () => void;
 }
 
@@ -17,7 +18,25 @@ const HINT_STEPS = [
   { threshold: 30, text: "Sintetizando plano de ação e redigindo resposta final..." },
 ];
 
-export function LoadingIndicator({ elapsedSeconds, onAbort }: LoadingIndicatorProps) {
+export function LoadingIndicator({
+  elapsedSeconds: controlledSeconds,
+  initialSeconds = 0,
+  onAbort,
+}: LoadingIndicatorProps) {
+  const [internalSeconds, setInternalSeconds] = React.useState(initialSeconds);
+
+  React.useEffect(() => {
+    if (controlledSeconds !== undefined) return;
+
+    const interval = setInterval(() => {
+      setInternalSeconds((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [controlledSeconds]);
+
+  const elapsedSeconds = controlledSeconds !== undefined ? controlledSeconds : internalSeconds;
+
   const currentHint = React.useMemo(() => {
     let hint = HINT_STEPS[0].text;
     for (const step of HINT_STEPS) {

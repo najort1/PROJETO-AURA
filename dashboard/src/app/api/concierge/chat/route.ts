@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { execSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 
 function getProjectRoot(): string {
   if (fs.existsSync(path.resolve(process.cwd(), 'agent'))) {
@@ -15,44 +15,197 @@ function getProjectRoot(): string {
   return process.cwd();
 }
 
-export async function GET() {
-  try {
-    const projectRoot = getProjectRoot();
-    const tmpIn = path.join(os.tmpdir(), `aura_status_in_${Date.now()}_${Math.random().toString(36).substring(7)}.json`);
-    const tmpOut = path.join(os.tmpdir(), `aura_status_out_${Date.now()}_${Math.random().toString(36).substring(7)}.json`);
-
-    fs.writeFileSync(tmpIn, JSON.stringify({ action: 'status' }), 'utf-8');
-
-    try {
-      const envArg = fs.existsSync(path.resolve(projectRoot, '.env')) ? '--env-file .env ' : '';
-      execSync(`uv run ${envArg}python -m agent.autonomous_bridge --input-file "${tmpIn}" --output-file "${tmpOut}"`, {
-        cwd: projectRoot,
-        timeout: 20000,
+function killProcessTree(pid: number | undefined): Promise<void> {
+  return new Promise((resolve) => {
+    if (!pid) return resolve();
+    if (process.platform === 'win32') {
+      const killer = spawn('taskkill', ['/PID', pid.toString(), '/T', '/F'], {
         windowsHide: true,
-        stdio: 'inherit',
+        stdio: 'ignore',
       });
-
-      if (fs.existsSync(tmpOut)) {
-        const data = JSON.parse(fs.readFileSync(tmpOut, 'utf-8'));
-        return NextResponse.json(data);
+      killer.on('close', () => resolve());
+      killer.on('error', () => {
+        try {
+          process.kill(pid);
+        } catch {}
+        resolve();
+      });
+    } else {
+      try {
+        process.kill(-pid, 'SIGKILL');
+      } catch {
+        try {
+          process.kill(pid, 'SIGKILL');
+        } catch {}
       }
-    } finally {
-      try { fs.unlinkSync(tmpIn); } catch {}
-      try { fs.unlinkSync(tmpOut); } catch {}
+      resolve();
+    }
+  });
+}
+
+interface RunBridgeOptions {
+  command: string;
+  args: string[];
+  cwd: string;
+  timeoutMs?: number;
+  signal?: AbortSignal;
+}
+
+function runBridgeProcess({ command, args, cwd, timeoutMs = 180000, signal }: RunBridgeOptions): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      const abortErr = new Error('Operação cancelada pelo cliente.');
+      abortErr.name = 'AbortError';
+      return reject(abortErr);
     }
 
-    return NextResponse.json({
-      success: true,
-      status: 'online',
-      model: 'principal-combo',
-      base_url: 'http://localhost:20128/v1',
+    const child = spawn(command, args, {
+      cwd,
+      windowsHide: true,
+      stdio: ['ignore', 'pipe', 'pipe'],
     });
-  } catch (err: any) {
-    return NextResponse.json(
-      { success: false, error: err.message, status: 'offline' },
-      { status: 500 }
-    );
+
+    let stdoutTail = '';
+    let stderrTail = '';
+    const MAX_TAIL_CHARS = 4096;
+
+    let isSettled = false;
+    let timer: NodeJS.Timeout | null = null;
+
+    const cleanup = () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      if (signal && onAbort) {
+        signal.removeEventListener('abort', onAbort);
+      }
+    };
+
+    const settleReject = (err: Error) => {
+      if (isSettled) return;
+      isSettled = true;
+      cleanup();
+      reject(err);
+    };
+
+    const settleResolve = () => {
+      if (isSettled) return;
+      isSettled = true;
+      cleanup();
+      resolve();
+    };
+
+    const onAbort = () => {
+      if (isSettled) return;
+      const abortErr = new Error('Operação cancelada pelo cliente.');
+      abortErr.name = 'AbortError';
+      settleReject(abortErr);
+      killProcessTree(child.pid).catch(() => {});
+    };
+
+    if (signal) {
+      signal.addEventListener('abort', onAbort, { once: true });
+    }
+
+    if (timeoutMs > 0) {
+      timer = setTimeout(() => {
+        if (isSettled) return;
+        const timeoutErr = new Error(
+          `O motor autônomo excedeu o tempo limite de ${Math.round(timeoutMs / 1000)}s.`
+        );
+        timeoutErr.name = 'TimeoutError';
+        settleReject(timeoutErr);
+        killProcessTree(child.pid).catch(() => {});
+      }, timeoutMs);
+    }
+
+    child.stdout?.on('data', (chunk: Buffer) => {
+      process.stdout.write(chunk);
+      stdoutTail += chunk.toString('utf-8');
+      if (stdoutTail.length > MAX_TAIL_CHARS) {
+        stdoutTail = stdoutTail.slice(-MAX_TAIL_CHARS);
+      }
+    });
+
+    child.stderr?.on('data', (chunk: Buffer) => {
+      process.stderr.write(chunk);
+      stderrTail += chunk.toString('utf-8');
+      if (stderrTail.length > MAX_TAIL_CHARS) {
+        stderrTail = stderrTail.slice(-MAX_TAIL_CHARS);
+      }
+    });
+
+    child.on('error', (err: Error) => {
+      settleReject(err);
+    });
+
+    child.on('close', (code: number | null, closeSignal: NodeJS.Signals | null) => {
+      if (isSettled) return;
+
+      if (code === 0) {
+        settleResolve();
+      } else {
+        const errorDetail =
+          stderrTail.trim() ||
+          stdoutTail.trim() ||
+          (closeSignal ? `Finalizado por sinal ${closeSignal}` : `Código de saída ${code}`);
+        const procErr = new Error(
+          `Falha na execução do motor autônomo (código ${code}): ${errorDetail}`
+        );
+        settleReject(procErr);
+      }
+    });
+  });
+}
+
+const DEFAULT_TOOLS = [
+  'consultar_cliente_360',
+  'consultar_historico_atritos_voos',
+  'consultar_regras_regulamento',
+  'conceder_milhas_cortesia',
+  'emitir_voucher_servico',
+  'propor_acao_retencao_kanban',
+  'escalar_atendimento_vip',
+  'listar_clientes_em_risco_ou_atrito',
+];
+
+export async function GET() {
+  const rawBaseUrl = process.env.AURA_LLM_BASE_URL || 'http://localhost:20128/v1';
+  const baseUrl = rawBaseUrl.replace(/\/+$/, '');
+  const model = process.env.AURA_LLM_MODEL || 'principal-combo';
+
+  let status: 'online' | 'offline' = 'offline';
+
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 2000);
+
+    const probeUrl = `${baseUrl}/models`;
+    const response = await fetch(probeUrl, {
+      method: 'GET',
+      signal: controller.signal,
+      headers: process.env.AURA_LLM_API_KEY
+        ? { Authorization: `Bearer ${process.env.AURA_LLM_API_KEY}` }
+        : {},
+    });
+
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      status = 'online';
+    }
+  } catch {
+    status = 'offline';
   }
+
+  return NextResponse.json({
+    success: true,
+    status,
+    model,
+    base_url: rawBaseUrl,
+    tools_available: DEFAULT_TOOLS,
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -63,24 +216,49 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const projectRoot = getProjectRoot();
 
-    fs.writeFileSync(tmpIn, JSON.stringify(body), 'utf-8');
+    await fs.promises.writeFile(tmpIn, JSON.stringify(body), 'utf-8');
 
-    // Executa a bridge com timeout de 2 minutos para permitir múltiplos turnos ReAct e chamadas de tools
-    const envArg = fs.existsSync(path.resolve(projectRoot, '.env')) ? '--env-file .env ' : '';
-    execSync(`uv run ${envArg}python -m agent.autonomous_bridge --input-file "${tmpIn}" --output-file "${tmpOut}"`, {
+    // Executa a bridge de forma assíncrona com timeout de 3 minutos e cancelamento via AbortSignal
+    const envArg = fs.existsSync(path.resolve(projectRoot, '.env')) ? ['--env-file', '.env'] : [];
+    const args = [
+      'run',
+      ...envArg,
+      'python',
+      '-m',
+      'agent.autonomous_bridge',
+      '--input-file',
+      tmpIn,
+      '--output-file',
+      tmpOut,
+    ];
+
+    await runBridgeProcess({
+      command: 'uv',
+      args,
       cwd: projectRoot,
-      timeout: 180000,
-      windowsHide: true,
-      stdio: 'inherit',
+      timeoutMs: 180000,
+      signal: request.signal,
     });
 
     if (!fs.existsSync(tmpOut)) {
       throw new Error('O motor autônomo não produziu o arquivo de resposta.');
     }
 
-    const result = JSON.parse(fs.readFileSync(tmpOut, 'utf-8'));
+    const fileContent = await fs.promises.readFile(tmpOut, 'utf-8');
+    const result = JSON.parse(fileContent);
     return NextResponse.json(result);
   } catch (err: any) {
+    if (request.signal.aborted || err?.name === 'AbortError') {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Requisição cancelada pelo cliente.',
+          reply: 'A geração de resposta foi interrompida pelo operador.',
+        },
+        { status: 499 }
+      );
+    }
+
     console.error('Erro em POST /api/concierge/chat:', err);
     return NextResponse.json(
       {
@@ -91,7 +269,7 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   } finally {
-    try { fs.unlinkSync(tmpIn); } catch {}
-    try { fs.unlinkSync(tmpOut); } catch {}
+    try { await fs.promises.unlink(tmpIn); } catch {}
+    try { await fs.promises.unlink(tmpOut); } catch {}
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Send, Square, RotateCcw } from "lucide-react";
+import { Send, Square, RotateCcw, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface ChatInputBarProps {
@@ -9,6 +9,7 @@ interface ChatInputBarProps {
   onChange: (value: string) => void;
   onSend: (text?: string) => void;
   isLoading: boolean;
+  isOnline?: boolean;
   onAbort?: () => void;
   lastFailedPrompt?: string;
   onRetry?: () => void;
@@ -19,6 +20,7 @@ export function ChatInputBar({
   onChange,
   onSend,
   isLoading,
+  isOnline = true,
   onAbort,
   lastFailedPrompt,
   onRetry,
@@ -53,7 +55,7 @@ export function ChatInputBar({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (value.trim() && !isLoading) {
+      if (value.trim() && !isLoading && isOnline) {
         onSend();
       }
     }
@@ -61,15 +63,28 @@ export function ChatInputBar({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (value.trim() && !isLoading) {
+    if (value.trim() && !isLoading && isOnline) {
       onSend();
     }
   };
 
   return (
     <div className="space-y-1.5">
+      {/* Banner amigável quando o motor estiver offline */}
+      {!isOnline && (
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-300 text-xs text-amber-900 shadow-xs">
+          <AlertTriangle className="size-4 text-amber-700 shrink-0" aria-hidden="true" />
+          <div className="flex-1">
+            <span className="font-semibold block">Motor Local Desconectado — Operação em Modo Somente Consulta</span>
+            <span className="text-[11px] text-amber-800">
+              O backend de inferência local (porta 20128) está offline. O envio de novas mensagens e ações autônomas está temporariamente desabilitado.
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Banner de Retry quando houver prompt que falhou */}
-      {lastFailedPrompt && !isLoading && (
+      {lastFailedPrompt && !isLoading && isOnline && (
         <div className="flex items-center justify-between gap-2 px-3 py-1.5 rounded-md bg-amber-50 border border-amber-200 text-xs text-amber-900">
           <span className="truncate">
             <strong>Prompt não enviado:</strong> &quot;{lastFailedPrompt}&quot;
@@ -102,13 +117,19 @@ export function ChatInputBar({
         <div className="relative flex-1">
           <textarea
             ref={textareaRef}
+            id="concierge-message-input"
+            name="message"
             rows={1}
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Digite uma mensagem, comando ou solicitação analítica... (Shift+Enter para quebra de linha)"
+            placeholder={
+              isOnline
+                ? "Digite uma mensagem, comando ou solicitação analítica... (Shift+Enter para quebra de linha)"
+                : "Motor local desconectado. Operação em modo somente consulta..."
+            }
             aria-label="Mensagem para o Aura Concierge"
-            disabled={isLoading}
+            disabled={isLoading || !isOnline}
             className="w-full resize-none rounded-xl border border-border-subtle bg-surface px-3.5 py-2.5 text-xs text-text-primary placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-azul-action/40 disabled:opacity-60 disabled:cursor-not-allowed leading-relaxed shadow-xs transition-colors"
             style={{ maxHeight: "120px", minHeight: "40px" }}
           />
@@ -130,7 +151,7 @@ export function ChatInputBar({
           ) : (
             <Button
               type="submit"
-              disabled={!value.trim() || isLoading}
+              disabled={!value.trim() || isLoading || !isOnline}
               size="sm"
               className="h-9 px-3.5 text-xs bg-azul-action text-white hover:bg-azul-action/90 font-medium cursor-pointer shadow-xs disabled:opacity-40"
               aria-label="Enviar mensagem para o Aura Concierge"

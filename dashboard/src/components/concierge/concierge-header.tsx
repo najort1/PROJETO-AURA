@@ -10,14 +10,16 @@ interface ConciergeHeaderProps {
   telemetry: ConciergeTelemetry | null;
   isLoadingTelemetry?: boolean;
   onClearChat: () => void;
+  isOnline?: boolean;
 }
 
 export function ConciergeHeader({
   telemetry,
   isLoadingTelemetry = false,
   onClearChat,
+  isOnline: isOnlineProp,
 }: ConciergeHeaderProps) {
-  const isOnline = telemetry?.status === "online";
+  const isOnline = typeof isOnlineProp === "boolean" ? isOnlineProp : telemetry?.status === "online";
   const modelName = telemetry?.model || "principal-combo";
   const toolsCount = telemetry?.tools_available?.length ?? 8;
 
@@ -43,7 +45,7 @@ export function ConciergeHeader({
           ) : (
             <Badge variant="destructive" className="text-[10px] font-mono flex items-center gap-1">
               <ShieldAlert className="size-2.5" aria-hidden="true" />
-              Motor Offline
+              Motor Desconectado (Modo Consulta)
             </Badge>
           )}
         </div>

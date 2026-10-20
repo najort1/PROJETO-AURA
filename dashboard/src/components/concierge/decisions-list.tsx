@@ -2,9 +2,11 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { CheckCircle2, ExternalLink, Copy, Check, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { CheckCircle2, ExternalLink, Copy, Check, CheckCircle, XCircle, Loader2, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
+import { OperatorContext } from "@/components/layout/operator-context";
 import { toast } from "sonner";
 import type { DecisionItem } from "@/types/concierge";
 
@@ -17,6 +19,13 @@ interface DecisionsListProps {
 export function DecisionsList({ messageId, decisions, onDecisionUpdate }: DecisionsListProps) {
   const [submittingIdx, setSubmittingIdx] = React.useState<number | null>(null);
   const [copiedHashIdx, setCopiedHashIdx] = React.useState<number | null>(null);
+
+  // Consumo nominal do operador ativo via OperatorContext (Contrato 2 da spec)
+  const operatorContext = React.useContext(OperatorContext);
+  const currentProfile = operatorContext?.currentProfile || {
+    name: "Carolina Silva",
+    role: "Analista de Retenção CRM (HITL)",
+  };
 
   if (!decisions || decisions.length === 0) return null;
 
@@ -40,7 +49,7 @@ export function DecisionsList({ messageId, decisions, onDecisionUpdate }: Decisi
           action_id: dec.action_id,
           action_name: dec.action_name,
           status: targetStatus,
-          operator: "operador_nextjs",
+          operator: `${currentProfile.name} (${currentProfile.role})`,
           original_message: dec.original_message || dec.final_message,
           final_message: dec.final_message,
           notes: `Homologação via Concierge Chat (${targetStatus === "approved" ? "Aprovado L2" : "Rejeitado"})`,
@@ -83,7 +92,7 @@ export function DecisionsList({ messageId, decisions, onDecisionUpdate }: Decisi
     <div className="space-y-2 pt-1">
       <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1">
         <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" aria-hidden="true" />
-        Decisões Registradas na Esteira (decisions.jsonl):
+        Trilha de Decisões Auditadas (LGPD):
       </span>
       <div className="grid grid-cols-1 gap-2">
         {decisions.map((dec, idx) => {
@@ -171,9 +180,38 @@ export function DecisionsList({ messageId, decisions, onDecisionUpdate }: Decisi
 
               <div className="flex flex-wrap items-center justify-between gap-1 pt-1 border-t border-border-subtle/50 text-[10px] text-text-secondary font-mono">
                 <div className="flex items-center gap-1.5">
-                  <span title={dec.hash_signature}>
-                    SHA-256: {dec.hash_signature ? `${dec.hash_signature.substring(0, 16)}...` : "n/a"}
-                  </span>
+                  <TooltipProvider delayDuration={150}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="cursor-help flex items-center gap-1 hover:text-azul-navy underline decoration-dotted">
+                          <Info className="size-3 text-azul-action shrink-0" aria-hidden="true" />
+                          <span>
+                            SHA-256: {dec.hash_signature ? `${dec.hash_signature.substring(0, 16)}...` : "n/a"}
+                          </span>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        side="top"
+                        className="max-w-xs p-2.5 text-xs bg-surface border border-border-subtle shadow-xl space-y-1.5 text-text-primary"
+                      >
+                        <p className="font-bold text-azul-navy">
+                          Assinatura Criptográfica Imutável
+                        </p>
+                        <p className="text-[11px] text-text-secondary leading-relaxed">
+                          Garante a integridade da auditoria contra alterações retroativas na trilha de decisões (Art. 20 LGPD).
+                        </p>
+                        {dec.hash_signature && (
+                          <div className="pt-1 border-t border-border-subtle">
+                            <span className="text-[10px] text-text-muted block font-sans">Hash Completo:</span>
+                            <code className="text-[10px] font-mono break-all text-azul-navy block bg-muted/60 p-1 rounded mt-0.5 select-all">
+                              {dec.hash_signature}
+                            </code>
+                          </div>
+                        )}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+
                   {dec.hash_signature && (
                     <button
                       type="button"
@@ -190,7 +228,7 @@ export function DecisionsList({ messageId, decisions, onDecisionUpdate }: Decisi
                   )}
                 </div>
                 <Link
-                  href="/agente"
+                  href={`/agente?customer_id=${encodeURIComponent(dec.customer_id)}`}
                   className="text-azul-action hover:underline font-sans font-semibold flex items-center gap-0.5"
                 >
                   Ver no Kanban

@@ -10,6 +10,7 @@ interface CustomerContextBarProps {
   onSelectCustomer: (customerId: string) => void;
   onQuickAction: (prompt: string, actionType?: "chat" | "evaluate") => void;
   isLoading: boolean;
+  isOnline?: boolean;
   customers?: PresetCustomer[];
 }
 
@@ -18,8 +19,11 @@ export function CustomerContextBar({
   onSelectCustomer,
   onQuickAction,
   isLoading,
+  isOnline = true,
   customers = PRESET_CUSTOMERS,
 }: CustomerContextBarProps) {
+  const isActionDisabled = isLoading || !isOnline;
+
   return (
     <div className="rounded-xl border border-border-subtle bg-surface p-2.5 sm:p-3 space-y-2.5 shadow-xs">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -60,8 +64,9 @@ export function CustomerContextBar({
                 "evaluate"
               )
             }
-            disabled={isLoading}
-            className="text-xs font-semibold h-7 bg-azul-action/10 text-azul-action border-azul-action/30 hover:bg-azul-action/20 cursor-pointer disabled:opacity-50"
+            disabled={isActionDisabled}
+            title={!isOnline ? "Motor local desconectado — Ação indisponível" : undefined}
+            className="text-xs font-semibold h-7 bg-azul-action/10 text-azul-action border-azul-action/30 hover:bg-azul-action/20 cursor-pointer disabled:opacity-40"
             aria-label={`Executar ciclo autônomo completo para ${selectedCustomerId || "carteira geral"}`}
           >
             <Zap className="size-3 mr-1 text-azul-action fill-azul-action" aria-hidden="true" />
@@ -85,13 +90,14 @@ export function CustomerContextBar({
                 : "Consulte a visão 360 dos clientes em risco na carteira e me informe o tier predominante, CLV e fatores SHAP dominantes."
             )
           }
-          disabled={isLoading}
+          disabled={isActionDisabled}
+          title={!isOnline ? "Motor local desconectado" : undefined}
           aria-label={
             selectedCustomerId
               ? `Consultar visão 360 e fatores SHAP do cliente ${selectedCustomerId}`
               : "Consultar visão 360 e fatores SHAP gerais da carteira"
           }
-          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-muted/60 hover:bg-muted text-text-secondary hover:text-azul-navy text-[11px] font-medium transition-colors border border-border-subtle/50 cursor-pointer disabled:opacity-50"
+          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-muted/60 hover:bg-muted text-text-secondary hover:text-azul-navy text-[11px] font-medium transition-colors border border-border-subtle/50 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Search className="size-2.5 text-azul-action" aria-hidden="true" />
           <span>Visão 360° & SHAP</span>
@@ -106,13 +112,14 @@ export function CustomerContextBar({
                 : "Quais foram os principais atritos operacionais e atrasos de voo recentes registrados na carteira?"
             )
           }
-          disabled={isLoading}
+          disabled={isActionDisabled}
+          title={!isOnline ? "Motor local desconectado" : undefined}
           aria-label={
             selectedCustomerId
               ? `Consultar histórico de atritos e atrasos do cliente ${selectedCustomerId}`
               : "Consultar principais atritos e atrasos de voos da carteira"
           }
-          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-muted/60 hover:bg-muted text-text-secondary hover:text-azul-navy text-[11px] font-medium transition-colors border border-border-subtle/50 cursor-pointer disabled:opacity-50"
+          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-muted/60 hover:bg-muted text-text-secondary hover:text-azul-navy text-[11px] font-medium transition-colors border border-border-subtle/50 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Plane className="size-2.5 text-azul-action" aria-hidden="true" />
           <span>Histórico de Atritos</span>
@@ -125,9 +132,10 @@ export function CustomerContextBar({
               `Consulte no regulamento oficial quais são as regras de Resgate Especial e teto de pontos para clientes Diamante e Safira.`
             )
           }
-          disabled={isLoading}
+          disabled={isActionDisabled}
+          title={!isOnline ? "Motor local desconectado" : undefined}
           aria-label="Consultar regras do regulamento oficial"
-          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-muted/60 hover:bg-muted text-text-secondary hover:text-azul-navy text-[11px] font-medium transition-colors border border-border-subtle/50 cursor-pointer disabled:opacity-50"
+          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-muted/60 hover:bg-muted text-text-secondary hover:text-azul-navy text-[11px] font-medium transition-colors border border-border-subtle/50 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <BookOpen className="size-2.5 text-azul-action" aria-hidden="true" />
           <span>Regulamento (RAG)</span>
@@ -140,9 +148,10 @@ export function CustomerContextBar({
               `Liste os 5 clientes de maior valor com atrito recente e risco de perda na carteira.`
             )
           }
-          disabled={isLoading}
+          disabled={isActionDisabled}
+          title={!isOnline ? "Motor local desconectado" : undefined}
           aria-label="Listar 5 clientes em maior risco na carteira"
-          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-muted/60 hover:bg-muted text-text-secondary hover:text-azul-navy text-[11px] font-medium transition-colors border border-border-subtle/50 cursor-pointer disabled:opacity-50"
+          className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-muted/60 hover:bg-muted text-text-secondary hover:text-azul-navy text-[11px] font-medium transition-colors border border-border-subtle/50 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <ShieldAlert className="size-2.5 text-amber-600" aria-hidden="true" />
           <span>Varredura de Risco</span>

@@ -9,7 +9,6 @@ import type { ChatMessage, DecisionItem } from "@/types/concierge";
 interface ChatMessageListProps {
   messages: ChatMessage[];
   isLoading: boolean;
-  elapsedSeconds: number;
   onAbort?: () => void;
   onDecisionUpdate?: (messageId: string, decisionIndex: number, newStatus: DecisionItem["status"]) => void;
   onRetryMessage?: () => void;
@@ -18,7 +17,6 @@ interface ChatMessageListProps {
 export const ChatMessageList = React.memo(function ChatMessageList({
   messages,
   isLoading,
-  elapsedSeconds,
   onAbort,
   onDecisionUpdate,
   onRetryMessage,
@@ -81,7 +79,8 @@ export const ChatMessageList = React.memo(function ChatMessageList({
     }
   }, [isLoading, isAtBottom, scrollToBottom]);
 
-  // ResizeObserver para acompanhar expansão vertical do efeito typewriter da última mensagem
+  // ResizeObserver para acompanhar expansão vertical da última mensagem (carga lazy do MarkdownRenderer,
+  // expansão dos acordeões de raciocínio/ferramentas e montagem do LoadingIndicator)
   React.useEffect(() => {
     const container = containerRef.current;
     if (!container || typeof ResizeObserver === "undefined") return;
@@ -128,7 +127,7 @@ export const ChatMessageList = React.memo(function ChatMessageList({
         ))}
 
         {isLoading && (
-          <LoadingIndicator elapsedSeconds={elapsedSeconds} onAbort={onAbort} />
+          <LoadingIndicator onAbort={onAbort} />
         )}
       </div>
 

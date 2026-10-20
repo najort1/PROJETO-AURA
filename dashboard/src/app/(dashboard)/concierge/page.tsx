@@ -14,7 +14,6 @@ export default function ConciergeChatPage() {
     input,
     setInput,
     isLoading,
-    elapsedSeconds,
     selectedCustomerId,
     setSelectedCustomerId,
     telemetry,
@@ -26,6 +25,8 @@ export default function ConciergeChatPage() {
     clearChat,
     updateDecision,
   } = useConciergeChat();
+
+  const isOnline = telemetry?.status === "online";
 
   const handleQuickAction = React.useCallback(
     (prompt: string, actionType: "chat" | "evaluate" = "chat") => {
@@ -50,6 +51,7 @@ export default function ConciergeChatPage() {
         <ConciergeHeader
           telemetry={telemetry}
           isLoadingTelemetry={isLoadingTelemetry}
+          isOnline={isOnline}
           onClearChat={clearChat}
         />
         <CustomerContextBar
@@ -57,6 +59,7 @@ export default function ConciergeChatPage() {
           onSelectCustomer={setSelectedCustomerId}
           onQuickAction={handleQuickAction}
           isLoading={isLoading}
+          isOnline={isOnline}
         />
       </div>
 
@@ -65,7 +68,6 @@ export default function ConciergeChatPage() {
         <ChatMessageList
           messages={messages}
           isLoading={isLoading}
-          elapsedSeconds={elapsedSeconds}
           onAbort={abortChat}
           onDecisionUpdate={updateDecision}
           onRetryMessage={retryLastFailed}
@@ -77,6 +79,7 @@ export default function ConciergeChatPage() {
             onChange={setInput}
             onSend={handleSend}
             isLoading={isLoading}
+            isOnline={isOnline}
             onAbort={abortChat}
             lastFailedPrompt={lastFailedPrompt}
             onRetry={retryLastFailed}

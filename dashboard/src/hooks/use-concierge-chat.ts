@@ -26,12 +26,10 @@ export function useConciergeChat(initialCustomerId = "C000030") {
   const [selectedCustomerId, setSelectedCustomerId] = React.useState(initialCustomerId);
   const [telemetry, setTelemetry] = React.useState<ConciergeTelemetry | null>(null);
   const [isLoadingTelemetry, setIsLoadingTelemetry] = React.useState(false);
-  const [elapsedSeconds, setElapsedSeconds] = React.useState(0);
   const [lastFailedPrompt, setLastFailedPrompt] = React.useState<string>("");
   const [isHydrated, setIsHydrated] = React.useState(false);
 
   const abortControllerRef = React.useRef<AbortController | null>(null);
-  const timerIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Refs sincronizados diretamente no render (elimina qualquer janela de staleness pós-commit)
   const inputRef = React.useRef(input);
@@ -133,27 +131,6 @@ export function useConciergeChat(initialCustomerId = "C000030") {
     }
   }, [messages, isHydrated]);
 
-  // Timer decorrido durante status === 'sending'
-  React.useEffect(() => {
-    if (status === "sending") {
-      setElapsedSeconds(0);
-      timerIntervalRef.current = setInterval(() => {
-        setElapsedSeconds((prev) => prev + 1);
-      }, 1000);
-    } else {
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current);
-        timerIntervalRef.current = null;
-      }
-    }
-
-    return () => {
-      if (timerIntervalRef.current) {
-        clearInterval(timerIntervalRef.current);
-      }
-    };
-  }, [status]);
-
   // AbortController
   const abortChat = React.useCallback(() => {
     if (abortControllerRef.current) {
@@ -198,19 +175,24 @@ export function useConciergeChat(initialCustomerId = "C000030") {
       abortControllerRef.current = controller;
 
       try {
+        const filteredHistory = messagesRef.current
+          .filter(
+            (m) =>
+              (m.role === "user" || m.role === "assistant") &&
+              !m.isError &&
+              m.id !== "welcome" &&
+              m.id !== "welcome_reset"
+          )
+          .map((m) => ({ role: m.role, content: m.content }));
+
+        // Janela deslizante: mantém os últimos 8 turnos anteriores de histórico [B3]
+        const boundedHistory = filteredHistory.slice(-8);
+
         const payload = {
           action: actionType,
           message: textToSend,
           customer_id: selectedCustomerIdRef.current || null,
-          history: messagesRef.current
-            .filter(
-              (m) =>
-                (m.role === "user" || m.role === "assistant") &&
-                !m.isError &&
-                m.id !== "welcome" &&
-                m.id !== "welcome_reset"
-            )
-            .map((m) => ({ role: m.role, content: m.content })),
+          history: boundedHistory,
         };
 
         const res = await fetch("/api/concierge/chat", {
@@ -373,7 +355,6 @@ export function useConciergeChat(initialCustomerId = "C000030") {
     setInput,
     status,
     isLoading,
-    elapsedSeconds,
     selectedCustomerId,
     setSelectedCustomerId,
     telemetry,
