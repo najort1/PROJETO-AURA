@@ -27,12 +27,42 @@ dois runtimes (Node + Python via `uv`) em um único container.
 
 ## 1. Pré-requisitos (instruções executáveis)
 
-1. **Chave gratuita de LLM (Groq):**
-   - Acesse https://console.groq.com/keys → crie uma conta gratuita → **Create API Key**.
-     Guarde a chave (formato `gsk_...`).
-   - Modelos grátis com *function calling* já usados pelo AURA:
-     `llama-3.3-70b-versatile` (padrão) ou `openai/gpt-oss-20b`.
-     Limites free (típico): 30 req/min e ~1.000 req/dia por modelo — folgão para demo.
+1. **API de LLM gratuita — escolha 1 principal (+ 1 reserva).** O agente fala o
+   padrão OpenAI (`tools`/`tool_calls`); os provedores abaixo são 100% grátis e
+   OpenAI-compatíveis. **Por que sair do Groq:** o free deles é 30 RPM /
+   **8.000 TPM** / 1.000 RPD por modelo — os schemas das 8 ferramentas + contexto
+   RAG somam 10-20k tokens por turno do loop ReAct, então o TPM estoura já no
+   2º-3º uso.
+
+      **Recomendado (principal) — NVIDIA NIM (build.nvidia.com), sem cartão:**
+   - Key grátis com conta NVIDIA Developer: https://build.nvidia.com/explore/discover
+     → botão "Get API Key" (formato `nvapi-...`).
+   - `AURA_LLM_BASE_URL` = `https://integrate.api.nvidia.com/v1`
+   - `AURA_LLM_MODEL` = `meta/llama-3.3-70b-instruct` (contexto 128k, function calling OpenAI)
+   - Limites free: ~40 RPM e teto diário de até 10.000 req/dia por modelo
+     (varia por modelo — o limite exato aparece no canto superior do build.nvidia.com).
+
+   **Reserva automática — Cloudflare Workers AI (300 RPM em text-gen):**
+   - Free: **10.000 neurons/dia**, sem cartão. O `agent/llm.py` do AURA agora faz
+     **fallback automático** para este provedor quando o principal esgotar/travar
+     (HTTP 429/5xx) — configure os 3 envs `AURA_LLM_FALLBACK_*` na Render.
+   - Crie um API Token (dash.cloudflare.com → API Tokens → permissão *Workers AI*)
+     e copie seu `Account ID` (Home → Workers & Pages, coluna lateral).
+   - `AURA_LLM_FALLBACK_BASE_URL` = `https://api.cloudflare.com/client/v4/accounts/<ACCOUNT_ID>/ai/v1`
+   - `AURA_LLM_FALLBACK_API_KEY` = `<API token>`
+   - `AURA_LLM_FALLBACK_MODEL` = `@cf/meta/llama-3.3-70b-instruct-fp8-fast`
+     (function calling OpenAI-compat confirmado; contexto 24k; ~20 conversas
+     completas/dia no free — contingência do dia de avaliação).
+     Alternativa mais barata em neurons/dia: `@cf/qwen/qwen3-30b-a3b-fp8`.
+
+   **Por que NÃO o Gemini como principal (dado 2026):** o free tier foi apertado
+   (flash peregrino medido em ~5 RPM / 20 RPD por trackers) e Google não publica
+   mais cotas — risco alto para o dia da demo.
+
+   **Também reaproveitável — Groq (só perguntas curtas):**
+   - `AURA_LLM_BASE_URL` = `https://api.groq.com/openai/v1` + `llama-3.1-8b-instant`,
+     key em https://console.groq.com/keys. Free: 30 RPM / 8.000 TPM / 1.000 RPD —
+     não sirva como principal: estoura TPM já no 2º-3º uso do Concierge.
 
 2. **Git / GitHub:**
    - O projeto está na branch `refactor/ux-telas`. Para o deploy, o ideal é
@@ -93,9 +123,12 @@ git push -u origin HEAD
 4. Quando a Render pedir os valores de `sync:false`, informe:
    | Variável | Valor |
    |---|---|
-   | `AURA_LLM_API_KEY` | `gsk_...` (sua chave Groq) |
-   | `AURA_LLM_BASE_URL` | `https://api.groq.com/openai/v1` |
-   | `AURA_LLM_MODEL` | `llama-3.3-70b-versatile` |
+   | `AURA_LLM_API_KEY` | `nvapi-...` (chave NVIDIA NIM) |
+   | `AURA_LLM_BASE_URL` | `https://integrate.api.nvidia.com/v1` |
+   | `AURA_LLM_MODEL` | `meta/llama-3.3-70b-instruct` |
+   | `AURA_LLM_FALLBACK_BASE_URL` | `https://api.cloudflare.com/client/v4/accounts/<ID>/ai/v1` |
+   | `AURA_LLM_FALLBACK_API_KEY` | API Token Cloudflare (Workers AI) |
+   | `AURA_LLM_FALLBACK_MODEL` | `@cf/meta/llama-3.3-70b-instruct-fp8-fast` |
 5. **Deploy automático** — build executa o Dockerfile (estágio builder Node +
    estágio runner Python). URL final aparece no topo do painel.
 
@@ -123,8 +156,10 @@ git push -u origin HEAD
   Decisões feitas durante a sessão vivem até o serviço reiniciar (redeploy ou
   sleep). Se quiser persistir de fato, a recomendação é um stickiness via
   volume pago (não-freemium) ou banco grátis (ex. Neon) — fora do escopo atual.
-- **Limites do Groq free:** 30 RPM / 1.000 req/dia (por modelo). Piscar a tema
-  se você e os avaliadores usarem o concierge ao mesmo tempo durante horas.
+- **Limites da malha LLM (2026):** principal NVIDIA NIM ~40 RPM e até ~10.000
+  req/dia; reserva Cloudflare 300 RPM e 10.000 neurons/dia (consumo no dash →
+  Workers AI, reset à meia-noite UTC). Juntas, fecham um dia de avaliação
+  com folga zerando custo.
 
 ---
 

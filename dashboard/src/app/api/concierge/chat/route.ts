@@ -194,6 +194,12 @@ export async function GET() {
 
     if (response.ok) {
       status = 'online';
+    } else if (![401, 403].includes(response.status)) {
+      // Alguns gateways OpenAI-compat (ex.: Cloudflare Workers AI, Gemini)
+      // respondem 404/405 em GET /models. Qualquer resposta HTTP autenticada
+      // prova que o serviço está alcançável e credenciado -> online.
+      // 401/403 = credencial rejeitada -> permanece offline.
+      status = 'online';
     }
   } catch {
     status = 'offline';

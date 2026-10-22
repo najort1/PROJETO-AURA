@@ -31,3 +31,12 @@ services:
         sync: false # padrão: llama-3.3-70b-versatile
       - key: AURA_LLM_MAX_TOKENS
         value: "4096"
+      # Provedor reserva (fallback automático do agent/llm.py) — Cloudflare Workers AI
+      # Free: 10.000 neurons/dia + 300 RPM. Sem cartão. Token/API key com permissão
+      # "Workers AI" criada em dash.cloudflare.com -> API Tokens, e Account ID na Home.
+      - key: AURA_LLM_FALLBACK_BASE_URL
+        sync: false # https://api.cloudflare.com/client/v4/accounts/<ACCOUNT_ID>/ai/v1
+      - key: AURA_LLM_FALLBACK_API_KEY
+        sync: false # API Token Cloudflare (Workers AI)
+      - key: AURA_LLM_FALLBACK_MODEL
+        sync: false # @cf/meta/llama-3.3-70b-instruct-fp8-fast
