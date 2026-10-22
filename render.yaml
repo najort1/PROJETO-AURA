@@ -1,0 +1,33 @@
+# =============================================================================
+# PROJETO AURA 2.0 - Render Blueprint (deploy 100% gratuito)
+#
+# Como usar:
+#   1) Faça push deste arquivo para o repositório GitHub do projeto;
+#   2) Em https://dashboard.render.com/blueprints -> "New Blueprint Instance";
+#   3) Selecione o repositório. A Render cria automaticamente o serviço abaixo;
+#   4) Quando solicitado, informe os valores das variáveis marcadas sync:false.
+#
+# Notas (2026): o Plano Free da Render dorme após 15 min sem tráfego e acorda
+# em ~1 min. Consulte docs/deploy-render-free.md para o guia completo.
+# =============================================================================
+services:
+  - type: web
+    name: aura-dashboard
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    plan: free
+    region: oregon # região com disponibilidade constante do plano Free
+    autoDeploy: true
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: AURA_LLM_API_KEY
+        sync: false # informe sua chave Groq no painel (get_value no deploy)
+      - key: AURA_LLM_BASE_URL
+        sync: false # padrão: https://api.groq.com/openai/v1
+      - key: AURA_LLM_MODEL
+        sync: false # padrão: llama-3.3-70b-versatile
+      - key: AURA_LLM_MAX_TOKENS
+        value: "4096"

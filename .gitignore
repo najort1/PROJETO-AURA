@@ -46,3 +46,6 @@ dbt/.user.yml
 # OS
 Thumbs.db
 .DS_Store
+
+# Serena (config local de ferramenta)
+.serena/

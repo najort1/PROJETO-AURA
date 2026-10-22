@@ -219,11 +219,28 @@ export async function POST(request: NextRequest) {
     await fs.promises.writeFile(tmpIn, JSON.stringify(body), 'utf-8');
 
     // Executa a bridge de forma assíncrona com timeout de 3 minutos e cancelamento via AbortSignal
-    const envArg = fs.existsSync(path.resolve(projectRoot, '.env')) ? ['--env-file', '.env'] : [];
+    // Resolve o interpretador Python do Concierge:
+    // 1) Python do venv do projeto (.venv) — criado pelo `uv sync` no dev e
+    //    presente na imagem Docker de produção. Evita depender do binário `uv`
+    //    em runtime (requisito essencial para deploys cloud, ex.: Render).
+    // 2) Fallback: `uv run python` (ambiente de desenvolvimento local).
+    const isWindows = process.platform === 'win32';
+    const venvPython = path.join(
+      projectRoot,
+      '.venv',
+      isWindows ? 'Scripts' : 'bin',
+      isWindows ? 'python.exe' : 'python'
+    );
+    const useVenv = fs.existsSync(venvPython);
+
+    const command = useVenv ? venvPython : 'uv';
+    const prefixArgs = useVenv
+      ? []
+      : fs.existsSync(path.resolve(projectRoot, '.env'))
+        ? ['run', '--env-file', '.env']
+        : ['run'];
     const args = [
-      'run',
-      ...envArg,
-      'python',
+      ...prefixArgs,
       '-m',
       'agent.autonomous_bridge',
       '--input-file',
@@ -233,7 +250,7 @@ export async function POST(request: NextRequest) {
     ];
 
     await runBridgeProcess({
-      command: 'uv',
+      command,
       args,
       cwd: projectRoot,
       timeoutMs: 180000,
