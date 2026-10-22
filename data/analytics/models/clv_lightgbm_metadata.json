@@ -1,0 +1,43 @@
+{
+  "model_name": "clv_lightgbm",
+  "artifact_file": "clv_lightgbm.pkl",
+  "created_at": "2026-10-12T18:38:45.607086+00:00",
+  "seed": 1735706358,
+  "cutoff": "2025-08-31",
+  "features": [
+    "recency_days",
+    "frequency_3m",
+    "frequency_6m",
+    "frequency_12m",
+    "monetary_12m",
+    "ticket_medio_12m",
+    "frequency_trend",
+    "frequency_volatility",
+    "share_rotas_troncais",
+    "share_resgate",
+    "avg_advance_booking_days",
+    "pontos_qualificaveis_12m",
+    "saldo_pontos",
+    "pontos_expirando_30d",
+    "meta_proximo_nivel_pct",
+    "days_since_last_interaction",
+    "atritos_atraso_12m",
+    "atritos_bagagem_12m",
+    "atritos_app_checkin_12m",
+    "atritos_resgate_milhas_12m",
+    "atritos_atendimento_12m",
+    "atritos_preco_12m",
+    "total_atritos_12m",
+    "tier_encoded"
+  ],
+  "n_features": 24,
+  "metrics": {
+    "model_type": "LightGBM Regressor",
+    "wape": 0.655,
+    "mae": 497.85,
+    "spearman": 0.7346,
+    "gini_capture": 0.6598,
+    "lift_decil_1": 5.23
+  },
+  "extra": {}
+}

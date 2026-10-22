@@ -1,0 +1,45 @@
+{
+  "baseline": {
+    "model_type": "Regressão Logística",
+    "roc_auc": 0.844,
+    "pr_auc": 0.8451,
+    "brier": 0.1516,
+    "lift_top10": 1.74
+  },
+  "lightgbm": {
+    "model_type": "LightGBM Classifier",
+    "roc_auc": 0.8566,
+    "pr_auc": 0.8522,
+    "brier": 0.1453,
+    "lift_top10": 1.74
+  },
+  "bootstrap_comparison": {
+    "roc_auc_diff": {
+      "model_point": 0.8565863156212602,
+      "baseline_point": 0.8439877237917696,
+      "point_diff": 0.012598591829490635,
+      "ci_lower": 0.010809126399665983,
+      "ci_upper": 0.014523793319815478,
+      "significant": true,
+      "p_value": 0.0
+    },
+    "pr_auc_diff": {
+      "model_point": 0.8521927194234196,
+      "baseline_point": 0.8450557975161425,
+      "point_diff": 0.007136921907277105,
+      "ci_lower": 0.006085503591045746,
+      "ci_upper": 0.00826815778591331,
+      "significant": true,
+      "p_value": 0.0
+    },
+    "brier_diff": {
+      "model_point": 0.14531558477688847,
+      "baseline_point": 0.15162329917597045,
+      "point_diff": -0.006307714399081982,
+      "ci_lower": -0.007045879366398493,
+      "ci_upper": -0.005600251916850712,
+      "significant": true,
+      "p_value": 0.0
+    }
+  }
+}

@@ -1,0 +1,381 @@
+{
+  "meta": {
+    "modulo": "ml.impact.simulate",
+    "gerado_em": "2026-10-12T19:07:28.238887+00:00",
+    "total_clientes_base": 50000,
+    "total_clientes_alvo_elegiveis": 14645,
+    "custo_total_playbook_brl": 166631.0,
+    "seed_bootstrap": 42,
+    "n_bootstraps": 1000
+  },
+  "cenarios": {
+    "conservador": {
+      "premissas": {
+        "efeito_retencao": 0.05,
+        "resposta_canal": 0.12,
+        "margem": 0.15,
+        "fonte_premissa": "benchmarks de programas de retenção CRM",
+        "descricao": "Adesão cautelosa e baixa redução de evasão (estresse)."
+      },
+      "metricas": {
+        "clientes_alvo": 14645,
+        "evasoes_evitadas": 23.8,
+        "receita_bruta_salva_brl": 3239.59,
+        "custo_total_acoes_brl": 166631.0,
+        "delta_receita_brl": -163391.41,
+        "roi_liquido": -0.9806,
+        "ic95_delta_receita": {
+          "estimativa_pontual": -163391.41,
+          "limite_inferior": -165569.92,
+          "limite_superior": -161156.56,
+          "n_bootstraps": 1000,
+          "seed": 42
+        },
+        "ic95_receita_bruta": {
+          "estimativa_pontual": 3239.59,
+          "limite_inferior": 3215.99,
+          "limite_superior": 3263.6
+        }
+      }
+    },
+    "base": {
+      "premissas": {
+        "efeito_retencao": 0.1,
+        "resposta_canal": 0.18,
+        "margem": 0.2,
+        "fonte_premissa": "benchmarks de programas de retenção CRM",
+        "descricao": "Parâmetros centrais calibrados com literatura de fidelidade e CRM."
+      },
+      "metricas": {
+        "clientes_alvo": 14645,
+        "evasoes_evitadas": 71.39,
+        "receita_bruta_salva_brl": 12958.35,
+        "custo_total_acoes_brl": 166631.0,
+        "delta_receita_brl": -153672.65,
+        "roi_liquido": -0.9222,
+        "ic95_delta_receita": {
+          "estimativa_pontual": -153672.65,
+          "limite_inferior": -155840.07,
+          "limite_superior": -151455.9,
+          "n_bootstraps": 1000,
+          "seed": 42
+        },
+        "ic95_receita_bruta": {
+          "estimativa_pontual": 12958.35,
+          "limite_inferior": 12863.95,
+          "limite_superior": 13054.39
+        }
+      }
+    },
+    "otimista": {
+      "premissas": {
+        "efeito_retencao": 0.15,
+        "resposta_canal": 0.25,
+        "margem": 0.25,
+        "fonte_premissa": "benchmarks de programas de retenção CRM",
+        "descricao": "Alto engajamento multicanal e forte redução do atrito."
+      },
+      "metricas": {
+        "clientes_alvo": 14645,
+        "evasoes_evitadas": 148.74,
+        "receita_bruta_salva_brl": 33745.71,
+        "custo_total_acoes_brl": 166631.0,
+        "delta_receita_brl": -132885.29,
+        "roi_liquido": -0.7975,
+        "ic95_delta_receita": {
+          "estimativa_pontual": -132885.29,
+          "limite_inferior": -135056.39,
+          "limite_superior": -130662.31,
+          "n_bootstraps": 1000,
+          "seed": 42
+        },
+        "ic95_receita_bruta": {
+          "estimativa_pontual": 33745.71,
+          "limite_inferior": 33499.86,
+          "limite_superior": 33995.8
+        }
+      }
+    }
+  },
+  "sensibilidade_tornado": {
+    "cenario_referencia": "base",
+    "delta_receita_referencia_brl": -153672.65,
+    "variacao_padronizada_pct": 20,
+    "ranking_tornado_padronizado": [
+      {
+        "parametro": "custo_acao",
+        "valor_base": 1.0,
+        "valor_low": 0.8,
+        "valor_high": 1.2,
+        "delta_receita_low": -120346.45,
+        "delta_receita_base": -153672.65,
+        "delta_receita_high": -186998.85,
+        "amplitude_swing_brl": 66652.4,
+        "elasticidade": -1.0843
+      },
+      {
+        "parametro": "efeito_retencao",
+        "valor_base": 0.1,
+        "valor_low": 0.08,
+        "valor_high": 0.12,
+        "delta_receita_low": -156264.32,
+        "delta_receita_base": -153672.65,
+        "delta_receita_high": -151080.97,
+        "amplitude_swing_brl": 5183.34,
+        "elasticidade": 0.0843
+      },
+      {
+        "parametro": "resposta_canal",
+        "valor_base": 0.18,
+        "valor_low": 0.144,
+        "valor_high": 0.216,
+        "delta_receita_low": -156264.32,
+        "delta_receita_base": -153672.65,
+        "delta_receita_high": -151080.97,
+        "amplitude_swing_brl": 5183.34,
+        "elasticidade": 0.0843
+      },
+      {
+        "parametro": "margem",
+        "valor_base": 0.2,
+        "valor_low": 0.16,
+        "valor_high": 0.24,
+        "delta_receita_low": -156264.32,
+        "delta_receita_base": -153672.65,
+        "delta_receita_high": -151080.97,
+        "amplitude_swing_brl": 5183.34,
+        "elasticidade": 0.0843
+      }
+    ],
+    "ranking_tornado_faixas_cenarios": [
+      {
+        "parametro": "custo_acao",
+        "faixa": [
+          0.8,
+          1.2
+        ],
+        "delta_receita_min": -120346.45,
+        "delta_receita_max": -186998.85,
+        "amplitude_brl": 66652.4
+      },
+      {
+        "parametro": "efeito_retencao",
+        "faixa": [
+          0.05,
+          0.15
+        ],
+        "delta_receita_min": -160151.82,
+        "delta_receita_max": -147193.47,
+        "amplitude_brl": 12958.35
+      },
+      {
+        "parametro": "resposta_canal",
+        "faixa": [
+          0.12,
+          0.25
+        ],
+        "delta_receita_min": -157992.1,
+        "delta_receita_max": -148633.29,
+        "amplitude_brl": 9358.81
+      },
+      {
+        "parametro": "margem",
+        "faixa": [
+          0.15,
+          0.25
+        ],
+        "delta_receita_min": -156912.23,
+        "delta_receita_max": -150433.06,
+        "amplitude_brl": 6479.18
+      }
+    ]
+  },
+  "cobertura_orcamento_80k": {
+    "orcamento_brl": 80000.0,
+    "total_clientes_elegiveis": 14645,
+    "estrategia_priorizacao_var": {
+      "clientes_cobertos": 6140,
+      "cobertura_pct": 41.93,
+      "investimento_total_brl": 79988.0,
+      "var_capturado_brl": 2119404.58,
+      "var_capturado_pct": 58.88,
+      "cenarios": {
+        "conservador": {
+          "receita_bruta_brl": 1907.46,
+          "delta_receita_brl": -78080.54,
+          "roi": -0.9762
+        },
+        "base": {
+          "receita_bruta_brl": 7629.86,
+          "delta_receita_brl": -72358.14,
+          "roi": -0.9046
+        },
+        "otimista": {
+          "receita_bruta_brl": 19869.42,
+          "delta_receita_brl": -60118.58,
+          "roi": -0.7516
+        }
+      }
+    },
+    "heuristica_custo_medio_tela06": {
+      "custo_medio_premissa_brl": 45.0,
+      "clientes_cobertos": 1777,
+      "cobertura_pct": 12.13,
+      "investimento_total_brl": 79965.0
+    },
+    "estrategia_menor_custo": {
+      "clientes_cobertos": 11182,
+      "cobertura_pct": 76.35,
+      "investimento_total_brl": 79976.0
+    }
+  },
+  "break_even": {
+    "custo_total_atual_brl": 166631.0,
+    "custo_medio_atual_por_acao_brl": 11.38,
+    "custo_acao_break_even_por_cenario": {
+      "conservador": {
+        "receita_bruta_gerada_brl": 3239.59,
+        "custo_maximo_por_acao_brl": 0.22
+      },
+      "base": {
+        "receita_bruta_gerada_brl": 12958.35,
+        "custo_maximo_por_acao_brl": 0.88
+      },
+      "otimista": {
+        "receita_bruta_gerada_brl": 33745.71,
+        "custo_maximo_por_acao_brl": 2.3
+      }
+    },
+    "joint_effect_response_necessario_base": 0.2315,
+    "clientes_lucrativos_unitariamente_base": {
+      "contagem": 8,
+      "pct_alvo": 0.055,
+      "ganho_liquido_positivo_somado_brl": 12.19
+    },
+    "diagnostico_estrategico": "Abordagens 'em massa' (blanket) com ações custando entre R$ 5 e R$ 25 geram delta negativo porque o ganho esperado ponderado por evasão em clientes de baixo valor/risco é menor que o custo da ação. A viabilidade econômica em CRM exige: (1) foco estrito nos clientes de Alto Valor com risco iminente; ou (2) migração para canais puramente digitais automatizados (push app/email transacional) com custo ~R$0."
+  },
+  "plano_piloto_ab": {
+    "populacao_alto_valor_total": 5005,
+    "churn_prob_mediana_alto_valor": 0.0948,
+    "criterio_elegibilidade_piloto": "alto_valor == True E churn_prob > mediana (0.0941)",
+    "tamanho_publico_elegivel_amostra_50k": 2499,
+    "baseline_churn_prob_real": 0.1465,
+    "baseline_retencao_12m_real": 0.8535,
+    "parametros_teste": {
+      "metrica_primaria": "Taxa de retenção em 12 meses",
+      "poder_estatistico": 0.8,
+      "significancia_alfa_bilateral": 0.05,
+      "mde_primario_pp": 2,
+      "mde_primario_taxa": 0.02
+    },
+    "dimensionamento_primario_mde_2pp": {
+      "n_por_braco": 4624,
+      "n_total": 9248,
+      "capacidade_na_amostra_50k": "Necessário 9248 clientes vs 2499 disponíveis na amostra sintética. Na amostra de 50k, o MDE mínimo viável com 80% de poder é +4pp (n=1.082/braço, total 2.164). Na base real de 20,1M de membros (Azul RI 2025), a população de alto valor estimada (>140k membros) permite múltiplos pilotos paralelos com MDE +1pp ou +2pp com total folga estatística."
+    },
+    "tabela_sensibilidade_mde": [
+      {
+        "mde_pp": 1,
+        "mde_taxa": 0.01,
+        "n_por_braco": 19066,
+        "n_total_teste": 38132,
+        "cabe_no_grupo_risco_50k": false,
+        "cabe_no_alto_valor_50k": false
+      },
+      {
+        "mde_pp": 2,
+        "mde_taxa": 0.02,
+        "n_por_braco": 4624,
+        "n_total_teste": 9248,
+        "cabe_no_grupo_risco_50k": false,
+        "cabe_no_alto_valor_50k": false
+      },
+      {
+        "mde_pp": 3,
+        "mde_taxa": 0.03,
+        "n_por_braco": 1991,
+        "n_total_teste": 3982,
+        "cabe_no_grupo_risco_50k": false,
+        "cabe_no_alto_valor_50k": true
+      },
+      {
+        "mde_pp": 4,
+        "mde_taxa": 0.04,
+        "n_por_braco": 1083,
+        "n_total_teste": 2166,
+        "cabe_no_grupo_risco_50k": true,
+        "cabe_no_alto_valor_50k": true
+      },
+      {
+        "mde_pp": 5,
+        "mde_taxa": 0.05,
+        "n_por_braco": 669,
+        "n_total_teste": 1338,
+        "cabe_no_grupo_risco_50k": true,
+        "cabe_no_alto_valor_50k": true
+      }
+    ]
+  },
+  "custos_do_agente": {
+    "total_clientes_analisados": 50000,
+    "modo_offline": {
+      "custo_por_recomendacao_brl": 0.0,
+      "custo_total_brl": 0.0,
+      "tipo_execucao": "Compositor determinístico em regras de negócio e embeddings locais",
+      "status_projeto": "MODO OFICIAL AVALIADO NESTE PROJETO (reprodutível, custo ~R$0)"
+    },
+    "modo_llm_estimado": {
+      "faixa_tokens_por_cliente": [
+        600,
+        900
+      ],
+      "volume_total_tokens_faixa": [
+        30000000,
+        45000000
+      ],
+      "cambio_usd_brl_premissa": 5.5,
+      "faixas_por_tier_modelo": {
+        "tier_economico": {
+          "descricao": "Modelos compactos/destilados (ex: GPT-4o-mini, DeepSeek V3)",
+          "preco_usd_per_1m": 0.4,
+          "custo_usd_faixa": [
+            12.0,
+            18.0
+          ],
+          "custo_brl_faixa": [
+            66.0,
+            99.0
+          ],
+          "custo_brl_por_cliente": 0.002
+        },
+        "tier_standard": {
+          "descricao": "Modelos intermediários ágeis (ex: Claude 3.5 Haiku, Gemini Flash)",
+          "preco_usd_per_1m": 1.5,
+          "custo_usd_faixa": [
+            45.0,
+            67.5
+          ],
+          "custo_brl_faixa": [
+            247.5,
+            371.25
+          ],
+          "custo_brl_por_cliente": 0.0074
+        },
+        "tier_premium": {
+          "descricao": "Modelos de fronteira completos (ex: GPT-4o, Claude 3.5 Sonnet)",
+          "preco_usd_per_1m": 5.0,
+          "custo_usd_faixa": [
+            150.0,
+            225.0
+          ],
+          "custo_brl_faixa": [
+            825.0,
+            1237.5
+          ],
+          "custo_brl_por_cliente": 0.0248
+        }
+      },
+      "nota": "Estimativa prospectiva de custo de inferência via API em nuvem; modo não avaliado empiricamente nesta sessão."
+    }
+  }
+}

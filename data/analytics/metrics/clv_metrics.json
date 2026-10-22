@@ -1,0 +1,47 @@
+{
+  "baseline": {
+    "model_type": "BG/NBD + Gamma-Gamma",
+    "wape": 0.7972,
+    "mae": 605.97,
+    "spearman": 0.6109,
+    "gini_capture": 0.5566,
+    "lift_decil_1": 4.35
+  },
+  "lightgbm": {
+    "model_type": "LightGBM Regressor",
+    "wape": 0.655,
+    "mae": 497.85,
+    "spearman": 0.7346,
+    "gini_capture": 0.6598,
+    "lift_decil_1": 5.23
+  },
+  "bootstrap_comparison": {
+    "wape_diff": {
+      "model_point": 0.6549661959598494,
+      "baseline_point": 0.7972115787349325,
+      "point_diff": -0.14224538277508314,
+      "ci_lower": -0.14862572980340774,
+      "ci_upper": -0.13587464060557852,
+      "significant": true,
+      "p_value": 0.0
+    },
+    "mae_diff": {
+      "model_point": 497.84529102196586,
+      "baseline_point": 605.9671978028364,
+      "point_diff": -108.12190678087052,
+      "ci_lower": -113.78188460336702,
+      "ci_upper": -102.24320065574658,
+      "significant": true,
+      "p_value": 0.0
+    },
+    "spearman_diff": {
+      "model_point": 0.7346256545702156,
+      "baseline_point": 0.6109098755021187,
+      "point_diff": 0.12371577906809683,
+      "ci_lower": 0.11909828713689495,
+      "ci_upper": 0.1280737930804745,
+      "significant": true,
+      "p_value": 0.0
+    }
+  }
+}
