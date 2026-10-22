@@ -75,6 +75,7 @@ RUN uv python install 3.12 && \
     uv pip install --python /app/.venv/bin/python \
         "pandas>=2.2,<3" \
         "numpy>=1.26" \
+        "pyarrow>=15" \
         "duckdb>=1.1" \
         "pydantic>=2.7" \
         "PyYAML>=6.0" \
